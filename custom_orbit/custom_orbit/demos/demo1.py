@@ -17,7 +17,6 @@ simulation_app = SimulationApp(config)
 
 
 import torch
-
 import omni.isaac.core.utils.prims as prim_utils
 from omni.isaac.core.simulation_context import SimulationContext
 from omni.isaac.core.utils.viewports import set_camera_view
@@ -25,6 +24,9 @@ from omni.isaac.core.utils.viewports import set_camera_view
 import omni.isaac.orbit.utils.kit as kit_utils
 from omni.isaac.orbit.robots.config.ridgeback_franka import RIDGEBACK_FRANKA_PANDA_CFG
 from omni.isaac.orbit.robots.mobile_manipulator import MobileManipulator
+from robots.mobile_robot import MobileRobot
+from robots.config.aau_rover import AAU_ROVER_CFG
+from omni.isaac.orbit.utils.assets import ISAAC_ORBIT_NUCLEUS_DIR
 
 """
 Helpers
@@ -59,9 +61,12 @@ def main():
     # Set main camera
     set_camera_view([1.5, 1.5, 1.5], [0.0, 0.0, 0.0])
     # Spawn things into stage
-    robot = MobileManipulator(cfg=RIDGEBACK_FRANKA_PANDA_CFG)
-    robot.spawn("/World/Robot_1", translation=(0.0, -1.0, 0.0))
-    robot.spawn("/World/Robot_2", translation=(0.0, 1.0, 0.0))
+    #robot = MobileManipulator(cfg=RIDGEBACK_FRANKA_PANDA_CFG)
+    robot = MobileRobot(cfg=AAU_ROVER_CFG)
+    for i in range(10):
+        robot.spawn(f"/World/Robot_{i}", translation=(0.0, 2.0*i, 0.0))
+    # robot.spawn("/World/Robot_1", translation=(0.0, -1.0, 0.0))
+    # robot.spawn("/World/Robot_2", translation=(0.0, 1.0, 0.0))
     design_scene()
     # Play the simulator
     sim.reset()
@@ -75,9 +80,9 @@ def main():
     print("[INFO]: Setup complete...")
 
     # dummy action
-    actions = torch.rand(robot.count, robot.num_actions, device=robot.device)
-    actions[:, 0 : robot.base_num_dof] = 0.0
-    actions[:, -1] = -1
+    # actions = torch.rand(robot.count, robot.num_actions, device=robot.device)
+    # actions[:, 0 : robot.base_num_dof] = 0.0
+    # actions[:, -1] = -1
 
     # Define simulation stepping
     sim_dt = sim.get_physics_dt()
@@ -102,41 +107,18 @@ def main():
             robot.set_dof_state(dof_pos, dof_vel)
             robot.reset_buffers()
             # reset command
-            actions = torch.rand(robot.count, robot.num_actions, device=robot.device)
-            actions[:, 0 : robot.base_num_dof] = 0.0
-            actions[:, -1] = 1
+            #actions = torch.rand(robot.count, robot.num_actions, device=robot.device)
+            #actions[:, 0 : robot.base_num_dof] = 0.0
+            #actions[:, -1] = 1
             print(">>>>>>>> Reset! Opening gripper.")
+            print(ISAAC_ORBIT_NUCLEUS_DIR)
         # change the gripper action
         if ep_step_count % 200 == 0:
             # flip command
-            actions[:, -1] = -actions[:, -1]
-        # change the base action
-        if ep_step_count == 200:
-            actions[:, : robot.base_num_dof] = 0.0
-            actions[:, 0] = 1.0
-        if ep_step_count == 300:
-            actions[:, : robot.base_num_dof] = 0.0
-            actions[:, 0] = -1.0
-        if ep_step_count == 400:
-            actions[:, : robot.base_num_dof] = 0.0
-            actions[:, 1] = 1.0
-        if ep_step_count == 500:
-            actions[:, : robot.base_num_dof] = 0.0
-            actions[:, 1] = -1.0
-        if ep_step_count == 600:
-            actions[:, : robot.base_num_dof] = 0.0
-            actions[:, 2] = 1.0
-        if ep_step_count == 700:
-            actions[:, : robot.base_num_dof] = 0.0
-            actions[:, 2] = -1.0
-        if ep_step_count == 900:
-            actions[:, : robot.base_num_dof] = 0.0
-            actions[:, 2] = 1.0
-        # change the arm action
-        if ep_step_count % 100:
-            actions[:, robot.base_num_dof : -1] = torch.rand(robot.count, robot.arm_num_dof, device=robot.device)
+            pass
+            #actions[:, -1] = -actions[:, -1]
         # apply action
-        robot.apply_action(actions)
+        #robot.apply_action(actions)
         # perform step
         sim.step()
         # update sim-time
@@ -147,11 +129,11 @@ def main():
             # update buffers
             robot.update_buffers(sim_dt)
             # read buffers
-            if ep_step_count % 20 == 0:
-                if robot.data.tool_dof_pos[0, -1] > 0.01:
-                    print("Opened gripper.")
-                else:
-                    print("Closed gripper.")
+            # if ep_step_count % 20 == 0:
+            #     if robot.data.tool_dof_pos[0, -1] > 0.01:
+            #         print("Opened gripper.")
+            #     else:
+            #         print("Closed gripper.")
 
 
 if __name__ == "__main__":

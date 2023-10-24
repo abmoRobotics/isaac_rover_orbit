@@ -62,10 +62,12 @@ class MobileRobot(RobotBase):
         # Update base class
         super().update_buffers(dt)
         # Other stuff
+        
+        # self._data.root_pos[:] = self._data.root_pos_w
 
-        self._data.root_vel[:, 0:3] = quat_rotate_inverse(self._data.root_quat_w, self._data.root_lin_vel_w)
-        self._data.root_vel[:, 3:6] = quat_rotate_inverse(self._data.root_quat_w, self._data.root_ang_vel_w)
-        self._data.projected_gravity[:] = quat_rotate_inverse(self._data.root_quat_w, self._GRAVITY_VEC_W)
+        # self._data.root_vel[:, 0:3] = quat_rotate_inverse(self._data.root_quat_w, self._data.root_lin_vel_w)
+        # self._data.root_vel[:, 3:6] = quat_rotate_inverse(self._data.root_quat_w, self._data.root_ang_vel_w)
+        # self._data.projected_gravity[:] = quat_rotate_inverse(self._data.root_quat_w, self._GRAVITY_VEC_W)
 
 
     def _create_buffers(self):
@@ -75,9 +77,10 @@ class MobileRobot(RobotBase):
 
         # Constants
         self._GRAVITY_VEC_W = torch.tensor([0.0, 0.0, -1.0], device=self.device).repeat(self.count, 1)
-
+        
+        self._data.root_pos = torch.zeros(self.count, 3, device=self.device)
         # Mobile robot frame states -- base
-        self._data.root_vel = torch.zeros((self.count, 6), device=self.device).repeat(self.count, 1)
+        self._data.root_vel = torch.zeros(self.count, 6, device=self.device)
         self._data.projected_gravity = torch.zeros(self.count, 3, dtype=torch.float, device=self.device)
 
         self._data.base_dof_pos = self._data.dof_pos[:, : self.mobile_robot_num_dof]

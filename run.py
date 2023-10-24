@@ -34,6 +34,7 @@ import omni.isaac.contrib_envs  # noqa: F401
 import omni.isaac.orbit_envs  # noqa: F401
 from omni.isaac.orbit_envs.utils import parse_env_cfg
 from omni.isaac.orbit.utils.assets import ISAAC_NUCLEUS_DIR
+import custom_envs
 
 def main():
     """Zero actions agent with Isaac Orbit environment."""
@@ -48,6 +49,7 @@ def main():
     while simulation_app.is_running():
         # compute zero actions
         actions = torch.zeros((env.num_envs, env.action_space.shape[0]), device=env.device)
+        actions[:, 1] = 0.0
         # apply actions
         _, _, _, _ = env.step(actions)
         # check if simulator is stopped
