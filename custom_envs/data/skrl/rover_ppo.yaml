@@ -11,27 +11,27 @@ models:
     max_log_std: 2.0
     input_shape: "Shape.STATES"
     hiddens: [256, 160, 128]
-    hidden_activation: ["elu", "elu", "elu"]
+    hidden_activation: ["leaky_relu", "leaky_relu", "leaky_relu"]
     output_shape: "Shape.ACTIONS"
     output_activation: "tanh"
     output_scale: 1.0
   value:  # see skrl.utils.model_instantiators.deterministic_model for parameter details
     clip_actions: False
     input_shape: "Shape.STATES"
-    hiddens: [256, 128, 64]
-    hidden_activation: ["elu", "elu", "elu"]
+    hiddens: [256, 160, 128]
+    hidden_activation: ["leaky_relu", "leaky_relu", "leaky_relu"]
     output_shape: "Shape.ONE"
     output_activation: ""
     output_scale: 1.0
 
 
 agent:
-  rollouts: 30
+  rollouts: 60
   learning_epochs: 4
-  mini_batches: 30
+  mini_batches: 60
   discount_factor: 0.99
   lambda: 0.95
-  learning_rate: 3.e-4
+  learning_rate: 1.e-4
   learning_rate_scheduler: "KLAdaptiveRL"
   learning_rate_scheduler_kwargs:
     kl_threshold: 0.008
@@ -47,7 +47,7 @@ agent:
   clip_predicted_values: True
   entropy_loss_scale: 0.0
   value_loss_scale: 1.0
-  kl_threshold: 0
+  kl_threshold: 0.008
   rewards_shaper_scale: 0.01
   # logging and checkpoint
   experiment:
@@ -55,3 +55,7 @@ agent:
     experiment_name: ""
     write_interval: 40
     checkpoint_interval: 400
+    wandb: True             # whether to use Weights & Biases
+
+trainer:
+  timesteps: 100000

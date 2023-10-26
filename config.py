@@ -11,24 +11,17 @@ import yaml
 
 from skrl.resources.preprocessors.torch import RunningStandardScaler  # noqa: F401
 from skrl.resources.schedulers.torch import KLAdaptiveRL  # noqa: F401
-from skrl.utils.model_instantiators import Shape  # noqa: F401
+from skrl.utils.model_instantiators.torch import Shape  # noqa: F401
 
-from omni.isaac.orbit_envs import ORBIT_ENVS_DATA_DIR
+from custom_envs import ORBIT_CUSTOM_ENVS_DATA_DIR
 
 __all__ = ["SKRL_PPO_CONFIG_FILE", "parse_skrl_cfg"]
 
 
 SKRL_PPO_CONFIG_FILE = {
     # classic
-    "Isaac-Cartpole-v0": os.path.join(ORBIT_ENVS_DATA_DIR, "skrl/cartpole_ppo.yaml"),
-    "Isaac-Ant-v0": os.path.join(ORBIT_ENVS_DATA_DIR, "skrl/ant_ppo.yaml"),
-    "Isaac-Humanoid-v0": os.path.join(ORBIT_ENVS_DATA_DIR, "skrl/humanoid_ppo.yaml"),
-    # manipulation
-    "Isaac-Lift-Franka-v0": os.path.join(ORBIT_ENVS_DATA_DIR, "skrl/lift_ppo.yaml"),
-    "Isaac-Reach-Franka-v0": os.path.join(ORBIT_ENVS_DATA_DIR, "skrl/reach_ppo.yaml"),
-    # locomotion
-    "Isaac-Velocity-Anymal-C-v0": os.path.join(ORBIT_ENVS_DATA_DIR, "skrl/anymal_ppo.yaml"),
-}
+    "Rover-v0": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_ppo.yaml"),
+    }
 """Mapping from environment names to PPO agent files."""
 
 
@@ -51,9 +44,6 @@ def parse_skrl_cfg(task_name) -> dict:
     # parse agent configuration
     with open(config_file, encoding="utf-8") as f:
         cfg = yaml.load(f, Loader=yaml.Loader)
-        print("CFGERERER")
-        print(cfg)
-        exit()
     return cfg
 
 

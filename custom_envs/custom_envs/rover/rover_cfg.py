@@ -49,7 +49,7 @@ class RandomizationCfg:
         position_category: str = "default"
 
         # Randomize target position
-        radius_default = 2
+        radius_default = 9
         radius_uniform_min = 8
         radius_uniform_max = 10
     
@@ -67,8 +67,8 @@ class ObservationsCfg:
         enable_corruption: bool = True
         
         rover_actions = {"scale": 1.0}
-        angle_to_goal = {"scale": 1.0}
-        distance_to_goal = {"scale": 1.0}
+        angle_to_goal = {"scale": 0.33}
+        distance_to_goal = {"scale": 0.11}
     
     return_dict_obs_in_group = False
 
@@ -78,8 +78,10 @@ class ObservationsCfg:
 class RewardsCfg:
     """ Reward terms and weights """
 
-    distance_to_target = {"weight": 1.0}
-    reached_goal_reward = {"weight": 1.0}
+    distance_to_target = {"weight": 10.0}
+    reached_goal_reward = {"weight": 10.0}
+    oscillation_penalty = {"weight": -0.05}
+    goal_angle_penalty = {"weight": -1.0}
 
 @configclass
 class TerminationsCfg:
@@ -98,7 +100,7 @@ class TerminationsCfg:
 class ControlCfg:
     """ Processing of MDP actions """
     # Decimation: Number of physics steps per action 
-    decimation: int = 1
+    decimation: int = 4
     # scaling of actions
     action_scaling: float = 0.586 # Max speed = 2.11 km/h = 0.586 m/s
     # Clipping of actions
@@ -108,7 +110,7 @@ class ControlCfg:
 class RoverEnvCfg(IsaacEnvCfg):
     """ Configuration for the Rover environment """
 
-    env: EnvCfg = EnvCfg(num_envs=4, env_spacing=10.0, episode_length_s=120.0)
+    env: EnvCfg = EnvCfg(num_envs=256, env_spacing=2.0, episode_length_s=300.0)
     viewer: ViewerCfg = ViewerCfg(debug_vis=True)
     # gpu_max_rigid_contact_count: 524288
     # gpu_max_rigid_patch_count: 81920

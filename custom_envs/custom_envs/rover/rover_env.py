@@ -61,13 +61,11 @@ class RoverEnv(IsaacEnv):
         
         
         if self.cfg.viewer.debug_vis and self.enable_render:
-
+            
             self._goal_markers = PointMarker(
                 "/Visuals/goal_marker",
                 self.num_envs,
                 radius=0.1,
-                #usd_path = self.cfg.target_marker.usd_path,
-                #scale = self.cfg.target_marker.scale,
             )
 
         return ["/World/defaultGroundPlane"]
@@ -76,20 +74,21 @@ class RoverEnv(IsaacEnv):
         dof_pos, dof_vel = self.robot.get_default_dof_state(env_ids=env_ids)
         self.robot.set_dof_state(dof_pos, dof_vel, env_ids=env_ids)
 
-        reset_state = self.robot.get_default_root_state(env_ids=env_ids)
-        reset_state[:, 0:3] = self.envs_positions[env_ids] # shift the robot to the initial position
-        self.robot.set_root_state(reset_state, env_ids=env_ids)
-        #self.robot.set_root_state(self.initial_root_pos[env_ids], env_ids=env_ids)
-        #self.robot._data.root_pos_w[env_ids] = self.initial_root_pos[env_ids]
+        # Reset the rover 
+        self._reset_rover_state(env_ids)
+
+        # Generate a random target position
         self._randomize_target(env_ids, self.cfg.randomization.object_target_position)
 
         self.extras["episode"] = dict()
 
+        # Reset Reward and Observation Manager
         self._reward_manager.reset_idx(env_ids, self.extras["episode"])
         self._observation_manager.reset_idx(env_ids)
 
         # Reset History Buffers
         self.prev_actions[env_ids] = 0
+        
         # Reset MDP Buffers
         self.episode_length_buf[env_ids] = 0
         self.reset_buf[env_ids] = 0
@@ -115,8 +114,17 @@ class RoverEnv(IsaacEnv):
         # Post step
         self.robot.update_buffers(self.dt)
 
+        self.reward_buf = self._reward_manager.compute()
+        
         # Terminations
         self._check_termination()
+
+        self.prev_actions = self.actions.clone()
+
+
+        self.extras["time_outs"] = self.episode_length_buf >= self.max_episode_length
+        distance = torch.norm(self.target_pose[:, 0:2] - self.robot.data.root_pos_w[:, 0:2], dim=1)
+        self.extras["is_success"] = torch.where(distance < 0.18, 1, self.reset_buf)
 
         # Update USD 
         if self.cfg.viewer.debug_vis and self.enable_render:
@@ -169,16 +177,22 @@ class RoverEnv(IsaacEnv):
             distance = torch.norm(self.target_pose[:, 0:2] - self.robot.data.root_pos_w[:, 0:2], dim=1)
             self.reset_buf = torch.where(distance < 0.18, 1, self.reset_buf)
 
+        if self.cfg.terminations.robot_distance_to_target:
+            distance = torch.norm(self.target_pose[:, 0:2] - self.robot.data.root_pos_w[:, 0:2], dim=1)
+            self.reset_buf = torch.where(distance > 10, 1, self.reset_buf)
 
     def _debug_vis(self):
         # print(self.target_pose[:, 0:3])
-        self._goal_markers.set_world_poses(self.target_pose[:, 0:3], self.target_pose[:, 3:7])
+        indices = torch.tensor([50,100,150,200],device=self.device)
+        pos = torch.index_select(self.target_pose[:, 0:3], 0, indices)
+        ori = torch.index_select(self.target_pose[:, 3:7], 0, indices)
+        self._goal_markers.set_world_poses(pos, ori, indices)
 
     def _randomize_target(self, env_ids: torch.Tensor, cfg: RandomizationCfg.TargetPositionCfg):
         radius = cfg.radius_default
 
         # Generate a random angle        
-        theta = torch.rand((self.num_envs,), device=self.device) * 2 * torch.pi
+        theta = torch.rand((len(env_ids),), device=self.device) * 2 * torch.pi
         
         # set the target position x and y
         self.target_pose[env_ids, 0] = radius * torch.cos(theta) + self.envs_positions[env_ids, 0]
@@ -186,9 +200,31 @@ class RoverEnv(IsaacEnv):
         self.target_pose[env_ids, 2] = 0.1
         
 
-    def _randomize_rover_orientation(self):
-        pass
+    def _randomize_rover_orientation(self, env_ids):
+        """ Randomize the rover orientation """
+        angle = torch.rand((len(env_ids),), device=self.device) * 2 * torch.pi
+        quat = torch.zeros((len(env_ids), 4), device=self.device)
+        quat[:, 0] = torch.cos(angle / 2)
+        quat[:, 3] = torch.sin(angle / 2)
+        self.robot.set_root_state(quat, env_ids=env_ids)
 
+    def _reset_rover_state(self, env_ids):
+        """ Reset the rover state with random orientation"""
+        # Get default state
+        reset_state = self.robot.get_default_root_state(env_ids=env_ids)
+
+        # Position
+        reset_state[:, 0:3] = self.envs_positions[env_ids]
+
+        # Orientation
+        angle = torch.rand((len(env_ids),), device=self.device) * 2 * torch.pi
+        quat = torch.zeros((len(env_ids), 4), device=self.device)
+        quat[:, 0] = torch.cos(angle / 2)
+        quat[:, 3] = torch.sin(angle / 2)
+        reset_state[:, 3:7] = quat
+        
+        # Set State
+        self.robot.set_root_state(reset_state, env_ids=env_ids)
 
 class RoverObservationManager(ObservationManager):
     
@@ -220,15 +256,44 @@ class RoverObservationManager(ObservationManager):
 class RoverRewardManager(RewardManager):
     
     def distance_to_target(self, env: RoverEnv):
-        """Reward for moving towards the goal"""
+        """Reward depending on the distance to the target"""
         distance = torch.norm(env.target_pose[:, 0:2] - env.robot.data.root_pos_w[:, 0:2], dim=1)
-        return (1.0 / (1.0 + (0.33*0.33*distance*distance)) - 0.5) 
+        return (1.0 / (1.0 + (0.33*0.33*distance*distance))) / env.max_episode_length
 
     def reached_goal_reward(self, env: RoverEnv):
         """Reward for reaching the goal"""
         distance = torch.norm(env.target_pose[:, 0:2] - env.robot.data.root_pos_w[:, 0:2], dim=1)
-        return torch.where(distance < 0.18, env.episode_length_buf, 0)
+        return torch.where(distance < 0.18, 1.0*(env.max_episode_length-env.episode_length_buf) / env.max_episode_length , 0)
+
+    def oscillation_penalty(self, env: RoverEnv):
+        """Penalty for oscillating"""
+        linear_difference = torch.abs(env.actions[:, 1] - env.prev_actions[:, 1]) * 3
+        angular_difference = torch.abs(env.actions[:, 0] - env.prev_actions[:, 0]) * 3
         
+        angular_penalty = torch.where(angular_difference > 0.05, torch.square(angular_difference), 0.0)
+        linear_penalty = torch.where(linear_difference > 0.05, torch.square(linear_difference), 0.0)
+
+        angular_penalty = torch.pow(angular_penalty, 2)
+        linear_penalty = torch.pow(linear_penalty, 2)
+
+        return (angular_penalty + linear_penalty) / env.max_episode_length
+        
+    def goal_angle_penalty(self, env: RoverEnv):
+
+        rover_rotation_euler = tensor_quat_to_eul(env.robot.data.root_quat_w[:, 0:4], device=env.device)
+        direction_vector = torch.zeros([env.num_envs, 2], device=self._device)
+        direction_vector[:,0] = torch.cos(rover_rotation_euler[:, 2])
+        direction_vector[:,1] = torch.sin(rover_rotation_euler[:, 2])
+        target_vector = env.target_pose[:, 0:2] - env.robot.data.root_pos_w[:, 0:2]
+        
+        cross_product = direction_vector[:,1] * target_vector[:,0] - direction_vector[:,0] * target_vector[:,1]
+        dot_product = direction_vector[:,0] * target_vector[:,0] + direction_vector[:,1] * target_vector[:,1]
+
+        heading_difference = torch.atan2(cross_product, dot_product)
+
+        return torch.where(torch.abs(heading_difference) > 2.0, torch.abs(heading_difference) / env.max_episode_length, 0.0)
+
+
 
 
 

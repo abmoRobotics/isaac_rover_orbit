@@ -1,6 +1,6 @@
 {
     "python.analysis.extraPaths": [
-        "~/.local/share/ov/pkg/isaac_sim-2023.1.0/exts/omni.isaac.core"
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.0/exts/omni.isaac.core",
     ],
     "python.defaultInterpreterPath": "~/anaconda3/envs/orbit_env/bin/python",
     "ros.distro": "humble",

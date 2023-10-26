@@ -26,7 +26,7 @@ else:
 simulation_app = SimulationApp(config, experience=app_experience)
 
 
-import gymnasium as gym
+import gym
 from datetime import datetime
 
 from skrl.agents.torch.ppo import PPO, PPO_DEFAULT_CONFIG
@@ -37,11 +37,11 @@ from skrl.utils.model_instantiators.torch import deterministic_model, gaussian_m
 from omni.isaac.orbit.utils.dict import print_dict
 from omni.isaac.orbit.utils.io import dump_pickle, dump_yaml
 
-import omni.isaac.contrib_envs  # noqa: F401
-import omni.isaac.orbit_envs  # noqa: F401
+#import omni.isaac.contrib_envs  # noqa: F401
+#import omni.isaac.orbit_envs  # noqa: F401
 from omni.isaac.orbit_envs.utils import parse_env_cfg
 from omni.isaac.orbit_envs.utils.wrappers.skrl import SkrlSequentialLogTrainer, SkrlVecEnvWrapper
-
+import custom_envs
 from config import convert_skrl_cfg, parse_skrl_cfg
 
 def log_setup(experiment_cfg, env_cfg):
@@ -71,7 +71,7 @@ def main():
     experiment_cfg = parse_skrl_cfg(args_cli.task)
 
     log_setup(experiment_cfg, env_cfg)
-
+    print(args_cli)
     # create isaac environment
     env = gym.make(args_cli.task, cfg=env_cfg, headless=args_cli.headless, viewport=args_cli.video)
 
@@ -85,13 +85,13 @@ def main():
         observation_space=env.observation_space,
         action_space=env.action_space,
         device=env.device,
-        **convert_skrl_cfg(experiment_cfg["agent"]["models"]["policy"])
+        **convert_skrl_cfg(experiment_cfg["models"]["policy"])
     )
     models["value"] = deterministic_model(
         observation_space=env.observation_space,
         action_space=env.action_space,
         device=env.device,
-        **convert_skrl_cfg(experiment_cfg["agent"]["models"]["value"])
+        **convert_skrl_cfg(experiment_cfg["models"]["value"])
     )
 
     memory_size = experiment_cfg["agent"]["rollouts"]  # memory_size is the agent's number of rollouts
@@ -101,6 +101,8 @@ def main():
     experiment_cfg["agent"]["rewards_shaper"] = None  # avoid 'dictionary changed size during iteration'
     agent_cfg.update(convert_skrl_cfg(experiment_cfg["agent"]))
 
+    agent_cfg["state_preprocessor_kwargs"].update({"size": env.observation_space, "device": env.device})
+    agent_cfg["value_preprocessor_kwargs"].update({"size": 1, "device": env.device})
 
     agent = PPO(
         models=models,
@@ -112,7 +114,7 @@ def main():
     )
 
     trainer_cfg = experiment_cfg["trainer"]
-    trainer = SkrlSequentialLogTrainer(cfg=trainer_cfg, agent=agent, env=env)
+    trainer = SkrlSequentialLogTrainer(cfg=trainer_cfg, agents=agent, env=env)
     trainer.train()
 
     env.close()
