@@ -1,3 +1,4 @@
 *.pyc
 logs
 wandb
+custom_envs/custom_envs/rover/utils/terrain_data/
