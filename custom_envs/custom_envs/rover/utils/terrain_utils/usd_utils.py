@@ -5,7 +5,7 @@ from omni.isaac.core.prims import XFormPrim
 
 import numpy as np
 
-def trimesh_to_usd(vertices: np.ndarray, faces: np.ndarray, position = None, orientation = None):
+def trimesh_to_usd(vertices: np.ndarray, faces: np.ndarray, position = None, orientation = None, name = "terrain"):
     """ Convert trimesh to USD 
     
     Parameters
@@ -20,14 +20,14 @@ def trimesh_to_usd(vertices: np.ndarray, faces: np.ndarray, position = None, ori
     stage: Usd.Stage = get_current_stage()  
 
     # Define terrain mesh
-    mesh_prim = stage.DefinePrim("/World/terrain", "Mesh")
+    mesh_prim = stage.DefinePrim(f"/World/{name}", "Mesh")
     mesh_prim.GetAttribute("points").Set(vertices)
     mesh_prim.GetAttribute("faceVertexIndices").Set(faces.flatten())
     mesh_prim.GetAttribute("faceVertexCounts").Set(np.asarray([3] * faces.shape[0])) # 3 vertices per face 
 
     terrain_prim = XFormPrim(
-                prim_path="/World/terrain",
-                name="terrain",
+                prim_path=f"/World/{name}",
+                name=f'{name}',
                 position=position,
                 orientation=orientation)
     
