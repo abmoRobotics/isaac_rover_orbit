@@ -11,7 +11,10 @@ from custom_orbit.robots.mobile_robot import MobileRobot
 from omni.isaac.orbit.utils.mdp import ObservationManager, RewardManager
 from omni.isaac.orbit.markers import StaticMarker, PointMarker
 from omni.isaac.orbit.utils.dict import class_to_dict
+#from .utils.terrain_utils.terrain_utils import mesh_to_omni_stage
+from .utils.terrain_utils.terrain_utils import TerrainManager
 import time
+from .utils.camera.camera import Camera
 
 class RoverEnv(IsaacEnv):
     
@@ -45,6 +48,7 @@ class RoverEnv(IsaacEnv):
         
         self.action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(self.num_actions,))
         # take the intial step
+        self.camera = Camera(self.device, torch.tensor([0.0, 0.0, 0.0],device=self.device), False)
 
         self.sim.step()
 
@@ -55,8 +59,11 @@ class RoverEnv(IsaacEnv):
 
     
     def _design_scene(self) -> List[str]:
-        kit_utils.create_ground_plane("/World/defaultGroundPLane",z_position=-.4)
+        #kit_utils.create_ground_plane("/World/defaultGroundPLane",z_position=-.4)
+        self._terrainManager = TerrainManager(device=self.device)
+        self._terrainManager.mesh_to_omni_stage()
 
+        #mesh_to_omni_stage()
         self.robot.spawn(self.template_env_ns + "/Robot")
         
         
@@ -121,6 +128,11 @@ class RoverEnv(IsaacEnv):
 
         self.prev_actions = self.actions.clone()
 
+        rotation = tensor_quat_to_eul(self.robot.data.root_quat_w, device=self.device)
+        heightmap, output_pt, sources = self.camera.get_depths(positions=self.robot.data.root_pos_w, rotations=rotation)
+        sparse = self.camera.heightmap.get_sparse_vector(heightmap)
+        dense = self.camera.heightmap.get_dense_vector(heightmap)
+        #print(sparse.shape)
 
         self.extras["time_outs"] = self.episode_length_buf >= self.max_episode_length
         distance = torch.norm(self.target_pose[:, 0:2] - self.robot.data.root_pos_w[:, 0:2], dim=1)
@@ -165,6 +177,9 @@ class RoverEnv(IsaacEnv):
         self.dt = self.cfg.control.decimation * self.physics_dt
         self.max_episode_length = math.ceil(self.cfg.env.episode_length_s / (self.dt*self.cfg.control.decimation*self.cfg.sim.substeps))
 
+        # TODO FIX THIS AND MAKE IT PART OF CFG -> shift 30, 30
+        self.envs_positions += torch.tensor([30.0, 30.0, 5.0], device=self.device)
+
 
     def _check_termination(self):
         self.reset_buf[:] = 0
@@ -183,10 +198,12 @@ class RoverEnv(IsaacEnv):
 
     def _debug_vis(self):
         # print(self.target_pose[:, 0:3])
-        indices = torch.tensor([50,100,150,200],device=self.device)
-        pos = torch.index_select(self.target_pose[:, 0:3], 0, indices)
-        ori = torch.index_select(self.target_pose[:, 3:7], 0, indices)
-        self._goal_markers.set_world_poses(pos, ori, indices)
+        # indices = torch.tensor([50,100,150,200],device=self.device)
+        # pos = torch.index_select(self.target_pose[:, 0:3], 0, indices)
+        # ori = torch.index_select(self.target_pose[:, 3:7], 0, indices)
+        # self._goal_markers.set_world_poses(pos, ori, indices)
+        self._goal_markers.set_world_poses(self.target_pose[:, 0:3], self.target_pose[:, 3:7])
+
 
     def _randomize_target(self, env_ids: torch.Tensor, cfg: RandomizationCfg.TargetPositionCfg):
         radius = cfg.radius_default
@@ -213,7 +230,16 @@ class RoverEnv(IsaacEnv):
         # Get default state
         reset_state = self.robot.get_default_root_state(env_ids=env_ids)
 
-        # Position
+        # Get the available spawn locations from the terrain manager
+        spawn_locations = self._terrainManager.spawn_locations
+
+        # Randomly select a spawn location
+        spawn_index = torch.randint(0, len(spawn_locations), (len(env_ids),), device=self.device)
+        print(spawn_index)
+        # Set position
+        self.envs_positions[env_ids] = self._terrainManager.spawn_locations[spawn_index]
+        self.envs_positions[env_ids, 2] += 5
+        
         reset_state[:, 0:3] = self.envs_positions[env_ids]
 
         # Orientation
