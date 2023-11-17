@@ -137,14 +137,19 @@ class Camera():
 
         
         d1,d2,d3 = sources.shape[0],sources.shape[1] ,sources.shape[2] 
-        # self.debug = True
-        if self.debug:
-            try:
-                draw_depth(sources.reshape(d1*d2,d3),output_pt.reshape(d1*d2,d3))
-            except:
-                print("Isaac Sim not running")
-        return output_distances, output_pt, sources
+        #self.debug = True
+        self.sources = sources.reshape(d1*d2,d3)
+        self.output_pt = output_pt.reshape(d1*d2,d3)
+        # if self.debug:
+        #     try:
+        #         draw_depth(sources.reshape(d1*d2,d3),output_pt.reshape(d1*d2,d3))
+        #     except:
+        #         print("Isaac Sim not running")
+        return output_distances#, output_pt, sources
 
+    def draw_depths(self):
+        draw_depth(self.sources,self.output_pt)
+        
     def _load_triangles(self):
         """Loads triangles with explicit values, each triangle is a 3 x 3 matrix"""
         absolute_path = os.path.dirname(os.path.abspath(__file__))
@@ -162,8 +167,6 @@ class Camera():
         triangles = torch.load(os.path.join(absolute_path, "../terrain_data/knn_terrain/triangles.pt"))
         vertices = torch.load(os.path.join(absolute_path, "../terrain_data/knn_terrain/vertices.pt"))
         return map_indices, triangles, vertices
-
-
 
     def _depth_transform(self, rover_l, rover_r, rover_depth_points):
         """Transforms the local heightmap of the rover, into the global frame"""

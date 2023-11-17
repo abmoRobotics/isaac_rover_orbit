@@ -11,7 +11,7 @@ import yaml
 
 from skrl.resources.preprocessors.torch import RunningStandardScaler  # noqa: F401
 from skrl.resources.schedulers.torch import KLAdaptiveRL  # noqa: F401
-from skrl.utils.model_instantiators.torch import Shape  # noqa: F401
+from skrl.utils.model_instantiators import Shape  # noqa: F401
 
 from custom_envs import ORBIT_CUSTOM_ENVS_DATA_DIR
 

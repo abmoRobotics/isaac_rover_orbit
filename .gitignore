@@ -2,3 +2,6 @@
 logs
 wandb
 custom_envs/custom_envs/rover/utils/terrain_data/
+custom_envs/custom_envs/rover/rover_cfg.py
+best_agent.pt
+best_agent2.pt

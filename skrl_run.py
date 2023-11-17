@@ -32,7 +32,7 @@ from datetime import datetime
 from skrl.agents.torch.ppo import PPO, PPO_DEFAULT_CONFIG
 from skrl.memories.torch import RandomMemory
 from skrl.utils import set_seed
-from skrl.utils.model_instantiators.torch import deterministic_model, gaussian_model, shared_model
+from skrl.utils.model_instantiators import deterministic_model, gaussian_model, shared_model
 
 from omni.isaac.orbit.utils.dict import print_dict
 from omni.isaac.orbit.utils.io import dump_pickle, dump_yaml
@@ -42,6 +42,7 @@ from omni.isaac.orbit.utils.io import dump_pickle, dump_yaml
 from omni.isaac.orbit_envs.utils import parse_env_cfg
 from omni.isaac.orbit_envs.utils.wrappers.skrl import SkrlSequentialLogTrainer, SkrlVecEnvWrapper
 import custom_envs
+from custom_envs.rover.learning.models import GaussianNeuralNetwork, DeterministicNeuralNetwork
 from config import convert_skrl_cfg, parse_skrl_cfg
 
 def log_setup(experiment_cfg, env_cfg):
@@ -64,45 +65,65 @@ def log_setup(experiment_cfg, env_cfg):
     dump_yaml(os.path.join(log_dir, "params", "agent.yaml"), experiment_cfg)
     dump_pickle(os.path.join(log_dir, "params", "env.pkl"), env_cfg)
     dump_pickle(os.path.join(log_dir, "params", "agent.pkl"), experiment_cfg)
+    return log_dir
 
 def main():
     args_cli_seed = args_cli.seed
     env_cfg = parse_env_cfg(args_cli.task, use_gpu=not args_cli.cpu, num_envs=args_cli.num_envs)
     experiment_cfg = parse_skrl_cfg(args_cli.task)
 
-    log_setup(experiment_cfg, env_cfg)
+    log_dir = log_setup(experiment_cfg, env_cfg)
     print(args_cli)
     # create isaac environment
     env = gym.make(args_cli.task, cfg=env_cfg, headless=args_cli.headless, viewport=args_cli.video)
-
-    env = SkrlVecEnvWrapper(env)
-
+    if args_cli.video:
+        video_kwargs = {
+            "video_folder": os.path.join(log_dir, "videos"),
+            "step_trigger": lambda step: step % args_cli.video_interval == 0,
+            "video_length": args_cli.video_length,
+        }
+        print("[INFO] Recording videos during training.")
+        print_dict(video_kwargs, nesting=4)
+        env = gym.wrappers.RecordVideo(env, **video_kwargs)
+    env  = SkrlVecEnvWrapper(env)
+    
     set_seed(args_cli_seed if args_cli_seed is not None else experiment_cfg["seed"])
 
     models = {}
+    ray = env._env.cfg.observations.policy.enable_ray_height
 
-    models["policy"] = gaussian_model(
-        observation_space=env.observation_space,
-        action_space=env.action_space,
-        device=env.device,
-        **convert_skrl_cfg(experiment_cfg["models"]["policy"])
-    )
-    models["value"] = deterministic_model(
-        observation_space=env.observation_space,
-        action_space=env.action_space,
-        device=env.device,
-        **convert_skrl_cfg(experiment_cfg["models"]["value"])
-    )
+    if not ray:
+        models["policy"] = gaussian_model(
+            observation_space=env.observation_space,
+            action_space=env.action_space,
+            device=env.device,
+            **convert_skrl_cfg(experiment_cfg["models"]["policy"])
+        )
+        models["value"] = deterministic_model(
+            observation_space=env.observation_space,
+            action_space=env.action_space,
+            device=env.device,
+            **convert_skrl_cfg(experiment_cfg["models"]["value"])
+        )
+    else:
+        models["policy"] = GaussianNeuralNetwork(
+            observation_space=env.observation_space,
+            action_space=env.action_space,
+            device=env.device)
+        models["value"] = DeterministicNeuralNetwork(
+            observation_space=env.observation_space,
+            action_space=env.action_space,
+            device=env.device)
 
     memory_size = experiment_cfg["agent"]["rollouts"]  # memory_size is the agent's number of rollouts
     memory = RandomMemory(memory_size=memory_size, num_envs=env.num_envs, device=env.device)
 
     agent_cfg = PPO_DEFAULT_CONFIG.copy()
-    experiment_cfg["agent"]["rewards_shaper"] = None  # avoid 'dictionary changed size during iteration'
+    # experiment_cfg["agent"]["rewards_shaper"] = None  # avoid 'dictionary changed size during iteration'
     agent_cfg.update(convert_skrl_cfg(experiment_cfg["agent"]))
 
-    agent_cfg["state_preprocessor_kwargs"].update({"size": env.observation_space, "device": env.device})
-    agent_cfg["value_preprocessor_kwargs"].update({"size": 1, "device": env.device})
+    # agent_cfg["state_preprocessor_kwargs"].update({"size": env.observation_space, "device": env.device})
+    # agent_cfg["value_preprocessor_kwargs"].update({"size": 1, "device": env.device})
 
     agent = PPO(
         models=models,
@@ -112,7 +133,8 @@ def main():
         action_space=env.action_space,
         device=env.device,
     )
-
+    #agent.load("logs/skrl/rover/Nov15_13-24-49/checkpoints/best_agent.pt")
+    #agent.load("best_agent2.pt")
     trainer_cfg = experiment_cfg["trainer"]
     trainer = SkrlSequentialLogTrainer(cfg=trainer_cfg, agents=agent, env=env)
     trainer.train()

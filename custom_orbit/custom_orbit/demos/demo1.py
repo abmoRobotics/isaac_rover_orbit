@@ -24,8 +24,8 @@ from omni.isaac.core.utils.viewports import set_camera_view
 import omni.isaac.orbit.utils.kit as kit_utils
 from omni.isaac.orbit.robots.config.ridgeback_franka import RIDGEBACK_FRANKA_PANDA_CFG
 from omni.isaac.orbit.robots.mobile_manipulator import MobileManipulator
-from robots.mobile_robot import MobileRobot
-from robots.config.aau_rover import AAU_ROVER_CFG
+from custom_orbit.robots.mobile_robot import MobileRobot
+from custom_orbit.robots.config.aau_rover import AAU_ROVER_CFG
 from omni.isaac.orbit.utils.assets import ISAAC_ORBIT_NUCLEUS_DIR
 
 """
@@ -63,8 +63,13 @@ def main():
     # Spawn things into stage
     #robot = MobileManipulator(cfg=RIDGEBACK_FRANKA_PANDA_CFG)
     robot = MobileRobot(cfg=AAU_ROVER_CFG)
-    for i in range(10):
+    num_envs = 2
+    for i in range(num_envs):
         robot.spawn(f"/World/Robot_{i}", translation=(0.0, 2.0*i, 0.0))
+        robot.prepare_contact_reporter("/World/defaultGroundPlane/GroundPlane/CollisionPlane")
+
+    #robot.spawn(["/World/Robot_0", "/World/Robot_1"])
+    #robot.prepare_contact_reporter("/World/defaultGroundPlane/GroundPlane/CollisionPlane")
     # robot.spawn("/World/Robot_1", translation=(0.0, -1.0, 0.0))
     # robot.spawn("/World/Robot_2", translation=(0.0, 1.0, 0.0))
     design_scene()
@@ -75,7 +80,16 @@ def main():
     robot.initialize("/World/Robot.*")
     # Reset states
     robot.reset_buffers()
+    from omni.isaac.core.prims import RigidPrimView
 
+    collisions_view = RigidPrimView("/World/Robot.*/.*",name="knees_view", reset_xform_properties=False, track_contact_forces=True, prepare_contact_sensors=False, 
+                                   contact_filter_prim_paths_expr=["/World/defaultGroundPlane/GroundPlane/CollisionPlane"])
+    
+    #collisions_view = RigidPrimView("/World/Robot.*/.*rive",name="knees_view", reset_xform_properties=False, track_contact_forces=True, prepare_contact_sensors=False)
+    collisions_view.initialize()
+    #print(collisions_view)
+    # from omni.physx import get_physx_simulation_interface
+    # _contact_report_sub = get_physx_simulation_interface().subscribe_contact_report_events(on_contact_report_event)
     # Now we are ready!
     print("[INFO]: Setup complete...")
 
@@ -99,7 +113,12 @@ def main():
             sim.step(render=not args_cli.headless)
             continue
         # reset
-        if ep_step_count % 1000 == 0:
+        if ep_step_count % 100 == 0:
+            print("NEW")
+            #print(collisions_view.get_contact_force_data)
+            #print(collisions_view.get_net_contact_forces().view(num_envs, 6, 3))
+            print(collisions_view.get_contact_force_matrix().view(num_envs, -1, 3))
+            print(collisions_view.get_contact_force_matrix().view(num_envs, -1, 3).shape)
             sim_time = 0.0
             ep_step_count = 0
             # reset dof state
@@ -110,8 +129,8 @@ def main():
             #actions = torch.rand(robot.count, robot.num_actions, device=robot.device)
             #actions[:, 0 : robot.base_num_dof] = 0.0
             #actions[:, -1] = 1
-            print(">>>>>>>> Reset! Opening gripper.")
-            print(ISAAC_ORBIT_NUCLEUS_DIR)
+            #print(">>>>>>>> Reset! Opening gripper.")
+            #print(ISAAC_ORBIT_NUCLEUS_DIR)
         # change the gripper action
         if ep_step_count % 200 == 0:
             # flip command
@@ -135,6 +154,18 @@ def main():
             #     else:
             #         print("Closed gripper.")
 
+# from omni.physx.scripts.physicsUtils import *
+# def on_contact_report_event(contact_headers, contact_data):
+#     for contact_header in contact_headers:
+#         print("Got contact header type: " + str(contact_header.type))
+#         print("Actor0: " + str(PhysicsSchemaTools.intToSdfPath(contact_header.actor0)))
+#         print("Actor1: " + str(PhysicsSchemaTools.intToSdfPath(contact_header.actor1)))
+#         print("Collider0: " + str(PhysicsSchemaTools.intToSdfPath(contact_header.collider0)))
+#         print("Collider1: " + str(PhysicsSchemaTools.intToSdfPath(contact_header.collider1)))
+#         print("StageId: " + str(contact_header.stage_id))
+#         print("Number of contacts: " + str(contact_header.num_contact_data))
+        
+#         contact_data_offset = contact_header.contact_data_offset
 
 if __name__ == "__main__":
     # Run the main function
