@@ -132,7 +132,7 @@ class ControlCfg:
 class RoverEnvCfg(IsaacEnvCfg):
     """ Configuration for the Rover environment """
 
-    env: EnvCfg = EnvCfg(num_envs=256, env_spacing=2.0, episode_length_s=150)
+    env: EnvCfg = EnvCfg(num_envs=4, env_spacing=2.0, episode_length_s=150)
     viewer: ViewerCfg = ViewerCfg(debug_vis=True)
     # gpu_max_rigid_contact_count: 524288
     # gpu_max_rigid_patch_count: 81920
