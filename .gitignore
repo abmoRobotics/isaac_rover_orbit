@@ -316,8 +316,7 @@ logs/*
 example*
 best_agent*
 *.vscode
-wandb
-data
-example*
+wandb/*
+/data/*
 *.ply
 #*.hdf5

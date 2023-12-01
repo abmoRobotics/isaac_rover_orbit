@@ -14,7 +14,7 @@ from omni.isaac.orbit.utils.mdp import ObservationManager, RewardManager
 # omni.isaac.orbit imports
 from omni.isaac.orbit_envs.isaac_env import IsaacEnv, VecEnvIndices, VecEnvObs
 
-from custom_orbit.robots.mobile_robot import MobileRobot
+from rover_envs.robots.mobile_robot import MobileRobot
 
 # ENV
 from .rover_cfg import RandomizationCfg, RoverEnvCfg

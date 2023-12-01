@@ -7,12 +7,12 @@ import pymeshlab
 import torch
 
 try:
-    from rover_envs.rover.utils.terrain_utils.usd_utils import (
+    from envs.rover.utils.terrain_utils.usd_utils import (
         add_material_to_stage_from_mdl, apply_material, trimesh_to_usd)
 except Exception as e:
     print(f'Error importing trimesh_to_usd: {e}')
 #from .usd_utils import trimesh_to_usd
-#from rover_envs.rover.utils.terrain_utils.usd_utils import trimesh_to_usd, apply_material, add_material_to_stage_from_mdl
+#from envs.rover.utils.terrain_utils.usd_utils import trimesh_to_usd, apply_material, add_material_to_stage_from_mdl
 # Get the directory containing the script
 directory_terrain_utils = os.path.dirname(os.path.abspath(__file__))
 class HeightmapManager():

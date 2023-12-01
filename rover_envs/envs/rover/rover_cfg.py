@@ -6,11 +6,11 @@ from omni.isaac.orbit.utils.assets import ISAAC_NUCLEUS_DIR
 from omni.isaac.orbit_envs.isaac_env_cfg import (EnvCfg, IsaacEnvCfg, PhysxCfg,
                                                  SimCfg, ViewerCfg)
 
-import custom_orbit
-from custom_orbit.robots.config.aau_rover import AAU_ROVER_CFG
-from custom_orbit.robots.mobile_robot.mobile_robot import MobileRobotCfg
+import rover_envs
+from rover_envs.robots.config.aau_rover import AAU_ROVER_CFG
+from rover_envs.robots.mobile_robot.mobile_robot import MobileRobotCfg
 
-CUSTOM_ORBIT_DIR = os.path.dirname(os.path.abspath(custom_orbit.__file__))
+# ROVER_ORBIT_DIR = os.path.dirname(os.path.abspath(rover_envs.__file__))
 
 ################################
 # Scene Setup Configurations
@@ -27,13 +27,13 @@ class TerrainCfg:
     # usd_path = f"{ISAAC_NUCLEUS_DIR}/Environments/Terrains/rough_plane.usd
     usd_path = f"{ISAAC_NUCLEUS_DIR}/Environment/Terrains/flat_plane.usd"
 
-@configclass
-class TargetCfg:
-    """ Properties for target marker"""
+# @configclass
+# class TargetCfg:
+#     """ Properties for target marker"""
 
-    usd_path = f"{CUSTOM_ORBIT_DIR}/assets/ball/ball.usd"
-    # Scale the asset by this array of 3 floats
-    scale = [1.0, 1.0, 1.0]
+#     usd_path = f"{ROVER_ORBIT_DIR}/assets/ball/ball.usd"
+#     # Scale the asset by this array of 3 floats
+#     scale = [1.0, 1.0, 1.0]
 
 
 ################################
@@ -179,7 +179,7 @@ class RoverEnvCfg(IsaacEnvCfg):
     # -- Robot
     robot: MobileRobotCfg = AAU_ROVER_CFG
     # -- Target marker visualization
-    target_marker: TargetCfg = TargetCfg()
+    #target_marker: TargetCfg = TargetCfg()
 
     # MDP settings
     randomization: RandomizationCfg = RandomizationCfg()

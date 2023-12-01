@@ -30,6 +30,7 @@ simulation_app = SimulationApp(config, experience=app_experience)
 
 from datetime import datetime
 
+import envs
 import gym
 from omni.isaac.orbit.utils.dict import print_dict
 from omni.isaac.orbit.utils.io import dump_pickle, dump_yaml
@@ -42,10 +43,9 @@ from skrl.utils import set_seed
 from skrl.utils.model_instantiators import (deterministic_model,
                                             gaussian_model, shared_model)
 
-import rover_envs
 from config import convert_skrl_cfg, parse_skrl_cfg
-from rover_envs.rover.learning.models import (DeterministicNeuralNetwork,
-                                              GaussianNeuralNetwork)
+from rover_envs.envs.rover.learning.models import (DeterministicNeuralNetwork,
+                                                   GaussianNeuralNetwork)
 
 #import omni.isaac.contrib_envs  # noqa: F401
 #import omni.isaac.orbit_envs  # noqa: F401
@@ -140,7 +140,7 @@ def main():
         device=env.device,
     )
     #agent.load("logs/skrl/rover/Nov15_13-24-49/checkpoints/best_agent.pt")
-    agent.load("best_agents/agent_5/checkpoints/agent_172800.pt")
+    agent.load("best_agents/Nov26_17-18-32/checkpoints/best_agent.pt")
     trainer_cfg = experiment_cfg["trainer"]
     print(trainer_cfg)
 

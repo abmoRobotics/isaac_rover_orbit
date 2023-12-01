@@ -1,33 +1,16 @@
-
-import asyncio
-import math
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Optional
 
 #from omni.replicator.isaac.scripts.writers.pytorch_writer import PytorchWriter
 import carb
 import gym.spaces
 import numpy as np
-import omni.isaac.core.utils.prims as prim_utils
-import omni.isaac.orbit.utils.kit as kit_utils
 import torch
 import warp as wp
-# omni.isaac.core imports
-from omni.isaac.core.prims import RigidPrimView
+from envs.rover.rover_env import RoverEnv
 from omni.isaac.core.utils import prims
-from omni.isaac.orbit.markers import PointMarker
-from omni.isaac.orbit.utils.dict import class_to_dict
-from omni.isaac.orbit.utils.mdp import ObservationManager, RewardManager
-# omni.isaac.orbit imports
-from omni.isaac.orbit_envs.isaac_env import IsaacEnv, VecEnvIndices, VecEnvObs
-from PIL import Image
-
-from custom_orbit.robots.mobile_robot import MobileRobot
-from rover_envs.rover.rover_env import RoverEnv
 
 # ENV
-from .rover_cfg import RandomizationCfg, RoverEnvCfg
-from .utils.camera.camera import Camera
-from .utils.terrain_utils.terrain_utils import TerrainManager
+from .rover_cfg import RoverEnvCfg
 
 #from omni.replicator.isaac.scripts.writers.pytorch_listener import PytorchListener
 

@@ -9,11 +9,12 @@
 import os
 
 import yaml
-from custom_envs.custom_envs import ORBIT_CUSTOM_ENVS_DATA_DIR
 from skrl.resources.preprocessors.torch import \
     RunningStandardScaler  # noqa: F401
 from skrl.resources.schedulers.torch import KLAdaptiveRL  # noqa: F401
 from skrl.utils.model_instantiators import Shape  # noqa: F401
+
+from rover_envs.envs import ORBIT_CUSTOM_ENVS_DATA_DIR
 
 __all__ = ["SKRL_PPO_CONFIG_FILE", "parse_skrl_cfg"]
 
