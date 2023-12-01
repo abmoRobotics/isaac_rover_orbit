@@ -6,11 +6,11 @@ import gym.spaces
 import numpy as np
 import torch
 import warp as wp
-from envs.rover.rover_env import RoverEnv
 from omni.isaac.core.utils import prims
 
 # ENV
 from .rover_cfg import RoverEnvCfg
+from .rover_env import RoverEnv
 
 #from omni.replicator.isaac.scripts.writers.pytorch_listener import PytorchListener
 
@@ -96,7 +96,7 @@ try:
             if "pytorch_rgb" in self.data:
                 images = self.data["pytorch_rgb"]
                 images = images[..., :3]
-                images = images.permute(0, 3, 1, 2)
+                images = images.permute(0, 2, 1, 3)
                 return images
             else:
                 return None
@@ -104,6 +104,7 @@ try:
         def get_depth_data(self) -> Optional[torch.Tensor]:
             if "pytorch_depth" in self.data:
                 images = self.data["pytorch_depth"]
+                images = images.permute(0, 2, 1)
                 return images
             else:
                 return None
