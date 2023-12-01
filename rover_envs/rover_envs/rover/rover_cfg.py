@@ -1,11 +1,15 @@
-import os 
+import os
 from typing import Tuple
-import custom_orbit
-from custom_orbit.robots.mobile_robot.mobile_robot import MobileRobotCfg
+
 from omni.isaac.orbit.utils import configclass
 from omni.isaac.orbit.utils.assets import ISAAC_NUCLEUS_DIR
-from omni.isaac.orbit_envs.isaac_env_cfg import EnvCfg, IsaacEnvCfg, SimCfg, ViewerCfg, PhysxCfg
+from omni.isaac.orbit_envs.isaac_env_cfg import (EnvCfg, IsaacEnvCfg, PhysxCfg,
+                                                 SimCfg, ViewerCfg)
+
+import custom_orbit
 from custom_orbit.robots.config.aau_rover import AAU_ROVER_CFG
+from custom_orbit.robots.mobile_robot.mobile_robot import MobileRobotCfg
+
 CUSTOM_ORBIT_DIR = os.path.dirname(os.path.abspath(custom_orbit.__file__))
 
 ################################
@@ -52,7 +56,7 @@ class RandomizationCfg:
         radius_default = 9
         radius_uniform_min = 8
         radius_uniform_max = 10
-    
+
     object_target_position: TargetPositionCfg = TargetPositionCfg()
 
 
@@ -66,13 +70,13 @@ class ObservationsCfg:
         # global group settings
         enable_corruption: bool = True
         enable_ray_height: bool = True
-        
+
         rover_actions = {"scale": 1.0}
         angle_to_goal = {"scale": 0.33}
         distance_to_goal = {"scale": 0.11}
         if enable_ray_height:
             rover_ray_depth_map = {"scale": 0.33}
-    
+
     return_dict_obs_in_group = False
 
     policy: PolicyCfg = PolicyCfg()
@@ -86,13 +90,13 @@ class RewardsCfg:
 
     # Penalties
     # Heading penalty missing
-    oscillation_penalty = {"weight": -0.05}
+    oscillation_penalty = {"weight": -0.1}
     goal_angle_penalty = {"weight": -1.5}
     collision_penalty = {"weight": -1.5}
     heading_contraint_penalty = {"weight": -0.5}
 
     # Below is notes from the original rover env REMOVE LATER
-    # Position reward 1.0 
+    # Position reward 1.0
     # Collision penalty -0.3
     # Heading Penalty -0.05
     # Motion Penalty -0.01
@@ -111,13 +115,13 @@ class TerminationsCfg:
     is_success = True
     # Collided with rock mesh
     collision_with_rock = True
-    
+
 
 
 @configclass
 class ControlCfg:
     """ Processing of MDP actions """
-    # Decimation: Number of physics steps per action 
+    # Decimation: Number of physics steps per action
     decimation: int = 4
     # scaling of actions
     action_scaling: float = 0.586 # Max speed = 2.11 km/h = 0.586 m/s
@@ -128,7 +132,7 @@ class ControlCfg:
 class RoverEnvCfg(IsaacEnvCfg):
     """ Configuration for the Rover environment """
 
-    env: EnvCfg = EnvCfg(num_envs=256, env_spacing=2.0, episode_length_s=75)
+    env: EnvCfg = EnvCfg(num_envs=256, env_spacing=2.0, episode_length_s=150)
     viewer: ViewerCfg = ViewerCfg(debug_vis=True)
     # gpu_max_rigid_contact_count: 524288
     # gpu_max_rigid_patch_count: 81920
@@ -147,20 +151,20 @@ class RoverEnvCfg(IsaacEnvCfg):
             solver_type=1,
             use_gpu=True,
             enable_stabilization=True,
-            bounce_threshold_velocity = 0.2,
-            friction_offset_threshold =  0.02,
+            bounce_threshold_velocity = 2.0,#0.2,
+            friction_offset_threshold =  0.04,
             friction_correlation_distance = 0.025,
 
-            gpu_max_rigid_contact_count=524288,
-            gpu_max_rigid_patch_count=81920,
-            gpu_found_lost_pairs_capacity=4096, #1024
-            gpu_found_lost_aggregate_pairs_capacity=262144,
-            gpu_total_aggregate_pairs_capacity=4096, # 2048
-            gpu_max_soft_body_contacts=1048576,
-            gpu_max_particle_contacts=1048576,
-            gpu_heap_capacity=67108864,
-            gpu_temp_buffer_capacity=16777216,
-            gpu_max_num_partitions=8,
+            # gpu_max_rigid_contact_count=524288,
+            # gpu_max_rigid_patch_count=81920,
+            # gpu_found_lost_pairs_capacity=4096, #1024
+            # gpu_found_lost_aggregate_pairs_capacity=262144,
+            # gpu_total_aggregate_pairs_capacity=4096, # 2048
+            # gpu_max_soft_body_contacts=1048576,
+            # gpu_max_particle_contacts=1048576,
+            # gpu_heap_capacity=67108864,
+            # gpu_temp_buffer_capacity=16777216,
+            # gpu_max_num_partitions=8,
         ),
         replicate_physics=False,
         device="cuda:0",
@@ -182,6 +186,6 @@ class RoverEnvCfg(IsaacEnvCfg):
     observations: ObservationsCfg = ObservationsCfg()
     rewards: RewardsCfg = RewardsCfg()
     terminations: TerminationsCfg = TerminationsCfg()
-    
+
     # Controller settings
     control: ControlCfg = ControlCfg()

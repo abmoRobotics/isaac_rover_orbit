@@ -7,13 +7,13 @@
 """Utility functions for parsing skrl configuration files."""
 
 import os
-import yaml
 
-from skrl.resources.preprocessors.torch import RunningStandardScaler  # noqa: F401
+import yaml
+from custom_envs.custom_envs import ORBIT_CUSTOM_ENVS_DATA_DIR
+from skrl.resources.preprocessors.torch import \
+    RunningStandardScaler  # noqa: F401
 from skrl.resources.schedulers.torch import KLAdaptiveRL  # noqa: F401
 from skrl.utils.model_instantiators import Shape  # noqa: F401
-
-from custom_envs import ORBIT_CUSTOM_ENVS_DATA_DIR
 
 __all__ = ["SKRL_PPO_CONFIG_FILE", "parse_skrl_cfg"]
 
@@ -21,8 +21,9 @@ __all__ = ["SKRL_PPO_CONFIG_FILE", "parse_skrl_cfg"]
 SKRL_PPO_CONFIG_FILE = {
     # classic
     "Rover-v0": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_ppo.yaml"),
+    "RoverCamera-v0": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_ppo.yaml"),
     }
-"""Mapping from environment names to PPO agent files."""
+
 
 
 def parse_skrl_cfg(task_name) -> dict:
@@ -34,7 +35,7 @@ def parse_skrl_cfg(task_name) -> dict:
     Returns:
         dict: A dictionary containing the parsed configuration.
     """
-    
+
     # retrieve the default environment config file
     try:
         config_file = SKRL_PPO_CONFIG_FILE[task_name]

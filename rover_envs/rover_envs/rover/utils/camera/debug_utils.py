@@ -1,13 +1,16 @@
-import torch
+import random
+
 import numpy as np
+import torch
+
 # from omni.isaac.core.utils.extensions import enable_extension
 # enable_extension("omni.isaac.debug_draw")
-from omni.isaac.debug_draw import _debug_draw
-import random
+
 
 
 
 def draw_depth(heightmap_points: torch.tensor, depth_points: torch.tensor,):
+    from omni.isaac.debug_draw import _debug_draw
     draw = _debug_draw.acquire_debug_draw_interface()
     rover_distribution = heightmap_points.tolist()
     depth_points = depth_points.tolist()

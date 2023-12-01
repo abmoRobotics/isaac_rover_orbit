@@ -1,12 +1,15 @@
 import os
 
-from ..mobile_robot import MobileRobotCfg
-from omni.isaac.orbit.actuators.group import ActuatorControlCfg, ActuatorGroupCfg
+from omni.isaac.orbit.actuators.group import (ActuatorControlCfg,
+                                              ActuatorGroupCfg)
 from omni.isaac.orbit.actuators.model import ImplicitActuatorCfg
 
+from ..mobile_robot import MobileRobotCfg
+
 #_AAU_ROVER_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '..', 'assets', 'rover' ,'rover_instance.usd')
-_AAU_ROVER_PATH = "http://localhost:8080/omniverse://127.0.0.1/Projects/simple_instanceable_new/rover_instance.usd"
+#_AAU_ROVER_PATH = "http://localhost:8080/omniverse://127.0.0.1/Projects/simple_instanceable_new/rover_instance.usd"
 #_AAU_ROVER_PATH = "http://localhost:8080/omniverse://127.0.0.1/Projects/simplified9.usd"
+_AAU_ROVER_PATH = "http://localhost:8080/omniverse://127.0.0.1/Projects/simple_instanceable_new2/rover_instance.usd"
 
 AAU_ROVER_CFG = MobileRobotCfg(
     meta_info=MobileRobotCfg.MetaInfoCfg(
@@ -27,17 +30,17 @@ AAU_ROVER_CFG = MobileRobotCfg(
         retain_accelerations=False,
         linear_damping=0.0,
         angular_damping=0.0,
-        max_linear_velocity=1000.0,
+        max_linear_velocity=2.0,
         max_angular_velocity=1000.0,
         max_depenetration_velocity=1.0,
     ),
     collision_props=MobileRobotCfg.CollisionPropertiesCfg(
-        contact_offset=0.02,
-        rest_offset=0.0,
+        contact_offset=0.04,
+        rest_offset=0.01,
     ),
     articulation_props=MobileRobotCfg.ArticulationRootPropertiesCfg(
-        enable_self_collisions=True,
-        solver_position_iteration_count=4,
+        enable_self_collisions=False,
+        solver_position_iteration_count=16,
         solver_velocity_iteration_count=4,
     ),
 
@@ -61,4 +64,3 @@ AAU_ROVER_CFG = MobileRobotCfg(
 
 
 )
-

@@ -1,17 +1,19 @@
-import numpy as np
+import os
+import time
+
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
-import open3d as o3d
+
+from .debug_utils import draw_depth
+from .heightmap_distribution import Heightmap
 #from omniisaacgymenvs.tasks.utils.camera.heightmap_distribution import heightmap_distribution
 from .ray_casting import ray_distance
-from .heightmap_distribution import Heightmap
-from .debug_utils import draw_depth
-import time
-import os
+
 
 class Camera():
     """Ray–Triangle intersection based on Möller–Trumbore intersection algorithm
-    
+
 
     Attributes
     ----------
@@ -28,7 +30,7 @@ class Camera():
         Returns a depthmap for a robot based on position and rotation
     """
 
-    
+
     def __init__(self, device, shift,debug=False):
         """
         Parameters
@@ -40,19 +42,19 @@ class Camera():
         debug : bool, optional
             Enables debugging functionalities (default is False)
         """
-        
+
         self.debug = debug
-        self.device = device    
+        self.device = device
         self.partition = True
         self.heightmap = Heightmap(self.device)
-        self.num_partitions = 4 # Slices the input data to reduce VRAM usage. 
+        self.num_partitions = 4 # Slices the input data to reduce VRAM usage.
         self.horizontal = 0.1  # Resolution of the triangle map
         #self.map_values = self._load_triangles()    # Load triangles into an [1200,1200, 100, 3, 3] array
         self.map_indices, self.triangles, self.vertices = self._load_triangles_with_indices()   # Load into [1200,1200, 100, 3] array
         self.heightmap_distribution = self.heightmap.get_distribution() # Get distribution of points in the local reference frame of the rover
-        self.num_exteroceptive = self.heightmap_distribution.shape[0] 
+        self.num_exteroceptive = self.heightmap_distribution.shape[0]
 
-        self.shift = shift          # Shift of the map 
+        self.shift = shift          # Shift of the map
         self.dtype = torch.float16  # data type for performing the calculations
 
     def get_num_exteroceptive(self):
@@ -76,7 +78,7 @@ class Camera():
 
         # We partition the data to reduce VRAM usage
         if self.partition:
-            partitions = self.num_partitions 
+            partitions = self.num_partitions
             output_distances = None
             for i in range(partitions if sources.shape[1]%partitions == 0 else partitions + 1):
                 if i == partitions + 1:
@@ -85,48 +87,48 @@ class Camera():
                 triangles = self.vertices[self.triangles[triangles_with_indices[:,i*step_size:i*step_size+step_size].long()].long()]
 
                 s = sources[:,i*step_size:i*step_size+step_size]
-     
+
                 d = directions[:,i*step_size:i*step_size+step_size]
                 #t = triangles[:,i*step_size:i*step_size+step_size]
                 t = triangles
                 dim0, dim1, dim2 = s.shape[0], s.shape[1], s.shape[2]
                 t_dim0, t_dim1, t_dim2, t_dim3, t_dim4 = t.shape[0], t.shape[1], t.shape[2], t.shape[3], t.shape[4]
-      
+
                 s = s.repeat(1,1,t_dim2)
 
                 s = s.reshape(dim0*dim1*t_dim2,dim2)
-     
+
                 #s = s.repeat(t_dim2,1)
-              
+
                 d = d.repeat(1,1,t_dim2)
                 d = d.reshape(dim0*dim1*t_dim2,dim2)
                 #d = d.repeat(t_dim2,1)
-                
+
 
                 t2 = t.reshape(t_dim0*t_dim1,t_dim2,t_dim3,t_dim4)
-     
+
                 t = t.reshape(t_dim0*t_dim1*t_dim2,t_dim3,t_dim4)
                 self.t = t
-         
+
                 distances,pt = ray_distance(s,d,t)
                 distances = distances.reshape(dim0,dim1,t_dim2)
-     
+
                 pt = pt.reshape(dim0,dim1,t_dim2,3)
                 # Find the maximum value of the 100 triangles to extract the "heightmap" value.
-                
+
                 indices =torch.min(distances,2).indices
                 distances = torch.min(distances,2).values
                 indices = indices.unsqueeze(dim=2).unsqueeze(dim=2).repeat(1,1,1,3)
                 pt = pt.gather(dim=2,index=indices)
                 pt = pt.squeeze(dim=2)
-                
+
                 if output_distances is None:
                     output_distances = distances.clone().detach()
                     output_pt = pt.clone().detach()
                 else:
                     output_distances = torch.cat((output_distances,distances),1)
                     output_pt = torch.cat((output_pt,pt),1)
-                
+
 
         else:
             dim0, dim1, dim2 = sources.shape[0], sources.shape[1], sources.shape[2]
@@ -135,8 +137,8 @@ class Camera():
             t = triangles.reshape(t_dim0*t_dim1*t_dim2,t_dim3,t_dim4)
             output_distances = ray_distance(s,d,t)
 
-        
-        d1,d2,d3 = sources.shape[0],sources.shape[1] ,sources.shape[2] 
+
+        d1,d2,d3 = sources.shape[0],sources.shape[1] ,sources.shape[2]
         #self.debug = True
         self.sources = sources.reshape(d1*d2,d3)
         self.output_pt = output_pt.reshape(d1*d2,d3)
@@ -149,7 +151,7 @@ class Camera():
 
     def draw_depths(self):
         draw_depth(self.sources,self.output_pt)
-        
+
     def _load_triangles(self):
         """Loads triangles with explicit values, each triangle is a 3 x 3 matrix"""
         absolute_path = os.path.dirname(os.path.abspath(__file__))
@@ -203,20 +205,20 @@ class Camera():
         x_p = rover_xl + sinzr * (y*cosxr + z*sinxr) + coszr * (x*cosyr - sinyr*(z*cosxr - y*sinxr))
         y_p = rover_yl + coszr * (y*cosxr + z*sinxr) - sinzr * (x*cosyr - sinyr*(z*cosxr - y*sinxr))
         z_p = rover_zl + x*sinyr + cosyr*(z*cosxr - y*sinxr)
-        
+
         # Extract the plane-normal as the last point
         x = (x_p[:,num_points-1]-rover_l[:, 0]).unsqueeze(1)
         y = (y_p[:,num_points-1]-rover_l[:, 1]).unsqueeze(1)
         z = (z_p[:,num_points-1]-rover_l[:, 2]).unsqueeze(1)
         rover_dir = torch.cat((x, y, z),1).unsqueeze(1)
-     
+
         rover_dir = rover_dir.repeat(1,num_points-1,1)
-        
+
         #Stack points in a [x, y, 3] matrix, and return
         sources = torch.stack((x_p[:,0:num_points-1], y_p[:,0:num_points-1], z_p[:,0:num_points-1]), 2)
 
         return sources.type(self.dtype), rover_dir.type(self.dtype)
-    
+
     def _height_lookup(self, triangle_matrix: torch.Tensor, depth_points: torch.Tensor, horizontal_scale, shift):
         """Look up the nearest triangles relative to an x, y coordinate"""
         # Heightmap 1200x1200x100
@@ -238,7 +240,7 @@ class Camera():
         y = y.reshape([(depth_points.size()[0]* depth_points.size()[1]), 1])
         x = x.long()
         y = y.long()
-        
+
         # Get nearets array of triangles for searching
         #triangles = triangle_matrix[x, y]
         #triangles = triangles.reshape([depth_points.shape[0],depth_points.shape[1],triangle_matrix.shape[2],triangle_matrix.shape[3],triangle_matrix.shape[4]])

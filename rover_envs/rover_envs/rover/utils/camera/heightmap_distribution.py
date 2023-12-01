@@ -1,24 +1,26 @@
-import torch
-import numpy as np
-import matplotlib.pyplot as plt
 import math
+
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+
 
 class Heightmap():
     def __init__(self, device='cuda:0'):
         self.device = device
-        
+
         # Define the borders of the area using lines. Define where points should be with respect to line.
-        self.coarse_border = [[[1.220,0.118],[4.4455,3.150],'over'],[[-1.220,0.118],[-4.4455,3.150],'over'],[[1.220,0.118],[-1.220,0.118],'over']] 
+        self.coarse_border = [[[1.220,0.118],[4.4455,3.150],'over'],[[-1.220,0.118],[-4.4455,3.150],'over'],[[1.220,0.118],[-1.220,0.118],'over']]
         self.coarse_radius = 3.5
 
         self.fine_border = [[[1.0,0.118],[1.0,0.119],'left'],[[-1.0,0.118],[-1.0,0.119],'right'],[[1.0,0.118],[-1.0,0.118],'over'],[[1.0,1.400],[-1.0,1.400],'below']]
         self.fine_radius = 1.2
 
-        self.beneath_border = [[[0.32,0],[0.320,1],'left'],[[-0.320,0],[-0.320,1],'right'],[[-0.320,-0.5],[0.320,-0.5],'over'],[[-0.320,0.6],[0.320,0.6],'under']] 
+        self.beneath_border = [[[0.32,0],[0.320,1],'left'],[[-0.320,0],[-0.320,1],'right'],[[-0.320,-0.5],[0.320,-0.5],'over'],[[-0.320,0.6],[0.320,0.6],'under']]
 
         self.delta_coarse = 0.15
         self.delta_fine = 0.05
-        
+
         self.see_beneath = False
         self.HD_enabled = True
 
@@ -29,7 +31,7 @@ class Heightmap():
         #self.calculate_grids() # Create the heightmap in a grid
 
     def heightmap_distribution(self, plot=False):
-        
+
         point_distribution = []
 
         coarse_idx = []
@@ -39,9 +41,9 @@ class Heightmap():
         # The coarse map
         y = -10
         while y < 10:
-        
+
             x = -10
-            
+
             while x < 10:
                 x += self.delta_coarse
                 if self._inside_borders([x, y], self.coarse_border) and self._inside_circle([x, y], [0,0], self.coarse_radius): # REMEMBER TO CHANGE BELOW
@@ -57,9 +59,9 @@ class Heightmap():
         if self.HD_enabled:
             y = -10
             while y < 10:
-            
+
                 x = -10
-                
+
                 while x < 10:
                     x += self.delta_fine
                     if self._inside_borders([x, y], self.fine_border):
@@ -76,16 +78,16 @@ class Heightmap():
         if self.see_beneath:
             y = -10
             while y < 10:
-            
+
                 x = -10
-                
+
                 while x < 10:
                     x += self.delta_fine
                     if self._inside_borders([x, y], self.beneath_border) and self._inside_circle([x, y], [0,0], self.fine_radius): # REMEMBER TO CHANGE BELOW
                         if [x, y, self.z_offset] not in point_distribution:
                             point_distribution.append([x, y, self.z_offset])
 
-                y += self.delta_fine        
+                y += self.delta_fine
 
             for idx, point in enumerate(point_distribution):
                 if self._inside_borders(point[0:2], self.beneath_border) and self._inside_circle(point[0:2], [0,0], self.fine_radius): # REMEMBER TO CHANGE ABOVE
@@ -138,7 +140,7 @@ class Heightmap():
 
     def get_num_dense_vector(self):
         return self.fine_idx.shape[0]
-        
+
     def get_num_beneath_vector(self):
         return self.beneath_idx.shape[0]
 
@@ -157,7 +159,7 @@ class Heightmap():
                 a = float("inf")
             else:
                 a = a[1]/a[0]
-            
+
             b = line[0][1]-a*line[0][0] # b = y - a*x
 
 
@@ -167,7 +169,7 @@ class Heightmap():
                 if y < b and line[2] == 'over':
                     passCondition = False
                 continue
-            
+
             if a == float("inf"):
                 if x < line[0][0] and line[2] == 'right':
                     passCondition = False
@@ -183,7 +185,7 @@ class Heightmap():
             if x < (y-b)/a and line[2] == 'right':
                 passCondition = False
             if x < (y-b)/a and line[2] == 'left':
-                passCondition = False    
+                passCondition = False
 
         return passCondition
 

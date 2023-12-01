@@ -22,28 +22,34 @@ if args_cli.headless:
     app_experience = f"{os.environ['EXP_PATH']}/omni.isaac.sim.python.gym.headless.kit"
 else:
     app_experience = f"{os.environ['EXP_PATH']}/omni.isaac.sim.python.kit"
+   # app_experience = f"{os.environ['EXP_PATH']}/omni.isaac.sim.python.gym.kit"
 # launch the simulator
+
 simulation_app = SimulationApp(config, experience=app_experience)
 
 
-import gym
 from datetime import datetime
 
+import gym
+from omni.isaac.orbit.utils.dict import print_dict
+from omni.isaac.orbit.utils.io import dump_pickle, dump_yaml
+from omni.isaac.orbit_envs.utils import parse_env_cfg
+from omni.isaac.orbit_envs.utils.wrappers.skrl import (
+    SkrlSequentialLogTrainer, SkrlVecEnvWrapper)
 from skrl.agents.torch.ppo import PPO, PPO_DEFAULT_CONFIG
 from skrl.memories.torch import RandomMemory
 from skrl.utils import set_seed
-from skrl.utils.model_instantiators import deterministic_model, gaussian_model, shared_model
+from skrl.utils.model_instantiators import (deterministic_model,
+                                            gaussian_model, shared_model)
 
-from omni.isaac.orbit.utils.dict import print_dict
-from omni.isaac.orbit.utils.io import dump_pickle, dump_yaml
+import rover_envs
+from config import convert_skrl_cfg, parse_skrl_cfg
+from rover_envs.rover.learning.models import (DeterministicNeuralNetwork,
+                                              GaussianNeuralNetwork)
 
 #import omni.isaac.contrib_envs  # noqa: F401
 #import omni.isaac.orbit_envs  # noqa: F401
-from omni.isaac.orbit_envs.utils import parse_env_cfg
-from omni.isaac.orbit_envs.utils.wrappers.skrl import SkrlSequentialLogTrainer, SkrlVecEnvWrapper
-import custom_envs
-from custom_envs.rover.learning.models import GaussianNeuralNetwork, DeterministicNeuralNetwork
-from config import convert_skrl_cfg, parse_skrl_cfg
+
 
 def log_setup(experiment_cfg, env_cfg):
      # specify directory for logging experiments
@@ -86,9 +92,9 @@ def main():
         print_dict(video_kwargs, nesting=4)
         env = gym.wrappers.RecordVideo(env, **video_kwargs)
     env  = SkrlVecEnvWrapper(env)
-    
-    set_seed(args_cli_seed if args_cli_seed is not None else experiment_cfg["seed"])
 
+    set_seed(args_cli_seed if args_cli_seed is not None else experiment_cfg["seed"])
+    print(env.action_space)
     models = {}
     ray = env._env.cfg.observations.policy.enable_ray_height
 
@@ -134,10 +140,13 @@ def main():
         device=env.device,
     )
     #agent.load("logs/skrl/rover/Nov15_13-24-49/checkpoints/best_agent.pt")
-    #agent.load("best_agent2.pt")
+    agent.load("best_agents/agent_5/checkpoints/agent_172800.pt")
     trainer_cfg = experiment_cfg["trainer"]
+    print(trainer_cfg)
+
     trainer = SkrlSequentialLogTrainer(cfg=trainer_cfg, agents=agent, env=env)
     trainer.train()
+    #trainer.eval()
 
     env.close()
     simulation_app.close()

@@ -1,11 +1,10 @@
 
 
-from skrl.models.torch.gaussian import GaussianMixin
-from skrl.models.torch.deterministic import DeterministicMixin
-from skrl.models.torch.base import Model as BaseModel
-
-import torch.nn as nn
 import torch
+import torch.nn as nn
+from skrl.models.torch.base import Model as BaseModel
+from skrl.models.torch.deterministic import DeterministicMixin
+from skrl.models.torch.gaussian import GaussianMixin
 
 
 def get_activation(activation_name):
@@ -35,7 +34,7 @@ class HeightmapEncoder(nn.Module):
         for layer in self.encoder_layers:
             x = layer(x)
         return x
-    
+
 class GaussianNeuralNetwork(GaussianMixin, BaseModel):
     """Gaussian neural network model."""
 
@@ -58,7 +57,7 @@ class GaussianNeuralNetwork(GaussianMixin, BaseModel):
             encoder_activation (str): The activation function to use for each encoder layer.
         """
         BaseModel.__init__(self, observation_space, action_space, device)
-        GaussianMixin.__init__(self, clip_actions=False, clip_log_std=True, min_log_std=-20.0, max_log_std=2.0, reduction="sum")
+        GaussianMixin.__init__(self, clip_actions=True, clip_log_std=True, min_log_std=-20.0, max_log_std=2.0, reduction="sum")
 
         self.proprioception_channels = 4
         self.dense_channels = 634
@@ -77,7 +76,7 @@ class GaussianNeuralNetwork(GaussianMixin, BaseModel):
             self.mlp.append(nn.Linear(in_channels, feature))
             self.mlp.append(get_activation(encoder_activation))
             in_channels = feature
-        
+
         self.mlp.append(nn.Linear(in_channels, action_space))
         self.mlp.append(nn.Tanh())
         self.log_std_parameter = nn.Parameter(torch.zeros(action_space))
@@ -91,13 +90,13 @@ class GaussianNeuralNetwork(GaussianMixin, BaseModel):
         x0 = x[:, 0:4]
         x1 = self.dense_encoder(x[:, dense_start:dense_end])
         x2 = self.sparse_encoder(x[:, dense_end:sparse_end])
-        
+
         x = torch.cat([x0, x1, x2], dim=1)
         for layer in self.mlp:
             x = layer(x)
-        
+
         return x, self.log_std_parameter, {}
-    
+
 class DeterministicNeuralNetwork(DeterministicMixin, BaseModel):
     """Gaussian neural network model."""
 
@@ -139,7 +138,7 @@ class DeterministicNeuralNetwork(DeterministicMixin, BaseModel):
             self.mlp.append(nn.Linear(in_channels, feature))
             self.mlp.append(get_activation(encoder_activation))
             in_channels = feature
-        
+
         self.mlp.append(nn.Linear(in_channels, 1))
 
     def compute(self, states, role="actor"):
@@ -150,11 +149,11 @@ class DeterministicNeuralNetwork(DeterministicMixin, BaseModel):
         x0 = x[:, 0:dense_start]
         x1 = self.dense_encoder(x[:, dense_start:dense_end])
         x2 = self.sparse_encoder(x[:, dense_end:sparse_end])
-        
+
         x = torch.cat([x0, x1, x2], dim=1)
         for layer in self.mlp:
             x = layer(x)
-        
+
         return x, {}
 
 
@@ -170,8 +169,8 @@ if __name__ == "__main__":
     # #print(states)
     # for idx, param in enumerate(heightmap_encoder.parameters()):
     #     print(idx, param.shape)
-    
+
     # torch.onnx.export(heightmap_encoder,
-    #                   states, 
+    #                   states,
     #                   "heightmap_encoder.onnx",
     #                   export_params=True)

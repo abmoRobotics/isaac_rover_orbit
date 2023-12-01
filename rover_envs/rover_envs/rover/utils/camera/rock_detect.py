@@ -1,14 +1,16 @@
-import numpy as np
+import time
+
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
-import open3d as o3d
+
 from .debug_utils import draw_depth
 from .ray_casting import ray_distance
-import time
+
 
 class Rock_Detection():
     """Ray–Triangle intersection based on Möller–Trumbore intersection algorithm
-    
+
 
     Attributes
     ----------
@@ -25,7 +27,7 @@ class Rock_Detection():
         Returns a depthmap for a robot based on position and rotation
     """
 
-    
+
     def __init__(self, device, shift,debug=False):
         """
         Parameters
@@ -38,12 +40,12 @@ class Rock_Detection():
             Enables debugging functionalities (default is False)
         """
         self.debug = debug
-        self.device = device    
-        self.partition = True    
-        self.num_partitions = 1 # Slices the input data to reduce VRAM usage. 
+        self.device = device
+        self.partition = True
+        self.num_partitions = 1 # Slices the input data to reduce VRAM usage.
         self.horizontal = 0.1  # Resolution of the triangle map
         self.rock_indices, self.triangles, self.vertices = self._load_triangles_with_indices()   # Load into [1200,1200, 100, 3] array
-        self.shift = shift          # Shift of the map 
+        self.shift = shift          # Shift of the map
         self.dtype = torch.float16  # data type for performing the calculations
 
     def get_num_exteroceptive(self):
@@ -75,42 +77,42 @@ class Rock_Detection():
             output_distances = None
             for i in range(partitions):
                 step_size = int(sources.shape[1]/partitions)
-         
-          
+
+
                 s = sources[:,i*step_size:i*step_size+step_size]
-     
+
                 d = directions[:,i*step_size:i*step_size+step_size]
                 t = triangles[:,i*step_size:i*step_size+step_size]
-       
+
                 dim0, dim1, dim2 = s.shape[0], s.shape[1], s.shape[2]
                 t_dim0, t_dim1, t_dim2, t_dim3, t_dim4 = t.shape[0], t.shape[1], t.shape[2], t.shape[3], t.shape[4]
-      
+
                 s = s.repeat(1,1,t_dim2)
 
                 s = s.reshape(dim0*dim1*t_dim2,dim2)
-     
+
                 #s = s.repeat(t_dim2,1)
-              
+
                 d = d.repeat(1,1,t_dim2)
                 d = d.reshape(dim0*dim1*t_dim2,dim2)
                 #d = d.repeat(t_dim2,1)
-    
+
                 t2 = t.reshape(t_dim0*t_dim1,t_dim2,t_dim3,t_dim4)
-     
+
                 t = t.reshape(t_dim0*t_dim1*t_dim2,t_dim3,t_dim4)
                 self.t = t
-         
+
                 #torch.save(t,'tritest.pt')
                 #torch.save(s, 'sourcetest.pt')
                 self.initialmemory2 = torch.cuda.memory_reserved(0)
-                
+
                 distances,pt = ray_distance(s,d,t)
                 self.initialmemory3 = torch.cuda.memory_reserved(0)
                 distances = distances.reshape(dim0,dim1,t_dim2)
-     
+
                 pt = pt.reshape(dim0,dim1,t_dim2,3)
                 # Find the maximum value of the 100 triangles to extract the "heightmap" value.
-                
+
                 indices =torch.min(distances,2).indices
                 distances = torch.min(distances,2).values
                 indices = indices.unsqueeze(dim=2).unsqueeze(dim=2).repeat(1,1,1,3)
@@ -122,7 +124,7 @@ class Rock_Detection():
                 if output_distances is None:
                     output_distances = distances.clone().detach()#torch.tensor(distances,device=self.device,)
                     output_pt = pt.clone().detach()#torch.tensor(pt,device=self.device,)
-                else: 
+                else:
                     output_distances = torch.cat((output_distances,distances),1)
                     output_pt = torch.cat((output_pt,pt),1)
 
@@ -133,8 +135,8 @@ class Rock_Detection():
             t = triangles.reshape(t_dim0*t_dim1*t_dim2,t_dim3,t_dim4)
             output_distances = ray_distance(s,d,t)
 
-        
-        d1,d2,d3 = sources.shape[0],sources.shape[1] ,sources.shape[2] 
+
+        d1,d2,d3 = sources.shape[0],sources.shape[1] ,sources.shape[2]
         #print((self.initialmemory3 - torch.cuda.memory_reserved(0))/1_000_000_000)
         if self.debug:
             try:
@@ -190,7 +192,7 @@ class Rock_Detection():
         # X:0, Y:1, Z:2
         # Setup
         # Location of the rays around the wheel. The last vector descibes the direction of projection
-        wheel_rays = wheel_FL = torch.tensor(  [[[0.215/2],[0.130/2],[0.1]],      #Ray 1            
+        wheel_rays = wheel_FL = torch.tensor(  [[[0.215/2],[0.130/2],[0.1]],      #Ray 1
                                                 [[0.215/2],[-0.130/2],[0.1]],     #Ray 2
                                                 [[-0.215/2],[0.130/2],[0.1]],     #Ray 3
                                                 [[-0.215/2],[-0.130/2],[0.1]],    #Ray 4
@@ -205,7 +207,7 @@ class Rock_Detection():
                                         [[-0.440],[0.385],[-0.197]],   #RL
                                         [[-0.440],[-0.385],[-0.197]]], #RR
                                         device=self.device)
-        
+
         # The last rotation, from boogie joint to base-frame of rover
         wheel_positions1 = torch.tensor([[[0.153],[0],[0.03]],      #Fl
                                         [[0.153],[0],[0.03]],       #FR
@@ -219,7 +221,7 @@ class Rock_Detection():
         num_robots = positions.size()[0]
         rays_per_wheel = wheel_rays.shape[0]-1 # -1 because direction is not included.
         wheels = wheel_positions0.shape[0]
-        num_points = wheels * (wheel_rays.shape[0]) 
+        num_points = wheels * (wheel_rays.shape[0])
 
         # Formatting
         # Expand wheel positions, and set translation for direction vector equal to zero.
@@ -234,7 +236,7 @@ class Rock_Detection():
 
         # Each robot has some amount of wheels, resulting in X rays per robot
         rays = wheel_rays.repeat(wheels, 1, 1)
-        
+
         # Expand rays to one row for each robot, for X, Y and Z.
         x = torch.transpose(rays[:,0,:], 0, 1).repeat(num_robots, 1)
         y = torch.transpose(rays[:,1,:], 0, 1).repeat(num_robots, 1)
@@ -242,7 +244,7 @@ class Rock_Detection():
 
         # Add a dimenion to joint_states - Makes concatenation easier
         joint_states = joint_states.expand(1, -1, -1)
-        
+
         # Steering transform
         # Get steering angles for wheels.                          FL                   FR         CL                                     CR                                                RL                   RR
         steer_angles = torch.transpose(torch.cat((joint_states[:,:,4], joint_states[:,:,6], torch.zeros_like(joint_states[:,:,6]), torch.zeros_like(joint_states[:,:,6]), -joint_states[:,:,7], joint_states[:,:,8]), 0), 0, 1)
@@ -267,9 +269,9 @@ class Rock_Detection():
 
         # Compute sin and cos to rover suspension angles
         sinsux = torch.sin(susX)
-        cossux = torch.cos(susX) 
-        sinsuy = torch.sin(susY) 
-        cossuy = torch.cos(susY) 
+        cossux = torch.cos(susX)
+        sinsuy = torch.sin(susY)
+        cossuy = torch.cos(susY)
 
         # Transform points
         x2 = wheel_positions1[:,:,0,0] + x1 * cossuy - sinsuy * (z1*cossux - y1*sinsux)
@@ -287,7 +289,7 @@ class Rock_Detection():
 
         # Zeros, for not transforming direction vector
         zeros = torch.zeros(num_robots,1, device = self.device)
-        
+
         # Get transforms, and set to zero for direction vector
         rover_xl = torch.transpose(positions[:, 0].expand(rays_per_wheel,num_robots), 0, 1)
         rover_xl = torch.cat((rover_xl,zeros),1)
@@ -300,7 +302,7 @@ class Rock_Detection():
         rover_zl = torch.transpose(positions[:, 2].expand(rays_per_wheel,num_robots), 0, 1)
         rover_zl = torch.cat((rover_zl,zeros),1)
         rover_zl = rover_zl.repeat(1, wheels)
-            
+
         # Transform points in the pointcloud
         x_p = rover_xl + sinzr * (y2*cosxr + z2*sinxr) + coszr * (x2*cosyr - sinyr*(z2*cosxr - y2*sinxr))
         y_p = rover_yl + coszr * (y2*cosxr + z2*sinxr) - sinzr * (x2*cosyr - sinyr*(z2*cosxr - y2*sinxr))
@@ -312,7 +314,7 @@ class Rock_Detection():
 
         # Get ray direction vectors, and repeat for each wheel
         ray_dir = sources[:,rays_per_wheel::rays_per_wheel+1,:].repeat_interleave(rays_per_wheel,1)
-    
+
         # Delete direction vector from sources
         sources = sources.reshape(-1,5,3)[:,:4].reshape(num_robots, wheels * (rays_per_wheel), 3)
 
@@ -356,15 +358,15 @@ class Rock_Detection():
         x_p = rover_xl + sinzr * (y*cosxr + z*sinxr) + coszr * (x*cosyr - sinyr*(z*cosxr - y*sinxr))
         y_p = rover_yl + coszr * (y*cosxr + z*sinxr) - sinzr * (x*cosyr - sinyr*(z*cosxr - y*sinxr))
         z_p = rover_zl + x*sinyr + cosyr*(z*cosxr - y*sinxr)
-        
+
         # Extract the plane-normal as the last point
         x = (x_p[:,num_points-1]-rover_l[:, 0]).unsqueeze(1)
         y = (y_p[:,num_points-1]-rover_l[:, 1]).unsqueeze(1)
         z = (z_p[:,num_points-1]-rover_l[:, 2]).unsqueeze(1)
         rover_dir = torch.cat((x, y, z),1).unsqueeze(1)
-     
+
         rover_dir = rover_dir.repeat(1,num_points-1,1)#.swapaxes(0,1)
-        
+
         #Stack points in a [x, y, 3] matrix, and return
         sources = torch.stack((x_p[:,0:num_points-1], y_p[:,0:num_points-1], z_p[:,0:num_points-1]), 2)
 
@@ -391,7 +393,7 @@ class Rock_Detection():
         y = y.reshape([(depth_points.size()[0]* depth_points.size()[1]), 1])
         x = x.long()
         y = y.long()
-        
+
         # Get nearets array of triangles for searching
         triangles = 0
         triangles_with_indices = triangle_matrix[x, y]
