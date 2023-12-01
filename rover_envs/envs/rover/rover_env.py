@@ -14,6 +14,9 @@ from omni.isaac.orbit.utils.mdp import ObservationManager, RewardManager
 # omni.isaac.orbit imports
 from omni.isaac.orbit_envs.isaac_env import IsaacEnv, VecEnvIndices, VecEnvObs
 
+from rover_envs.envs.rover.utils.kinematics import \
+    Ackermann_Optimized as Ackermann
+from rover_envs.envs.rover.utils.math import tensor_quat_to_eul
 from rover_envs.robots.mobile_robot import MobileRobot
 
 # ENV
@@ -132,7 +135,7 @@ class RoverEnv(IsaacEnv):
         self.actions_scaled = self.actions * self.cfg.control.action_scaling
 
         # TODO: Implement controller here
-        self.robot_actions[:,:10] = Ackermann2(lin_vel = self.actions_scaled[:, 0], ang_vel=self.actions_scaled[:, 1], device=self.device)
+        self.robot_actions[:,:10] = Ackermann(lin_vel = self.actions_scaled[:, 0], ang_vel=self.actions_scaled[:, 1], device=self.device)
 
         # Perform physics steps
         for _ in range(self.cfg.control.decimation):
@@ -411,155 +414,3 @@ class RoverRewardManager(RewardManager):
             return torch.where(forces_active, 1.0, 0.0)
         else:
             return torch.zeros((env.num_envs), device=self._device)
-
-
-
-def Ackermann(
-        lin_vel: torch.Tensor,
-        ang_vel: torch.Tensor,
-        device: torch.device,
-        wl = 0.849,
-        d_fr = 0.77,
-        d_mw = 0.894,
-        wheel_radius = 0.1,
-):
-    """
-    Ackermann steering model for the rover
-    wl = wheelbase length
-    d_fr = distance between front and rear wheels
-    d_mw = distance between middle wheels
-    """
-
-    # Checking the direction of the linear and angular velocities
-    direction: torch.Tensor = torch.sign(lin_vel)
-    turn_direction: torch.Tensor = torch.sign(ang_vel)
-
-    # Taking the absolute values of the velocities
-    lin_vel = torch.abs(lin_vel)
-    ang_vel = torch.abs(ang_vel)
-
-    # Calculates the turning radius of the rover, returns inf if ang_vel is 0
-    not_zero_condition = torch.logical_not(ang_vel == 0) & torch.logical_not(lin_vel == 0)
-
-    minimum_radius = (d_mw * 0.8) # should be 0.5 but 0.8 makes operation more smooth
-    turning_radius: torch.Tensor = torch.where(not_zero_condition, lin_vel / ang_vel, torch.tensor(float('inf'), device=device))
-    turning_radius = torch.where(turning_radius < minimum_radius, minimum_radius, turning_radius)
-
-    # Calculating the turning radius of the front wheels
-    r_ML = turning_radius - (d_mw / 2)
-    r_MR = turning_radius + (d_mw / 2)
-    r_FL = turning_radius - (d_fr / 2)
-    r_FR = turning_radius + (d_fr / 2)
-    r_RL = turning_radius - (d_fr / 2)
-    r_RR = turning_radius + (d_fr / 2)
-
-    # Steering angles
-
-    wl = torch.ones_like(r_FL) * wl # Repeat wl as tensor
-    #print(turning_radius)
-    theta_FL = torch.atan2(wl, r_FL) * turn_direction
-    theta_FR = torch.atan2(wl, r_FR) * turn_direction
-    theta_RL = -torch.atan2(wl, r_RL) * turn_direction
-    theta_RR = -torch.atan2(wl, r_RR) * turn_direction
-
-    # Wheel velocities (m/s)
-    # if ang_vel is 0, wheel velocity is equal to linear velocity
-    vel_FL = torch.where(ang_vel == 0, lin_vel, (r_FL * ang_vel)) * direction
-    vel_FR = torch.where(ang_vel == 0, lin_vel, (r_FR * ang_vel)) * direction
-    vel_RL = torch.where(ang_vel == 0, lin_vel, (r_RL * ang_vel)) * direction
-    vel_RR = torch.where(ang_vel == 0, lin_vel, (r_RR * ang_vel)) * direction
-    vel_ML = torch.where(ang_vel == 0, lin_vel, (r_ML * ang_vel)) * direction
-    vel_MR = torch.where(ang_vel == 0, lin_vel, (r_MR * ang_vel)) * direction
-
-    # Stack the wheel velocities and steering angles
-    wheel_velocities = torch.stack([vel_FL, vel_FR, vel_RL, vel_RR, vel_ML, vel_MR], dim=1)
-    steering_angles = torch.stack([theta_FL, theta_FR, theta_RL, theta_RR], dim=1)
-
-    # Convert wheel velocities from m/s to rad/s
-    wheel_velocities = wheel_velocities / wheel_radius
-
-    return torch.cat([steering_angles, wheel_velocities], dim=1)
-
-def tensor_quat_to_eul(quats, device):
-    # https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
-    # Quaternions format: W, X, Y, Z
-    # Quat index:         0, 1, 2, 3
-    # Euler angles:       ZYX
-
-    euler_angles = torch.zeros([len(quats), 3], device=device)
-    ones = torch.ones([len(quats)], device=device)
-    zeros = torch.zeros([len(quats)], device=device)
-
-    #Roll
-    sinr_cosp = 2 * (quats[:,0] * quats[:,1] + quats[:,2] * quats[:,3])
-    cosr_cosp = ones - (2 * (quats[:,1] * quats[:,1] + quats[:,2] * quats[:,2]))
-    euler_angles[:,0] = torch.atan2(sinr_cosp, cosr_cosp)
-
-    #Pitch
-    sinp = 2 * (quats[:,0]*quats[:,2] - quats[:,3] * quats[:,1])
-    condition = (torch.sign(sinp - ones) >= zeros)
-    euler_angles[:,1] = torch.where(condition, torch.copysign((ones*torch.pi)/2, sinp), torch.asin(sinp))
-
-    #Yaw
-    siny_cosp = 2 * (quats[:,0] * quats[:,3] + quats[:,1] * quats[:,2])
-    cosy_cosp = ones - (2 * (quats[:,2] * quats[:,2] + quats[:,3] * quats[:,3]))
-    euler_angles[:,2] = torch.atan2(siny_cosp, cosy_cosp)
-
-    return euler_angles
-
-#@torch.jit.script
-def Ackermann2(lin_vel, ang_vel, device='cuda:0'):
-
-    # All measurements in Meters!
-    num_robots = lin_vel.shape[0]
-    wheel_diameter = 0.2
-    # Locations of the wheels, with respect to center(between middle wheels) (X is right, Y is forward)
-    wheel_FL = torch.unsqueeze(torch.transpose(torch.tensor(  [[-0.385],[0.438]],  device=device).repeat(1,num_robots), 0, 1),0)
-    wheel_FR = torch.unsqueeze(torch.transpose(torch.tensor(  [[0.385],[0.438]],   device=device).repeat(1,num_robots), 0, 1),0)
-    wheel_ML = torch.unsqueeze(torch.transpose(torch.tensor(  [[-0.447],[0.0]],    device=device).repeat(1,num_robots), 0, 1),0)
-    wheel_MR = torch.unsqueeze(torch.transpose(torch.tensor(  [[0.447],[0.0]],     device=device).repeat(1,num_robots), 0, 1),0)
-    wheel_RL = torch.unsqueeze(torch.transpose(torch.tensor(  [[-0.385],[-0.411]], device=device).repeat(1,num_robots), 0, 1),0)
-    wheel_RR = torch.unsqueeze(torch.transpose(torch.tensor(  [[0.385],[-0.411]],  device=device).repeat(1,num_robots), 0, 1),0)
-
-    # Wheel locations, collected in a single variable
-    wheel_locations = torch.cat((wheel_FL, wheel_FR, wheel_ML, wheel_MR, wheel_RL, wheel_RR), 0)
-
-    # The distance at which the rover should switch to turn on the spot mode.
-    bound = 0.45
-
-    # Turning point
-    P = torch.unsqueeze(lin_vel/ang_vel, 0)
-    P = torch.copysign(P, -ang_vel)
-    zeros = torch.zeros_like(P)
-    P = torch.transpose(torch.cat((P,zeros), 0), 0, 1) # Add a zero component in the y-direction.
-    P[:,0] = torch.squeeze(torch.where(torch.abs(P[:,0]) > bound, P[:,0], zeros)) # If turning point is between wheels, turn on the spot.
-    lin_vel = torch.where(P[:,0] != 0, lin_vel, zeros) # If turning on the spot, set lin_vel = 0.
-
-    # Calculate distance to turning point
-    P = P.repeat((6,1,1))
-    dist = torch.transpose((P - wheel_locations).pow(2).sum(2).sqrt(), 0, 1)
-
-    # Motors on the left should turn opposite direction
-    motor_side = torch.transpose(torch.tensor([[-1.0],[1.0],[-1.0],[1.0],[-1.0],[1.0]], device=device).repeat((1, num_robots)), 0, 1)
-
-    # When not turning on the spot, wheel velocity is actually determined by the linear direction
-    wheel_linear = torch.transpose(torch.copysign(ang_vel, lin_vel).repeat((6,1)), 0, 1)
-    # When turning on the spot, wheel velocity is determined by motor side.
-    wheel_turning = torch.transpose(ang_vel.repeat((6,1)), 0, 1) * motor_side
-    ang_velocities = torch.where(torch.transpose(lin_vel.repeat((6,1)), 0, 1) != 0, wheel_linear, wheel_turning)
-
-    # The velocity is determined by the disance from the wheel to the turning point, and the angular velocity the wheel should travel with
-    motor_velocities = dist * ang_velocities
-
-    # If the turning point is more than 1000 meters away, just go straight.
-    motor_velocities = torch.where(dist > 1000, torch.transpose(lin_vel.repeat((6,1)), 0, 1), motor_velocities)
-
-    # Convert linear velocity above ground to rad/s
-    motor_velocities = (motor_velocities/wheel_diameter)
-
-    steering_angles = torch.transpose(torch.where(torch.abs(wheel_locations[:,:,0]) > torch.abs(P[:,:,0]), torch.atan2(wheel_locations[:,:,1], wheel_locations[:,:,0] - P[:,:,0]), torch.atan2(wheel_locations[:,:,1], wheel_locations[:,:,0] - P[:,:,0])), 0, 1)
-    steering_angles = torch.where(steering_angles < -3.14/2, steering_angles + math.pi, steering_angles)
-    steering_angles = torch.where(steering_angles > 3.14/2, steering_angles - math.pi, steering_angles)
-    #print(torch.stack([steering_angles, motor_velocities], dim=1).shape)
-
-    return torch.cat([steering_angles[:,0:2], steering_angles[:,4:6], motor_velocities], dim=1)
