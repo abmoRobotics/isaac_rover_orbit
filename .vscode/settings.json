@@ -1,3 +1,14 @@
 {
-    "ros.distro": "humble"
+    "python.analysis.extraPaths": [
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.0-hotfix.1/exts/omni.isaac.core",
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.0-hotfix.1/kit/exts/omni.usd.libs",
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.0-hotfix.1/extsPhysics/omni.usd.schema.physx",
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.0-hotfix.1/exts/omni.replicator.isaac",
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.0-hotfix.1/extscache/omni.replicator.core-1.10.10+105.1.lx64.r.cp310",
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.0-hotfix.1/kit/kernel/py",
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.0-hotfix.1/exts/omni.isaac.kit",
+    ],
+    "python.defaultInterpreterPath": "~/anaconda3/envs/orbit_env/bin/python",
+    "ros.distro": "humble",
+
 }
