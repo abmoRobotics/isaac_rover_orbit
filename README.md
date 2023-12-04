@@ -34,7 +34,7 @@ This project implements a Reinforcement Learning (RL) agent designed to operate 
 
 
 ```bash
-git clone --branch v0.1.0 --single-branch https://github.com/NVIDIA-Omniverse/Orbit.git
+git clone https://github.com/abmoRobotics/Orbit-fork
 cd Orbit
 
 # create aliases
@@ -56,6 +56,15 @@ conda activate orbit_env
 ```
 2. Clone Repo
 
+```bash
+# Clone Repo
+git clone https://github.com/abmoRobotics/isaac_rover_orbit
+cd isaac_rover_orbit
+
+# Run training script or evaluate pre-trained policy
+python train.py
+python eval.py
+```
 
 # Contact
 For other questions feel free to contact:
