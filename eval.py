@@ -30,12 +30,11 @@ simulation_app = SimulationApp(config, experience=app_experience)
 
 from datetime import datetime
 
-import envs
 import gym
 from omni.isaac.orbit.utils.dict import print_dict
 from omni.isaac.orbit.utils.io import dump_pickle, dump_yaml
-from omni.isaac.orbit_envs.utils import parse_env_cfg
-from omni.isaac.orbit_envs.utils.wrappers.skrl import (
+from omni.isaac.orbit_tasks.utils import parse_env_cfg
+from omni.isaac.orbit_tasks.utils.wrappers.skrl import (
     SkrlSequentialLogTrainer, SkrlVecEnvWrapper)
 from skrl.agents.torch.ppo import PPO, PPO_DEFAULT_CONFIG
 from skrl.memories.torch import RandomMemory
@@ -43,6 +42,7 @@ from skrl.utils import set_seed
 from skrl.utils.model_instantiators import (deterministic_model,
                                             gaussian_model, shared_model)
 
+import rover_envs.envs
 from config import convert_skrl_cfg, parse_skrl_cfg
 from rover_envs.envs.rover.learning.models import (DeterministicNeuralNetwork,
                                                    GaussianNeuralNetwork)

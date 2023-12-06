@@ -73,6 +73,22 @@ class RoverEnv(IsaacEnv):
         print(f'[INFO] Rover episode length: {self.cfg.env.episode_length_s}')
 
 
+        # ## This is a test for a new raycasting grid
+        # from omni.isaac.orbit.sensors.ray_caster import RayCasterCamera, RayCasterCameraCfg, patterns, RayCaster, RayCasterCfg
+        # camera_cfg = RayCasterCfg(
+        #     prim_path="/World/envs/env_.*/Robot/Body",
+        #     mesh_prim_paths=["/World/terrain"],
+        #     update_period=0,
+        #     offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, -0.2), rot=(1.0, 0.0, 0.0, 0.0)),
+        #     debug_vis=True,
+        #     pattern_cfg=patterns.GridPatternCfg(
+        #         resolution=0.1,
+        #         size=(2.0, 2.0),
+        #         offset=(0, 0, -1),
+        #     ),
+        # )
+
+
     def _design_scene(self) -> List[str]:
         self._terrainManager = TerrainManager(device=self.device)
 
