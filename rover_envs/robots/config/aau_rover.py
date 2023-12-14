@@ -22,7 +22,7 @@ _AAU_ROVER_PATH = "http://localhost:8080/omniverse://127.0.0.1/Projects/simple_i
 #         mobile_robot_passive_dof=3,
 #     ),
 
-_AAU_ROVER_CFG = ArticulationCfg(
+AAU_ROVER_CFG = ArticulationCfg(
     spawn=sim_utils.UsdFileCfg(
         usd_path=_AAU_ROVER_PATH,
         activate_contact_sensors=True,

@@ -30,12 +30,11 @@ simulation_app = SimulationApp(config, experience=app_experience)
 
 from datetime import datetime
 
-import envs
-import gym
+import gymnasium as gym
 from omni.isaac.orbit.utils.dict import print_dict
 from omni.isaac.orbit.utils.io import dump_pickle, dump_yaml
-from omni.isaac.orbit_envs.utils import parse_env_cfg
-from omni.isaac.orbit_envs.utils.wrappers.skrl import (
+from omni.isaac.orbit_tasks.utils import parse_env_cfg
+from omni.isaac.orbit_tasks.utils.wrappers.skrl import (
     SkrlSequentialLogTrainer, SkrlVecEnvWrapper)
 from skrl.agents.torch.ppo import PPO, PPO_DEFAULT_CONFIG
 from skrl.memories.torch import RandomMemory
@@ -43,6 +42,7 @@ from skrl.utils import set_seed
 from skrl.utils.model_instantiators import (deterministic_model,
                                             gaussian_model, shared_model)
 
+import rover_envs.envs
 from config import convert_skrl_cfg, parse_skrl_cfg
 from rover_envs.envs.rover.learning.models import (DeterministicNeuralNetwork,
                                                    GaussianNeuralNetwork)
@@ -79,8 +79,9 @@ def main():
     experiment_cfg = parse_skrl_cfg(args_cli.task)
 
     log_dir = log_setup(experiment_cfg, env_cfg)
-    print(args_cli)
+    #print(args_cli)
     # create isaac environment
+    from gymnasium import envs
     env = gym.make(args_cli.task, cfg=env_cfg, headless=args_cli.headless, viewport=args_cli.video)
     if args_cli.video:
         video_kwargs = {
@@ -96,30 +97,33 @@ def main():
     set_seed(args_cli_seed if args_cli_seed is not None else experiment_cfg["seed"])
     print(env.action_space)
     models = {}
-    ray = env._env.cfg.observations.policy.enable_ray_height
-
+    #ray = env._env.cfg.observations.policy.enable_ray_height
+    print(env.observation_space)
+    print(env.action_space)
+    env._env
+    ray = False
     if not ray:
         models["policy"] = gaussian_model(
-            observation_space=env.observation_space,
+            observation_space=env.observation_space["policy"],
             action_space=env.action_space,
             device=env.device,
             **convert_skrl_cfg(experiment_cfg["models"]["policy"])
         )
         models["value"] = deterministic_model(
-            observation_space=env.observation_space,
+            observation_space=env.observation_space["policy"],
             action_space=env.action_space,
             device=env.device,
             **convert_skrl_cfg(experiment_cfg["models"]["value"])
         )
-    else:
-        models["policy"] = GaussianNeuralNetwork(
-            observation_space=env.observation_space,
-            action_space=env.action_space,
-            device=env.device)
-        models["value"] = DeterministicNeuralNetwork(
-            observation_space=env.observation_space,
-            action_space=env.action_space,
-            device=env.device)
+    # else:
+    #     models["policy"] = GaussianNeuralNetwork(
+    #         observation_space=env.observation_space["policy"],
+    #         action_space=env.action_space,
+    #         device=env.device)
+    #     models["value"] = DeterministicNeuralNetwork(
+    #         observation_space=env.observation_space,
+    #         action_space=env.action_space,
+    #         device=env.device)
 
     memory_size = experiment_cfg["agent"]["rollouts"]  # memory_size is the agent's number of rollouts
     memory = RandomMemory(memory_size=memory_size, num_envs=env.num_envs, device=env.device)
@@ -140,7 +144,7 @@ def main():
         device=env.device,
     )
     #agent.load("logs/skrl/rover/Nov15_13-24-49/checkpoints/best_agent.pt")
-    agent.load("best_agents/Nov26_17-18-32/checkpoints/best_agent.pt")
+    #agent.load("best_agents/Nov26_17-18-32/checkpoints/best_agent.pt")
     trainer_cfg = experiment_cfg["trainer"]
     print(trainer_cfg)
 

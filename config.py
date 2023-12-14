@@ -23,6 +23,7 @@ SKRL_PPO_CONFIG_FILE = {
     # classic
     "Rover-v0": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_ppo.yaml"),
     "RoverCamera-v0": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_ppo.yaml"),
+    "RoverNew-v0": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_ppo.yaml"),
     }
 
 

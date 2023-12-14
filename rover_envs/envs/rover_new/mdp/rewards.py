@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 import torch
 # Importing necessary modules from the omni.isaac.orbit package
 from omni.isaac.orbit.assets import RigidObject
-from omni.isaac.orbit.command_generators import UniformPoseCommandGenerator
 from omni.isaac.orbit.managers import SceneEntityCfg
 from omni.isaac.orbit.sensors import ContactSensor
 from omni.isaac.orbit.utils.math import euler_xyz_from_quat
@@ -13,7 +12,7 @@ from omni.isaac.orbit.utils.math import euler_xyz_from_quat
 if TYPE_CHECKING:
     from omni.isaac.orbit.envs import RLTaskEnv
 
-def distance_to_target(env: RLTaskEnv, asset_cfg: SceneEntityCfg) -> torch.Tensor:
+def distance_to_target(env: RLTaskEnv, asset_cfg: SceneEntityCfg, command_name: str) -> torch.Tensor:
     """
     Calculate and return the distance to the target.
 
@@ -22,12 +21,12 @@ def distance_to_target(env: RLTaskEnv, asset_cfg: SceneEntityCfg) -> torch.Tenso
     to the squared distance. The reward is also normalized by the maximum episode length.
     """
     # Accessing the rover object and its position
-    rover_asset: RigidObject = env.scene["robot"]
+    rover_asset: RigidObject = env.scene[asset_cfg.name]
     rover_position = rover_asset.data.root_state_w[:, 3]
 
-    # Accessing the target's position through the command manager
-    target_manager: UniformPoseCommandGenerator = env.command_manager
-    target_position = target_manager.command[:, 3]
+    # Accessing the target's position through the command manage
+    target = env.command_manager.get_command(command_name)
+    target_position = target[:, 3]
 
     # Calculating the distance and the reward
     distance = torch.norm(target_position - rover_position, p=2, dim=-1)
@@ -35,7 +34,7 @@ def distance_to_target(env: RLTaskEnv, asset_cfg: SceneEntityCfg) -> torch.Tenso
 
     return reward
 
-def reached_target(env: RLTaskEnv, asset_cfg: SceneEntityCfg) -> torch.Tensor:
+def reached_target(env: RLTaskEnv, asset_cfg: SceneEntityCfg, command_name: str, threshold: float) -> torch.Tensor:
     """
     Determine whether the target has been reached.
 
@@ -47,15 +46,15 @@ def reached_target(env: RLTaskEnv, asset_cfg: SceneEntityCfg) -> torch.Tensor:
     rover_position = rover_asset.data.root_state_w[:, 3]
 
     # Accessing the target's position
-    target_manager: UniformPoseCommandGenerator = env.command_manager
-    target_position = target_manager.command[:, 3]
+    target = env.command_manager.get_command(command_name)
+    target_position = target[:, 3]
 
     # Calculating the distance and determining if the target is reached
     distance = torch.norm(target_position - rover_position, p=2, dim=-1)
     time_steps_to_goal = env.max_episode_length - env.episode_length_buf
     reward_scale = time_steps_to_goal / env.max_episode_length
 
-    reward = torch.where(distance < 0.18, 1.0 * reward_scale, 0.0)
+    reward = torch.where(distance < threshold, 1.0 * reward_scale, 0)
 
     return reward
 
@@ -84,7 +83,7 @@ def oscillation_penalty(env: RLTaskEnv, asset_cfg: SceneEntityCfg) -> torch.Tens
 
     return (angular_penalty + linear_penalty) / env.max_episode_length
 
-def goal_angle_penalty(env: RLTaskEnv, asset_cfg: SceneEntityCfg) -> torch.Tensor:
+def angle_to_target_penalty(env: RLTaskEnv, command_name: str, asset_cfg: SceneEntityCfg) -> torch.Tensor:
     """
     Calculate the penalty for the angle between the rover and the target.
 
@@ -93,20 +92,22 @@ def goal_angle_penalty(env: RLTaskEnv, asset_cfg: SceneEntityCfg) -> torch.Tenso
     """
     # Accessing rover's position and rotation
     rover_asset: RigidObject = env.scene[asset_cfg.name]
-    rover_rotation_euler = euler_xyz_from_quat(rover_asset.data.root_state_w[:, :4])
-    rover_position = rover_asset.data.root_state_w[:, 3]
+    _,_, yaw = euler_xyz_from_quat(rover_asset.data.root_state_w[:, :4])
+    rover_position = rover_asset.data.root_state_w[:, :2]
 
     # Calculating the rover's heading direction
-    direction_vector = torch.zeros([env.num_envs, 2])
-    direction_vector[:, 0] = torch.cos(rover_rotation_euler[:, 2])
-    direction_vector[:, 1] = torch.sin(rover_rotation_euler[:, 2])
+    direction_vector = torch.zeros([env.num_envs, 2], device=env.device)
+    direction_vector[:, 0] = torch.cos(yaw)
+    direction_vector[:, 1] = torch.sin(yaw)
 
     # Accessing the target's position and calculating the direction vector
-    target_manager: UniformPoseCommandGenerator = env.command_manager
-    target_position = target_manager.command[:, 3]
+    target = env.command_manager.get_command(command_name)
+    target_position = target[:, :2]
     target_vector = target_position - rover_position
 
     # Calculating the angle and applying the penalty
+    print(f'direction_vector: {direction_vector}')
+    print(f'target_vector: {target_vector}')
     cross_product = direction_vector[:, 1] * target_vector[:, 0] - direction_vector[:, 0] * target_vector[:, 1]
     dot_product = direction_vector[:, 0] * target_vector[:, 0] + direction_vector[:, 1] * target_vector[:, 1]
     angle = torch.atan2(cross_product, dot_product)
@@ -122,7 +123,7 @@ def heading_soft_contraint(env: RLTaskEnv, asset_cfg: SceneEntityCfg) -> torch.T
     """
     return torch.where(env.action_manager.action[:, 0] < 0.0, (1.0 / env.max_episode_length), 0.0)
 
-def collision_penalty(env: RLTaskEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
+def collision_penalty(env: RLTaskEnv, sensor_cfg: SceneEntityCfg, threshold: float) -> torch.Tensor:
     """
     Calculate a penalty for collisions detected by the sensor.
 
@@ -132,6 +133,7 @@ def collision_penalty(env: RLTaskEnv, sensor_cfg: SceneEntityCfg) -> torch.Tenso
     """
     # Accessing the contact sensor and its data
     contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
+    print(contact_sensor)
     force_matrix = contact_sensor.data.force_matrix_w.view(env.num_envs, -1, 3)
 
     # Calculating the force and applying a penalty if collision forces are detected
