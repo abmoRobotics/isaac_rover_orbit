@@ -133,13 +133,20 @@ def collision_penalty(env: RLTaskEnv, sensor_cfg: SceneEntityCfg, threshold: flo
     contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
     #print(contact_sensor)
     force_matrix = contact_sensor.data.force_matrix_w.view(env.num_envs, -1, 3)
-    print(f'force_matrix: {force_matrix.shape}')
-    print(f'force_matrix: {contact_sensor.data.force_matrix_w.shape}')
-    print(f'force_matrix: {contact_sensor.data.force_matrix_w}')
-
+    #force_matrix = contact_sensor.data.force_matrix_w.view(-1, env.num_envs, 3)
+    # print(f'force_matrix: {force_matrix.shape}')
+    # print(f'force_matrix: {contact_sensor.data.force_matrix_w.shape}')
+    # print(f'force_matrix: {contact_sensor.data.force_matrix_w}')
+    # normalized_forces = torch.norm(self.collisions_view.get_contact_force_matrix().view(self.num_envs, -1, 3), dim=1)
+    # forces_active = torch.sum(normalized_forces, dim=-1) > 1
+    # self.reset_buf = torch.where(forces_active, 1, self.reset_buf)
     # Calculating the force and applying a penalty if collision forces are detected
     normalized_forces = torch.norm(force_matrix, dim=1)
-    print(f'normalized_forces: {normalized_forces}')
-    forces_active = torch.sum(normalized_forces, dim=-1) > 1.0
-    print(forces_active)
+    #print(f'normalized_forces: {normalized_forces}')
+    forces_active = torch.sum(normalized_forces, dim=-1) > 1
     return torch.where(forces_active, True, False)
+    #Return false tensor
+    #return torch.tensor([False for i in range(env.num_envs)], device=env.device)
+    # return torch.any(
+    #     torch.max(torch.norm(contact_sensor.data.force_matrix_w[:, :,:], dim=-1), dim=1)[0] > threshold, dim=1
+    # )

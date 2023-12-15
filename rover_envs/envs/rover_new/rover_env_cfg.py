@@ -104,7 +104,7 @@ class ActionsCfg:
     )
 
 
-
+mdp.illegal_contact
 @configclass
 class ObservationCfg:
     """ Observation configuration for the task.  """
@@ -197,7 +197,7 @@ class CommandsCfg:
         asset_name="robot",
         body_name="Body",
         resampling_time_range=(150.0, 150.0),
-        debug_vis=True,
+        debug_vis=False,
         ranges=mdp.UniformPoseCommandCfg.Ranges(
             pos_x=(-9.0, 9.0), pos_y=(-9.0, 9.0), pos_z=(3.0, 3.0), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
         )
