@@ -44,8 +44,9 @@ from skrl.utils.model_instantiators import (deterministic_model,
 
 import rover_envs.envs
 from config import convert_skrl_cfg, parse_skrl_cfg
-from rover_envs.envs.rover.learning.models import (DeterministicNeuralNetwork,
-                                                   GaussianNeuralNetwork)
+from rover_envs.envs.rover.learning.models import (
+    DeterministicNeuralNetwork, DeterministicNeuralNetworkSimple,
+    GaussianNeuralNetwork, GaussianNeuralNetworkSimple)
 
 #import omni.isaac.contrib_envs  # noqa: F401
 #import omni.isaac.orbit_envs  # noqa: F401
@@ -102,19 +103,19 @@ def main():
     print(env.action_space)
     env._env
     ray = False
-    if not ray:
-        models["policy"] = gaussian_model(
-            observation_space=env.observation_space["policy"],
-            action_space=env.action_space,
-            device=env.device,
-            **convert_skrl_cfg(experiment_cfg["models"]["policy"])
-        )
-        models["value"] = deterministic_model(
-            observation_space=env.observation_space["policy"],
-            action_space=env.action_space,
-            device=env.device,
-            **convert_skrl_cfg(experiment_cfg["models"]["value"])
-        )
+    # if not ray:
+    #     models["policy"] = gaussian_model(
+    #         observation_space=env.observation_space["policy"],
+    #         action_space=env.action_space,
+    #         device=env.device,
+    #         **convert_skrl_cfg(experiment_cfg["models"]["policy"])
+    #     )
+    #     models["value"] = deterministic_model(
+    #         observation_space=env.observation_space["policy"],
+    #         action_space=env.action_space,
+    #         device=env.device,
+    #         **convert_skrl_cfg(experiment_cfg["models"]["value"])
+    #     )
     # else:
     #     models["policy"] = GaussianNeuralNetwork(
     #         observation_space=env.observation_space["policy"],
@@ -124,6 +125,14 @@ def main():
     #         observation_space=env.observation_space,
     #         action_space=env.action_space,
     #         device=env.device)
+    models["policy"] = GaussianNeuralNetworkSimple(
+            observation_space=env.observation_space["policy"],
+            action_space=env.action_space,
+            device=env.device)
+    models["value"] = DeterministicNeuralNetworkSimple(
+            observation_space=env.observation_space,
+            action_space=env.action_space,
+            device=env.device)
 
     memory_size = experiment_cfg["agent"]["rollouts"]  # memory_size is the agent's number of rollouts
     memory = RandomMemory(memory_size=memory_size, num_envs=env.num_envs, device=env.device)

@@ -34,6 +34,7 @@ AAU_ROVER_CFG = ArticulationCfg(
             disable_gravity=False,
         ),
         articulation_props=sim_utils.ArticulationRootPropertiesCfg(
+            #enabled_self_collisions=False, solver_position_iteration_count=16, solver_velocity_iteration_count=4)
             enabled_self_collisions=False, solver_position_iteration_count=16, solver_velocity_iteration_count=4)
         ),
 
@@ -42,7 +43,7 @@ AAU_ROVER_CFG = ArticulationCfg(
         #usd_path="http://localhost:8080/omniverse://
     #init_state=MobileRobotCfg.InitialStateCfg(
     init_state=ArticulationCfg.InitialStateCfg(
-        pos=(0.0, 0.0, 1.5),
+        pos=(0.0, 0.0, 0.5),
         joint_pos={".*Steer_Revolute": 0.0},
         joint_vel={".*Steer_Revolute": 0.0,
                  ".*Drive_Continuous": 0.0},

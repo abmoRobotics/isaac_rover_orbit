@@ -91,7 +91,7 @@ class AckermannAction(ActionTerm):
         self._asset.set_joint_position_target(self._joint_pos, joint_ids=self._steering_joint_ids)
 
     def ackermann(self, lin_vel, ang_vel):
-        device='cuda:0'
+        device = self.device
         # All measurements in Meters!
         num_robots = lin_vel.shape[0]
         wheel_diameter = 0.2

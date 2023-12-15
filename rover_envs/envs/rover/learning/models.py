@@ -157,6 +157,97 @@ class DeterministicNeuralNetwork(DeterministicMixin, BaseModel):
         return x, {}
 
 
+class GaussianNeuralNetworkSimple(GaussianMixin, BaseModel):
+    """Gaussian neural network model."""
+
+    def __init__(
+        self,
+        observation_space,
+        action_space,
+        device,
+        encoder_features=[80, 60],
+        encoder_activation="leaky_relu",
+        **kwargs,
+    ):
+        """Initialize the Gaussian neural network model.
+
+        Args:
+            observation_space (gym.spaces.Space): The observation space of the environment.
+            action_space (gym.spaces.Space): The action space of the environment.
+            device (torch.device): The device to use for computation.
+            encoder_features (list): The number of features for each encoder layer.
+            encoder_activation (str): The activation function to use for each encoder layer.
+        """
+        BaseModel.__init__(self, observation_space, action_space, device)
+        GaussianMixin.__init__(self, clip_actions=True, clip_log_std=True, min_log_std=-20.0, max_log_std=2.0, reduction="sum")
+
+        self.proprioception_channels = 4
+
+        self.mlp = nn.ModuleList()
+
+        mlp_features = [256, 160, 128]
+        in_channels = self.proprioception_channels
+        for feature in mlp_features:
+            self.mlp.append(nn.Linear(in_channels, feature))
+            self.mlp.append(get_activation(encoder_activation))
+            in_channels = feature
+
+        self.mlp.append(nn.Linear(in_channels, 2))
+        self.mlp.append(nn.Tanh())
+        self.log_std_parameter = nn.Parameter(torch.zeros((2)))
+
+
+    def compute(self, states, role="actor"):
+        x = states["states"]
+        for layer in self.mlp:
+            x = layer(x)
+
+        return x, self.log_std_parameter, {}
+
+class DeterministicNeuralNetworkSimple(DeterministicMixin, BaseModel):
+    """Gaussian neural network model."""
+
+    def __init__(
+        self,
+        observation_space,
+        action_space,
+        device,
+        encoder_features=[80, 60],
+        encoder_activation="leaky_relu",
+        **kwargs,
+    ):
+        """Initialize the Gaussian neural network model.
+
+        Args:
+            observation_space (gym.spaces.Space): The observation space of the environment.
+            action_space (gym.spaces.Space): The action space of the environment.
+            device (torch.device): The device to use for computation.
+            encoder_features (list): The number of features for each encoder layer.
+            encoder_activation (str): The activation function to use for each encoder layer.
+        """
+        BaseModel.__init__(self, observation_space, action_space, device)
+        DeterministicMixin.__init__(self, clip_actions=False)
+
+        self.mlp = nn.ModuleList()
+
+        mlp_features = [256, 160, 128]
+        in_channels = 4
+        for feature in mlp_features:
+            self.mlp.append(nn.Linear(in_channels, feature))
+            self.mlp.append(get_activation(encoder_activation))
+            in_channels = feature
+
+        self.mlp.append(nn.Linear(in_channels, 1))
+
+    def compute(self, states, role="actor"):
+
+        x = states["states"]
+        for layer in self.mlp:
+            x = layer(x)
+
+        return x, {}
+
+
 if __name__ == "__main__":
     pass
     # import gym

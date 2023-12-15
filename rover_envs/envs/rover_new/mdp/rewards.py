@@ -106,8 +106,6 @@ def angle_to_target_penalty(env: RLTaskEnv, command_name: str, asset_cfg: SceneE
     target_vector = target_position - rover_position
 
     # Calculating the angle and applying the penalty
-    print(f'direction_vector: {direction_vector}')
-    print(f'target_vector: {target_vector}')
     cross_product = direction_vector[:, 1] * target_vector[:, 0] - direction_vector[:, 0] * target_vector[:, 1]
     dot_product = direction_vector[:, 0] * target_vector[:, 0] + direction_vector[:, 1] * target_vector[:, 1]
     angle = torch.atan2(cross_product, dot_product)
@@ -133,10 +131,15 @@ def collision_penalty(env: RLTaskEnv, sensor_cfg: SceneEntityCfg, threshold: flo
     """
     # Accessing the contact sensor and its data
     contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
-    print(contact_sensor)
+    #print(contact_sensor)
     force_matrix = contact_sensor.data.force_matrix_w.view(env.num_envs, -1, 3)
+    print(f'force_matrix: {force_matrix.shape}')
+    print(f'force_matrix: {contact_sensor.data.force_matrix_w.shape}')
+    print(f'force_matrix: {contact_sensor.data.force_matrix_w}')
 
     # Calculating the force and applying a penalty if collision forces are detected
     normalized_forces = torch.norm(force_matrix, dim=1)
-    forces_active = torch.sum(normalized_forces, dim=1) > 1.0
-    return torch.where(forces_active, 1.0, 0.0)
+    print(f'normalized_forces: {normalized_forces}')
+    forces_active = torch.sum(normalized_forces, dim=-1) > 1.0
+    print(forces_active)
+    return torch.where(forces_active, True, False)

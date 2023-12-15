@@ -37,31 +37,45 @@ class RoverSceneCfg(InteractiveSceneCfg):
     # ground_terrain = AssetBaseCfg(
     #     prim_path="/World/terrain",
     #     spawn=sim_utils.UsdFileCfg(
-    #         usd_path="omniverse://127.0.0.1/Projects/P7 - Exam/Big rocks.usd",
+    #         #usd_path="omniverse://127.0.0.1/Projects/P7 - Exam/Big rocks.usd",
+    #         usd_path="/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/mars1/terrain_only.usd",
     #     ),
-    #     init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0), rot=(0.0, 0.0, 0.0, 1.0)),
+    #     init_state=AssetBaseCfg.InitialStateCfg(pos=(10.0, 10.0, 0.0), rot=(0.0, 0.0, 0.0, 1.0)),
     # )
 
-    # # Obstacles
+    # #Obstacles
     # obstacles = AssetBaseCfg(
     #     prim_path="/World/rock",
     #     spawn=sim_utils.UsdFileCfg(
-    #         usd_path="omniverse://127.0.0.1/Projects/P7 - Exam/Big rocks only.usd",
+    #         #usd_path="omniverse://127.0.0.1/Projects/P7 - Exam/Big rocks only.usd",
+    #         usd_path="/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/mars1/rocks_merged.usd"
     #     ),
-    #     init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0), rot=(0.0, 0.0, 0.0, 1.0)),
+    #     init_state=AssetBaseCfg.InitialStateCfg(pos=(10.0, 10.0, 0.0), rot=(0.0, 0.0, 0.0, 1.0)),
     # )
-    terrain = TerrainImporterCfg(
+
+    terrain = AssetBaseCfg(
         prim_path="/World/terrain",
-        terrain_type="plane",
-        collision_group=-1,
-        physics_material=sim_utils.RigidBodyMaterialCfg(static_friction=1.0, dynamic_friction=1.0, restitution=0.0),
-        debug_vis=False,
+        spawn=sim_utils.UsdFileCfg(
+            usd_path="omniverse://127.0.0.1/Projects/terrain_3.usd",
+        ),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=(10.0, 10.0, 0.0), rot=(0.0, 0.0, 0.0, 1.0)),
     )
+    sky_light = AssetBaseCfg(
+        prim_path="/World/skyLight",
+        spawn=sim_utils.DomeLightCfg(color=(0.13, 0.13, 0.13), intensity=2000.0),
+    )
+    # terrain = TerrainImporterCfg(
+    #     prim_path="/World/terrain",
+    #     terrain_type="plane",
+    #     collision_group=-1,
+    #     physics_material=sim_utils.RigidBodyMaterialCfg(static_friction=1.0, dynamic_friction=1.0, restitution=0.0),
+    #     debug_vis=False,
+    # )
 
     robot: ArticulationCfg = AAU_ROVER_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
 
-    # contact_forces = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/.*_(Drive|Steer|Boogie|Body)", filter_prim_paths_expr=["/World/rock"])
-    contact_forces = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/.*_(Drive|Steer|Boogie|Body)")
+    contact_forces = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/.*_(Drive|Steer|Boogie|Body)", filter_prim_paths_expr=["/World/terrain/combined/rocks_merged/Mesh_766"])
+    #contact_forces = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/.*_(Drive|Steer|Boogie|Body)")
 
 
     # height_scanner = RayCasterCfg(
@@ -170,11 +184,11 @@ class TerminationsCfg:
     #     func=mdp.far_from_target,
     #       params={"asset_cfg": SceneEntityCfg(name="robot"), "command_name": "target_pose", "threshold": 15.0},
     #       )
-    # collision = DoneTerm(
-    #     func=mdp.illegal_contact,
-    #     params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=[".*_(Drive|Steer|Boogie|Body)"]), "threshold": 1.0},
-    #     )
-
+    collision = DoneTerm(
+        func=mdp.collision_penalty,
+        params={"sensor_cfg": SceneEntityCfg("contact_forces"), "threshold": 1.0},
+        )
+mdp.illegal_contact
 @configclass
 class CommandsCfg:
     """ Command terms for the MDP. """
@@ -190,25 +204,46 @@ class CommandsCfg:
     )
 
 @configclass
+class RandomizationCfg:
+    """ Randomization configuration for the task. """
+    # pose_range: dict[str, tuple[float, float]],
+    # reset
+    reset_orientation = RandTerm(
+        func=mdp.reset_root_state_uniform,
+        mode="reset",
+        params={
+            "asset_cfg": SceneEntityCfg(name="robot"),
+            "pose_range": {"x": (0.0, 0.0), "y": (0.0, 0.0), "z": (0.0, 0.0), "roll": (0.0, 0.0), "pitch": (0.0, 0.0), "yaw": (0.0, 3.14)},
+            "velocity_range": (0.0, 0.0),
+            },
+        )
+#         params={"asset_cfg": SceneEntityCfg(name="robot"),
+#                 "rotation_range": (0.0, 0.0)},
+
+
+@configclass
 class RoverEnvCfg(RLTaskEnvCfg):
     """ """
 
     # Create scene
-    scene: RoverSceneCfg = RoverSceneCfg(num_envs=256, env_spacing=1.5, replicate_physics=False)
+    scene: RoverSceneCfg = RoverSceneCfg(num_envs=256, env_spacing=2.5, replicate_physics=False)
 
     # Basic Settings
     observations: ObservationCfg = ObservationCfg()
     actions: ActionsCfg = ActionsCfg()
-    commands: CommandsCfg = CommandsCfg()
+    # randomization: RandomizationCfg = RandomizationCfg()
+
     # TODO: add command generator
 
     # MDP Settings
     rewards: RewardsCfg = RewardsCfg()
     terminations: TerminationsCfg = TerminationsCfg()
 
+    commands: CommandsCfg = CommandsCfg()
+
     def __post_init__(self):
         self.decimation = 4
-        self.episode_length_s = 150
+        self.episode_length_s = 10
         self.viewer.eye = (3.5, 3.5, 3.5)
 
         # Simulation Settings
@@ -218,5 +253,5 @@ class RoverEnvCfg(RLTaskEnvCfg):
         # update sensor periods
         # if self.scene.height_scanner is not None:
         #     self.scene.height_scanner.update_period = self.sim.dt * self.decimation
-        # if self.scene.contact_forces is not None:
-        #     self.scene.contact_forces.update_period = self.sim.dt * self.decimation
+        if self.scene.contact_forces is not None:
+            self.scene.contact_forces.update_period = self.sim.dt * self.decimation
