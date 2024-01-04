@@ -12,10 +12,11 @@
 # )
 
 
+from .rover_env import RoverEnv
 # from .rover_camera_env import RoverEnvCamera
 # from .rover_cfg import RoverEnvCfg
 # from .rover_env import RoverEnv
 from .rover_env_cfg import RoverEnvCfg
 
-__all__ = ["RoverEnvCfg"]
+__all__ = ["RoverEnvCfg", "RoverEnv"]
 # __all__ = ["RoverEnvCfg", "RoverEnv", "RoverEnvCamera"]

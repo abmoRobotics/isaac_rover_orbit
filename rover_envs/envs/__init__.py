@@ -24,7 +24,8 @@ gym.register(
 
 gym.register(
     id='RoverNew-v0',
-    entry_point='omni.isaac.orbit.envs:RLTaskEnv',
+    # entry_point='omni.isaac.orbit.envs:RLTaskEnv',
+    entry_point='rover_envs.envs.rover_new:RoverEnv',
     #disable_env_checker=True,
     kwargs={
         "env_cfg_entry_point": "rover_envs.envs.rover_new:RoverEnvCfg",

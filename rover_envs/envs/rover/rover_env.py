@@ -145,12 +145,12 @@
 #         # Pre-step actions
 #         self.actions = actions.clone().to(self.device)
 #         #print(f'[INFO] Rover actions: {self.actions[0]}')
-#         # TODO Remove these comments
+
 #         # self.actions[:, 0] = 1.0 * self.cfg.control.action_scaling
 #         # self.actions[:, 1] = 0.0 * self.cfg.control.action_scaling
 #         self.actions_scaled = self.actions * self.cfg.control.action_scaling
 
-#         # TODO: Implement controller here
+
 #         self.robot_actions[:,:10] = Ackermann(lin_vel = self.actions_scaled[:, 0], ang_vel=self.actions_scaled[:, 1], device=self.device)
 
 #         # Perform physics steps
@@ -225,7 +225,7 @@
 #         self.max_episode_length = math.ceil(self.cfg.env.episode_length_s / self.dt)
 
 
-#         # TODO FIX THIS AND MAKE IT PART OF CFG -> shift 30, 30
+
 #         self.envs_positions += torch.tensor([30.0, 30.0, 5.0], device=self.device)
 
 #         if self.cfg.observations.policy.enable_ray_height:
@@ -260,7 +260,7 @@
 #             self.reset_buf = torch.where(distance > 15, 1, self.reset_buf)
 
 #         if self.cfg.terminations.collision_with_rock:
-#             # TODO: The number 6 should not be hardcoded
+
 #             normalized_forces = torch.norm(self.collisions_view.get_contact_force_matrix().view(self.num_envs, -1, 3), dim=1)
 #             forces_active = torch.sum(normalized_forces, dim=-1) > 1
 #             self.reset_buf = torch.where(forces_active, 1, self.reset_buf)
@@ -395,7 +395,6 @@
 #         linear_difference = torch.abs(env.actions[:, 1] - env.prev_actions[:, 1])
 #         angular_difference = torch.abs(env.actions[:, 0] - env.prev_actions[:, 0])
 
-#         # TODO combine these 5 lines into two lines
 #         angular_penalty = torch.where(angular_difference > 0.05, torch.square(angular_difference), 0.0)
 #         linear_penalty = torch.where(linear_difference > 0.05, torch.square(linear_difference), 0.0)
 

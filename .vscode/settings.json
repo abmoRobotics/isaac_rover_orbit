@@ -10,5 +10,10 @@
     ],
     "python.defaultInterpreterPath": "~/anaconda3/envs/orbit_env/bin/python",
     "ros.distro": "humble",
-
+    "codesnap.boxShadow": "none",
+    "codesnap.containerPadding": "5",
+    "codesnap.showLineNumbers": true,
+    "codesnap.showWindowControls": true,
+    "codesnap.transparentBackground": true,
+    "todo-tree.ripgrep.ripgrep": "/usr/bin/rg",
 }

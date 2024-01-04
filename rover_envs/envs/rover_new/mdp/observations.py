@@ -34,7 +34,7 @@ def angle_to_target_observation(env: RLTaskEnv, command_name: str, asset_cfg: Sc
     cross_product = direction_vector[:, 1] * target_vector[:, 0] - direction_vector[:, 0] * target_vector[:, 1]
     dot_product = direction_vector[:, 0] * target_vector[:, 0] + direction_vector[:, 1] * target_vector[:, 1]
     angle = torch.atan2(cross_product, dot_product)
-
+    #print(env.scene.terrain)
     return angle.unsqueeze(-1)
 
 def distance_to_target_euclidean(env: RLTaskEnv, command_name: str, asset_cfg: SceneEntityCfg):

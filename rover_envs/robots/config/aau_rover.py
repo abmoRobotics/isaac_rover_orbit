@@ -11,7 +11,7 @@ from omni.isaac.orbit.assets.articulation import ArticulationCfg
 #_AAU_ROVER_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '..', 'assets', 'rover' ,'rover_instance.usd')
 #_AAU_ROVER_PATH = "http://localhost:8080/omniverse://127.0.0.1/Projects/simple_instanceable_new/rover_instance.usd"
 #_AAU_ROVER_PATH = "http://localhost:8080/omniverse://127.0.0.1/Projects/simplified9.usd"
-_AAU_ROVER_PATH = "http://localhost:8080/omniverse://127.0.0.1/Projects/simple_instanceable_new2/rover_instance.usd"
+_AAU_ROVER_PATH = "http://localhost:8080/omniverse://127.0.0.1/Projects/simple_instanceable_new/rover_instance.usd"
 
 # AAU_ROVER_CFG = MobileRobotCfg(
 #     meta_info=MobileRobotCfg.MetaInfoCfg(
@@ -28,14 +28,14 @@ AAU_ROVER_CFG = ArticulationCfg(
         activate_contact_sensors=True,
         collision_props=sim_utils.CollisionPropertiesCfg(contact_offset=0.04, rest_offset=0.01),
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
-            max_linear_velocity=2.0,
+            max_linear_velocity=1.5,
             max_angular_velocity=1000.0,
             max_depenetration_velocity=1.0,
             disable_gravity=False,
         ),
         articulation_props=sim_utils.ArticulationRootPropertiesCfg(
             #enabled_self_collisions=False, solver_position_iteration_count=16, solver_velocity_iteration_count=4)
-            enabled_self_collisions=False, solver_position_iteration_count=16, solver_velocity_iteration_count=4)
+            enabled_self_collisions=False, solver_position_iteration_count=4, solver_velocity_iteration_count=4)
         ),
 
 

@@ -50,11 +50,14 @@ def main():
     # reset environment
     env.reset()
     # simulate environment
+    print(env.action_space.shape)
     while simulation_app.is_running():
         # run everything in inference mode
         with torch.inference_mode():
             # compute zero actions
             actions = torch.zeros(env.action_space.shape, device=env.unwrapped.device)
+            actions[:, 0] = 1.0
+            #print(env.action_space.shape)
             # apply actions
             env.step(actions)
 
