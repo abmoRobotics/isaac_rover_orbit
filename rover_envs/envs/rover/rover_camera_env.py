@@ -7,18 +7,21 @@ import numpy as np
 import torch
 import warp as wp
 from omni.isaac.core.utils import prims
+# from .rover_env import RoverEnv
+from omni.isaac.orbit.envs.rl_task_env import RLTaskEnv
 
 # ENV
-from .rover_cfg import RoverEnvCfg
-from .rover_env import RoverEnv
+from .rover_env_cfg import RoverEnvCfg
 
 #from omni.replicator.isaac.scripts.writers.pytorch_listener import PytorchListener
 
 
+class RoverEnvCamera(RLTaskEnv):
+    """ Rover environment for collecting camera data for Learning By Cheating.
 
-
-class RoverEnvCamera(RoverEnv):
-
+    Note:
+        This is a placeholder class for the rover environment. That is, this class is not fully implemented yet.
+    """
     def __init__(self, cfg: RoverEnvCfg, **kwargs):
 
         # Set up replicator
