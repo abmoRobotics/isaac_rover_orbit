@@ -6,11 +6,11 @@ import numpy as np
 import pymeshlab
 import torch
 
-from .usd_utils import get_triangles_and_vertices_from_prim
+from ..terrains.usd_utils import get_triangles_and_vertices_from_prim
 
 try:
-    from .usd_utils import (add_material_to_stage_from_mdl, apply_material,
-                            trimesh_to_usd)
+    from ..terrains.usd_utils import (add_material_to_stage_from_mdl,
+                                      apply_material, trimesh_to_usd)
 except Exception as e:
     print(f'Error importing trimesh_to_usd: {e}')
 #from .usd_utils import trimesh_to_usd

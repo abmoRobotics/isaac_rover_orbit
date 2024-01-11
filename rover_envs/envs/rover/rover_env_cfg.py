@@ -24,7 +24,7 @@ from omni.isaac.orbit.utils import configclass
 from omni.isaac.orbit.utils.noise import AdditiveUniformNoiseCfg as Unoise
 
 import rover_envs.envs.rover.mdp as mdp
-from rover_envs.envs.rover.utils.terrains.rover_terrain_importer import \
+from rover_envs.envs.rover.utils.terrains.terrain_importer import \
     RoverTerrainImporter
 from rover_envs.robots.aau_rover import AAU_ROVER_CFG
 
@@ -261,8 +261,8 @@ class RoverEnvCfg(RLTaskEnvCfg):
 
     def __post_init__(self):
         self.decimation = 4
-        self.episode_length_s = 200
-        self.viewer.eye = (3.5, 3.5, 3.5)
+        self.episode_length_s = 150
+        self.viewer.eye = (-6.0, -6.0, 3.5)
 
         # update sensor periods
         if self.scene.height_scanner is not None:
