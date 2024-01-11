@@ -6,6 +6,8 @@ INSTALL_REQUIRES = [
     "numpy",
     "torch",
     "prettytable==3.3.0",
+    "pymeshlab",
+    "open3d",
     # devices
     "hidapi",
 ]
