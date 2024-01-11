@@ -7,7 +7,7 @@ from omni.isaac.orbit.envs import BaseEnv
 from omni.isaac.orbit.managers import SceneEntityCfg
 from omni.isaac.orbit.utils.math import quat_from_euler_xyz, sample_uniform
 
-from ..utils.terrains.rover_terrain_importer import RoverTerrainImporter
+from ..utils.terrains.terrain_importer import RoverTerrainImporter
 
 if TYPE_CHECKING:
     from omni.isaac.orbit.envs import BaseEnv
