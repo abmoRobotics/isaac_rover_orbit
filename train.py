@@ -26,11 +26,11 @@ else:
 # launch the simulator
 
 simulation_app = SimulationApp(config, experience=app_experience)
-
-
+import math
 from datetime import datetime
 
 import gymnasium as gym
+from omni.isaac.orbit.envs import RLTaskEnv
 from omni.isaac.orbit.utils.dict import print_dict
 from omni.isaac.orbit.utils.io import dump_pickle, dump_yaml
 from omni.isaac.orbit_tasks.utils import parse_env_cfg
@@ -47,9 +47,9 @@ from config import convert_skrl_cfg, parse_skrl_cfg
 from rover_envs.envs.rover.learning.models import (
     DeterministicNeuralNetwork, DeterministicNeuralNetworkSimple,
     GaussianNeuralNetwork, GaussianNeuralNetworkSimple)
-
 #import omni.isaac.contrib_envs  # noqa: F401
 #import omni.isaac.orbit_envs  # noqa: F401
+from skrl_wrapper import IsaacOrbitWrapperFixed
 
 
 def log_setup(experiment_cfg, env_cfg):
@@ -93,46 +93,53 @@ def main():
         print("[INFO] Recording videos during training.")
         print_dict(video_kwargs, nesting=4)
         env = gym.wrappers.RecordVideo(env, **video_kwargs)
-    env  = SkrlVecEnvWrapper(env)
-
+    #env: RLTaskEnv  = SkrlVecEnvWrapper(env)
+    env: RLTaskEnv = IsaacOrbitWrapperFixed(env)
     set_seed(args_cli_seed if args_cli_seed is not None else experiment_cfg["seed"])
-    print(env.action_space)
+
     models = {}
     #ray = env._env.cfg.observations.policy.enable_ray_height
-    print(env.observation_space)
-    print(env.action_space)
-    env._env
-    ray = False
-    # if not ray:
-    #     models["policy"] = gaussian_model(
-    #         observation_space=env.observation_space["policy"],
-    #         action_space=env.action_space,
-    #         device=env.device,
-    #         **convert_skrl_cfg(experiment_cfg["models"]["policy"])
-    #     )
-    #     models["value"] = deterministic_model(
-    #         observation_space=env.observation_space["policy"],
-    #         action_space=env.action_space,
-    #         device=env.device,
-    #         **convert_skrl_cfg(experiment_cfg["models"]["value"])
-    #     )
-    # else:
-    #     models["policy"] = GaussianNeuralNetwork(
+    ray = True
+
+    num_obs = env.observation_manager.group_obs_dim["policy"][0]
+    num_actions = env.action_manager.action_term_dim[0]
+    observation_space = gym.spaces.Box(low=-math.inf, high=math.inf, shape=(num_obs,))
+    action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(num_actions,))
+
+    if not ray:
+        models["policy"] = gaussian_model(
+            observation_space=env.observation_space["policy"],
+            action_space=env.action_space,
+            device=env.device,
+            **convert_skrl_cfg(experiment_cfg["models"]["policy"])
+        )
+        models["value"] = deterministic_model(
+            observation_space=env.observation_space["policy"],
+            action_space=env.action_space,
+            device=env.device,
+            **convert_skrl_cfg(experiment_cfg["models"]["value"])
+        )
+    else:
+        models["policy"] = GaussianNeuralNetwork(
+            # observation_space=env.observation_space["policy"],
+            observation_space=observation_space,
+            #action_space=env.action_space,
+            action_space=action_space,
+            device=env.device)
+        models["value"] = DeterministicNeuralNetwork(
+            #observation_space=env.observation_space,
+            observation_space=observation_space,
+            #action_space=env.action_space,
+            action_space=action_space,
+            device=env.device)
+    # models["policy"] = GaussianNeuralNetworkSimple(
     #         observation_space=env.observation_space["policy"],
     #         action_space=env.action_space,
     #         device=env.device)
-    #     models["value"] = DeterministicNeuralNetwork(
+    # models["value"] = DeterministicNeuralNetworkSimple(
     #         observation_space=env.observation_space,
     #         action_space=env.action_space,
     #         device=env.device)
-    models["policy"] = GaussianNeuralNetworkSimple(
-            observation_space=env.observation_space["policy"],
-            action_space=env.action_space,
-            device=env.device)
-    models["value"] = DeterministicNeuralNetworkSimple(
-            observation_space=env.observation_space,
-            action_space=env.action_space,
-            device=env.device)
 
     memory_size = experiment_cfg["agent"]["rollouts"]  # memory_size is the agent's number of rollouts
     memory = RandomMemory(memory_size=memory_size, num_envs=env.num_envs, device=env.device)
@@ -148,8 +155,8 @@ def main():
         models=models,
         memory=memory,
         cfg=agent_cfg,
-        observation_space=env.observation_space,
-        action_space=env.action_space,
+        observation_space=observation_space,
+        action_space=action_space,
         device=env.device,
     )
     #agent.load("logs/skrl/rover/Nov15_13-24-49/checkpoints/best_agent.pt")
