@@ -6,9 +6,11 @@ import numpy as np
 import pymeshlab
 import torch
 
+from .usd_utils import get_triangles_and_vertices_from_prim
+
 try:
-    from envs.rover.utils.terrain_utils.usd_utils import (
-        add_material_to_stage_from_mdl, apply_material, trimesh_to_usd)
+    from .usd_utils import (add_material_to_stage_from_mdl, apply_material,
+                            trimesh_to_usd)
 except Exception as e:
     print(f'Error importing trimesh_to_usd: {e}')
 #from .usd_utils import trimesh_to_usd
@@ -82,17 +84,16 @@ class HeightmapManager():
 
         return heights
 
-
     def get_minimums(self):
         return self.min_x, self.min_y
 
 class TerrainManager():
 
-    def __init__(self, device):
+    def __init__(self, num_envs: int, device: str):
         self.dir_path = os.path.dirname(os.path.realpath(__file__))
         terrain_path = os.path.join(self.dir_path, "../terrain_data/map.ply")
         rock_mesh_path = os.path.join(self.dir_path, "../terrain_data/big_stones.ply")
-
+        terrain_path = "/World/terrain/terrain/ground"
 
         self.meshes = [terrain_path, rock_mesh_path]
 
@@ -107,29 +108,34 @@ class TerrainManager():
         self.gradient_threshold = 0.3
 
         ### Load Terrain
-        vertices, faces = self.load_mesh(self.meshes["terrain"])
+        vertices, faces = self.get_mesh(self.meshes["terrain"])
         self._heightmap_manager = HeightmapManager(self.resolution_in_m, vertices, faces)
 
         ## Generate Rock Mask
         self.rock_mask, self.safe_rock_mask = self.find_rocks_in_heightmap(self._heightmap_manager.heightmap, self.gradient_threshold)
 
         ## Generate Spawn Locations
-        self.spawn_locations = self.random_rover_spawns(rock_mask=self.safe_rock_mask,heightmap=self._heightmap_manager.heightmap, n_spawns=1025, seed=41, )
+        self.spawn_locations = self.random_rover_spawns(rock_mask=self.safe_rock_mask,heightmap=self._heightmap_manager.heightmap, n_spawns=num_envs*2, seed=41, )
         if device == 'cuda:0':
             self.spawn_locations = torch.from_numpy(self.spawn_locations).cuda()
             self.rock_mask_tensor = torch.from_numpy(self.safe_rock_mask).cuda().unsqueeze(-1)
 
 
-    def load_mesh(self, path) -> Tuple[np.ndarray, np.ndarray]:
+    def get_mesh(self, prim_path = "/") -> Tuple[np.ndarray, np.ndarray]:
 
         # Assert that the specified path exists in the list of meshes.
         #assert path in self.meshes, f"The provided path '{path}' must exist in the 'self.meshes' list."
 
-        # create an empty meshset
-        ms = pymeshlab.MeshSet()
+        # Get faces and vertices from the mesh using the provided prim path
+        print("OKER ")
 
-        # load the mesh
-        ms.load_new_mesh(path)
+        faces, vertices = get_triangles_and_vertices_from_prim(prim_path)
+
+        # Create pymeshlab mesh and meshset
+        mesh = pymeshlab.Mesh(vertices, faces)
+
+        ms = pymeshlab.MeshSet()
+        ms.add_mesh(mesh)
 
         # get the mesh
         mesh = ms.current_mesh() # get the mesh
@@ -142,27 +148,7 @@ class TerrainManager():
 
         return vertices, faces
 
-    def mesh_to_omni_stage(self, position = None, orientation = None, ground_only = False):
-
-
-        add_material_to_stage_from_mdl()
-
-
-        if not ground_only:
-            for key, value in self.meshes.items():
-                if key != "terrain":
-                    vertices, faces = self.load_mesh(value)
-                    trimesh_to_usd(vertices, faces, position, orientation, name=key)
-                    apply_material(f"/World/{key}", material_path="/Looks/Fieldstone")
-
-        vertices, faces = self.load_mesh(self.meshes["terrain"])
-        trimesh_to_usd(vertices, faces, position, orientation)
-        apply_material("/World/terrain")
-            # for mesh in self.meshes[1:]:
-            #     vertices, faces = self.load_mesh(mesh)
-            #     trimesh_to_usd(vertices, faces, position, orientation,)
-
-    def get_valid_targets(self, target_positions: torch.Tensor, device: str) -> torch.Tensor:
+    def get_valid_targets(self, target_positions: torch.Tensor, device: str = "cuda:0") -> torch.Tensor:
         """
         Computes the closest valid target positions from a set of potential target positions.
         Valid targets are determined based on a rock mask, which indicates traversable terrain.
@@ -170,7 +156,7 @@ class TerrainManager():
 
         Parameters:
         target_positions (torch.Tensor): A tensor of potential target positions.
-        device (str, optional): The device on which to perform the computations. Defaults to 'cuda'.
+        device (str, optional): The device on which to perform the computations. Defaults to 'cuda:0'.
 
         Returns:
         torch.Tensor: A tensor of the closest valid target positions.
@@ -206,6 +192,25 @@ class TerrainManager():
 
         return closest_valid_targets
 
+    # TODO finish this function
+    def check_if_target_is_valid(self, env_ids: torch.Tensor, target_positions: torch.Tensor, device: str = "cuda:0") -> torch.Tensor:
+        # Find the grid cell in self.heightmap_tensor
+
+        # Scale the position to match the heightmap indices
+        scaled_position = target_positions[:,0:2] / self._heightmap_manager.resolution_in_m + self._heightmap_manager.offset_tensor
+        # Convert to long to get the grid cell
+        grid_cell = scaled_position.long()
+
+        # Clamp the grid cell to the heightmap dimensions
+        grid_cell[:, 0] = torch.clamp(grid_cell[:, 0], 0, self._heightmap_manager.heightmap_tensor.shape[1]-1)
+        grid_cell[:, 1] = torch.clamp(grid_cell[:, 1], 0, self._heightmap_manager.heightmap_tensor.shape[0]-1)
+
+        ones = torch.ones_like(env_ids)
+        zeros = torch.zeros_like(env_ids)
+        reset_buf = torch.where(self.rock_mask_tensor[grid_cell[:,1], grid_cell[:,0]] == 1, 1, 0).squeeze(-1)
+        env_ids = env_ids[reset_buf == 1]
+        reset_buf_len = len(env_ids)
+        return env_ids, reset_buf_len
 
     def mesh_to_heightmap(self, vertices, faces, grid_size_in_m, resolution_in_m=0.1):
 
@@ -316,7 +321,7 @@ class TerrainManager():
         # Show the plot
         plt.show()
 
-    def random_rover_spawns(self, rock_mask: np.ndarray, heightmap, n_spawns: int = 100, min_xy: float = 10.0, max_xy: float = 50, seed = None) -> np.ndarray:
+    def random_rover_spawns(self, rock_mask: np.ndarray, heightmap, n_spawns: int = 100, min_xy: float = 20.0, max_xy: float = 180, seed = None) -> np.ndarray:
         """Generate random rover spawn locations. Calculates random x,y checks if it is a rock, if not,
         add to list of spawn locations with corresponding z value from heightmap.
 
