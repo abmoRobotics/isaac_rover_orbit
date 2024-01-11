@@ -29,8 +29,8 @@ import traceback
 
 import carb
 import gymnasium as gym
-import omni.isaac.contrib_tasks  # noqa: F401
-import omni.isaac.orbit_tasks  # noqa: F401
+#import omni.isaac.contrib_tasks  # noqa: F401
+#import omni.isaac.orbit_tasks  # noqa: F401
 import torch
 from omni.isaac.orbit_tasks.utils import parse_env_cfg
 
