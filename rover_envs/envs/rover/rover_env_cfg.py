@@ -24,9 +24,9 @@ from omni.isaac.orbit.utils import configclass
 from omni.isaac.orbit.utils.noise import AdditiveUniformNoiseCfg as Unoise
 
 import rover_envs.envs.rover.mdp as mdp
+from rover_envs.assets.aau_rover import AAU_ROVER_CFG
 from rover_envs.envs.rover.utils.terrains.terrain_importer import \
     RoverTerrainImporter
-from rover_envs.robots.aau_rover import AAU_ROVER_CFG
 
 ##
 # Scene Description
