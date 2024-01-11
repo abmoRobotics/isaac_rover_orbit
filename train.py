@@ -43,13 +43,13 @@ from skrl.utils.model_instantiators import (deterministic_model,
                                             gaussian_model, shared_model)
 
 import rover_envs.envs
-from config import convert_skrl_cfg, parse_skrl_cfg
 from rover_envs.envs.rover.learning.models import (
     DeterministicNeuralNetwork, DeterministicNeuralNetworkSimple,
     GaussianNeuralNetwork, GaussianNeuralNetworkSimple)
+from rover_envs.utils.config import convert_skrl_cfg, parse_skrl_cfg
 #import omni.isaac.contrib_envs  # noqa: F401
 #import omni.isaac.orbit_envs  # noqa: F401
-from skrl_wrapper import IsaacOrbitWrapperFixed
+from rover_envs.utils.skrl_wrapper import IsaacOrbitWrapperFixed
 
 
 def log_setup(experiment_cfg, env_cfg):
