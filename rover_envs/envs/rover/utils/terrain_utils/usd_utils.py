@@ -1,6 +1,6 @@
 import numpy as np
 import omni.isaac.core.utils.prims as prim_utils
-import omni.isaac.orbit.utils.kit as kit_utils
+#import omni.isaac.orbit.utils.kit as kit_utils
 from omni.isaac.core.materials import PhysicsMaterial
 from omni.isaac.core.prims import XFormPrim
 from omni.isaac.core.utils.stage import get_current_stage
@@ -53,9 +53,9 @@ def trimesh_to_usd(vertices: np.ndarray, faces: np.ndarray, position = None, ori
     material2.CreateCompliantContactDampingAttr().Set(20000.0)
 
     #PhysxSchema._physxSchema.PhysxMaterialAPI.CreateCompliantContactStiffnessAttr(defaultValue=0.0, writeSparsely=False)
-    kit_utils.apply_nested_physics_material(terrain_prim.prim_path, material.prim_path)
+    #kit_utils.apply_nested_physics_material(terrain_prim.prim_path, material.prim_path)
 
-
+# TODO: Clean up this function and potentially remove it
 def add_material_to_stage_from_mdl():
     stage: Usd.Stage = get_current_stage()
 
@@ -128,11 +128,27 @@ def add_material_to_stage_from_mdl():
     #     print(f'Exception: {e}')
 
     #fieldstone_prim.GetAttribute("inputs:project_uvw").Set(True)
-#/Looks/Soil_Rocky/Shader.inputs:project_uvw
+    #/Looks/Soil_Rocky/Shader.inputs:project_uvw
     # Type float2
     #soil_rocky_prim.GetAttribute("inputs:texture_scale").Set([1.0, 1.0])
 
 
+def get_triangles_and_vertices_from_prim(prim_path):
+    """ Get triangles and vertices from prim """
+    stage: Usd.Stage = get_current_stage()
+    mesh_prim = stage.GetPrimAtPath(prim_path)
+
+    points = mesh_prim.GetAttribute("points").Get()
+    face_vertex_counts = mesh_prim.GetAttribute("faceVertexCounts").Get()
+    face_vertex_indices = mesh_prim.GetAttribute("faceVertexIndices").Get()
+
+    # triangles = []
+    # for i in range(0, len(face_vertex_indices), 3):
+    #     triangles.append((face_vertex_indices[i], face_vertex_indices[i+1], face_vertex_indices[i+2]))
+    vertices = [(point[0], point[1], point[2]) for point in points]
+    faces = [(face_vertex_indices[i], face_vertex_indices[i+1], face_vertex_indices[i+2]) for i in range(0, len(face_vertex_indices), 3)]
+
+    return faces, vertices
 
 def apply_material(prim_path, material_path = "/Looks/Soil_Rocky"):
     """ Apply material to prim """
