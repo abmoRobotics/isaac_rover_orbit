@@ -320,3 +320,5 @@ wandb/*
 /data/*
 *.ply
 #*.hdf5
+Delete
+testers

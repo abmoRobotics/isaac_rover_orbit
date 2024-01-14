@@ -48,8 +48,9 @@ class RoverSceneCfg(InteractiveSceneCfg):
     )
 
     # Ground Terrain
-    ground_terrain = TerrainImporterCfg(
-        class_type=RoverTerrainImporter,
+    terrain = TerrainImporterCfg(
+        #class_type=RoverTerrainImporter,
+        class_type=TerrainImporter,
         prim_path="/World/terrain",
         terrain_type="usd",
         collision_group=-1,
@@ -84,16 +85,17 @@ class RoverSceneCfg(InteractiveSceneCfg):
 
     robot: ArticulationCfg = AAU_ROVER_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
 
-    contact_forces = ContactSensorCfg(
+    contact_sensor = ContactSensorCfg(
         prim_path="{ENV_REGEX_NS}/Robot/.*_(Drive|Steer|Boogie|Body)",
         filter_prim_paths_expr=["/World/terrain/obstacles/obstacles"]
         )
+    # contact_sensor = None
 
     height_scanner = RayCasterCfg(
         prim_path="{ENV_REGEX_NS}/Robot/Body",
         offset=RayCasterCfg.OffsetCfg(pos=[0.0, 0.0, 10.0]),
         attach_yaw_only=False,
-        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[3.0,3.0]),
+        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[0.2,0.2]),
         debug_vis=False,
         mesh_prim_paths=["/World/terrain/hidden_terrain"],
         max_distance=100.0,
@@ -178,24 +180,24 @@ class RewardsCfg:
     # collision = RewTerm(
     #     func=mdp.collision_penalty,
     #     weight=-1.5,
-    #     params={"sensor_cfg": SceneEntityCfg("contact_forces"), "threshold": 1.0},
+    #     params={"sensor_cfg": SceneEntityCfg("contact_sensor"), "threshold": 1.0},
     # )
 
 @configclass
 class TerminationsCfg:
     """ Termination conditions for the task. """
     time_limit = DoneTerm(func=mdp.time_out, time_out=True)
-    is_success = DoneTerm(
-        func=mdp.is_success,
-        params={"command_name": "target_pose", "threshold": 0.18},
-        )
+    # is_success = DoneTerm(
+    #     func=mdp.is_success,
+    #     params={"command_name": "target_pose", "threshold": 0.18},
+    #     )
     far_from_target = DoneTerm(
         func=mdp.far_from_target,
           params={"command_name": "target_pose", "threshold": 20.0},
           )
     collision = DoneTerm(
         func=mdp.collision_with_obstacles,
-        params={"sensor_cfg": SceneEntityCfg("contact_forces"), "threshold": 1.0},
+        params={"sensor_cfg": SceneEntityCfg("contact_sensor"), "threshold": 1.0},
         )
 # "mdp.illegal_contact
 @configclass
@@ -226,10 +228,11 @@ class RoverEnvCfg(RLTaskEnvCfg):
     """ Configuration for the rover environment."""
 
     # Create scene
-    scene: RoverSceneCfg = RoverSceneCfg(num_envs=256, env_spacing=5, replicate_physics=False)
+    scene: RoverSceneCfg = RoverSceneCfg(num_envs=256, env_spacing=4.0, replicate_physics=False)
 
     # Setup PhysX Settings
     sim: SimCfg = SimCfg(physx=PhysxCfg(
+        enable_stabilization=True,
         gpu_max_rigid_contact_count=8388608,
         gpu_max_rigid_patch_count=262144,
         gpu_found_lost_pairs_capacity=4096,
@@ -251,7 +254,7 @@ class RoverEnvCfg(RLTaskEnvCfg):
     # Basic Settings
     observations: ObservationCfg = ObservationCfg()
     actions: ActionsCfg = ActionsCfg()
-    randomization: RandomizationCfg = RandomizationCfg()
+    #randomization: RandomizationCfg = RandomizationCfg()
 
 
     # MDP Settings
@@ -260,6 +263,7 @@ class RoverEnvCfg(RLTaskEnvCfg):
     commands: CommandsCfg = CommandsCfg()
 
     def __post_init__(self):
+        self.sim.dt = 1 / 20.0
         self.decimation = 4
         self.episode_length_s = 150
         self.viewer.eye = (-6.0, -6.0, 3.5)
@@ -267,5 +271,5 @@ class RoverEnvCfg(RLTaskEnvCfg):
         # update sensor periods
         if self.scene.height_scanner is not None:
             self.scene.height_scanner.update_period = self.sim.dt * self.decimation
-        if self.scene.contact_forces is not None:
-            self.scene.contact_forces.update_period = self.sim.dt * self.decimation
+        if self.scene.contact_sensor is not None:
+            self.scene.contact_sensor.update_period = self.sim.dt * self.decimation

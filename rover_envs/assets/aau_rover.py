@@ -4,12 +4,16 @@ import omni.isaac.orbit.sim as sim_utils
 from omni.isaac.orbit.actuators import ImplicitActuatorCfg
 from omni.isaac.orbit.assets.articulation import ArticulationCfg
 
+from rover_envs.envs.rover.utils.articulation.articulation import \
+    RoverArticulation
+
 #_AAU_ROVER_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '..', 'assets', 'rover' ,'rover_instance.usd')
 #_AAU_ROVER_PATH = "http://localhost:8080/omniverse://127.0.0.1/Projects/simple_instanceable_new/rover_instance.usd"
 #_AAU_ROVER_PATH = "http://localhost:8080/omniverse://127.0.0.1/Projects/simplified9.usd"
 _AAU_ROVER_PATH = "http://localhost:8080/omniverse://127.0.0.1/Projects/simple_instanceable_new/rover_instance.usd"
 
 AAU_ROVER_CFG = ArticulationCfg(
+    class_type=RoverArticulation,
     spawn=sim_utils.UsdFileCfg(
         usd_path=_AAU_ROVER_PATH,
         activate_contact_sensors=True,

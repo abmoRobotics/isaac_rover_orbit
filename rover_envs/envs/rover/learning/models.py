@@ -60,8 +60,8 @@ class GaussianNeuralNetwork(GaussianMixin, BaseModel):
         GaussianMixin.__init__(self, clip_actions=True, clip_log_std=True, min_log_std=-20.0, max_log_std=2.0, reduction="sum")
 
         self.proprioception_channels = 4
-        self.dense_channels = 634
-        self.sparse_channels = 1112
+        self.dense_channels = 4
+        self.sparse_channels = 5
 
         self.dense_encoder = HeightmapEncoder(self.dense_channels, encoder_features, encoder_activation)
         self.sparse_encoder = HeightmapEncoder(self.sparse_channels, encoder_features, encoder_activation)
@@ -122,8 +122,8 @@ class DeterministicNeuralNetwork(DeterministicMixin, BaseModel):
         DeterministicMixin.__init__(self, clip_actions=False)
 
         self.proprioception_channels = 4
-        self.dense_channels = 634
-        self.sparse_channels = 1112
+        self.dense_channels = 4
+        self.sparse_channels = 5
 
         self.dense_encoder = HeightmapEncoder(self.dense_channels, encoder_features, encoder_activation)
         self.sparse_encoder = HeightmapEncoder(self.sparse_channels, encoder_features, encoder_activation)
