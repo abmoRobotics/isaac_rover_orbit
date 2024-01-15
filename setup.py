@@ -1,5 +1,4 @@
-
-from setuptools import find_packages, setup
+from setuptools import find_packages, setup  # noqa: F401
 
 INSTALL_REQUIRES = [
     # generic
