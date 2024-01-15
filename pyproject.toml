@@ -1,0 +1,27 @@
+[tool.isort]
+
+py_version = 3.10
+line_length = 120
+group_by_package = true
+
+# Files to skip
+skip_glob = ["logs/*","data/*", "_isaac_sim/*"]
+
+
+
+# Known third party packages with known types
+
+known_third_party = [
+    "omni.isaac.core",
+    "omni.replicator.isaac",
+    "omni.replicator.core",
+    "pxr",
+    "omni.kit.*",
+    "warp",
+    "carb",
+]
+
+known_first_party = "rover_envs"
+
+
+pythonVersion = "3.10"
