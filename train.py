@@ -5,19 +5,6 @@ from datetime import datetime
 
 import gymnasium as gym
 from omni.isaac.kit import SimulationApp
-from omni.isaac.orbit.envs import RLTaskEnv
-from omni.isaac.orbit.utils.dict import print_dict
-from omni.isaac.orbit.utils.io import dump_pickle, dump_yaml
-from omni.isaac.orbit_tasks.utils import parse_env_cfg
-from omni.isaac.orbit_tasks.utils.wrappers.skrl import SkrlSequentialLogTrainer
-from skrl.agents.torch.ppo import PPO, PPO_DEFAULT_CONFIG
-from skrl.memories.torch import RandomMemory
-from skrl.utils import set_seed
-
-import rover_envs.envs  # noqa: F401
-from rover_envs.envs.rover.learning.models import DeterministicNeuralNetwork, GaussianNeuralNetwork
-from rover_envs.utils.config import convert_skrl_cfg, parse_skrl_cfg
-from rover_envs.utils.skrl_wrapper import IsaacOrbitWrapperFixed
 
 # add argparse arguments
 parser = argparse.ArgumentParser("Welcome to Orbit: Omniverse Robotics Environments!")
@@ -42,6 +29,21 @@ else:
 # launch the simulator
 
 simulation_app = SimulationApp(config, experience=app_experience)
+
+
+from omni.isaac.orbit.envs import RLTaskEnv  # noqa: E402
+from omni.isaac.orbit.utils.dict import print_dict  # noqa: E402
+from omni.isaac.orbit.utils.io import dump_pickle, dump_yaml  # noqa: E402
+from omni.isaac.orbit_tasks.utils import parse_env_cfg  # noqa: E402
+from omni.isaac.orbit_tasks.utils.wrappers.skrl import SkrlSequentialLogTrainer  # noqa: E402
+from skrl.agents.torch.ppo import PPO, PPO_DEFAULT_CONFIG  # noqa: E402
+from skrl.memories.torch import RandomMemory  # noqa: E402
+from skrl.utils import set_seed  # noqa: E402
+
+import rover_envs.envs  # noqa: F401, E402
+from rover_envs.envs.rover.learning.models import DeterministicNeuralNetwork, GaussianNeuralNetwork  # noqa: E402
+from rover_envs.utils.config import convert_skrl_cfg, parse_skrl_cfg  # noqa: E402
+from rover_envs.utils.skrl_wrapper import IsaacOrbitWrapperFixed  # noqa: E402
 
 
 def log_setup(experiment_cfg, env_cfg):
