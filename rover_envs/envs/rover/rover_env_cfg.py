@@ -39,8 +39,8 @@ class RoverSceneCfg(InteractiveSceneCfg):
         spawn=sim_utils.UsdFileCfg(
             visible=False,
             usd_path=(
-                "/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/mars1/              "
-                "   terrain_merged3.usd"
+                "/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/mars1/"
+                "terrain_merged3.usd"
             ),
         ),
         init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0)),
@@ -89,7 +89,8 @@ class RoverSceneCfg(InteractiveSceneCfg):
         init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, -180.0, 80.0)),
     )
 
-    robot: ArticulationCfg = AAU_ROVER_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
+    robot: ArticulationCfg = AAU_ROVER_CFG.replace(
+        prim_path="{ENV_REGEX_NS}/Robot")
 
     contact_sensor = ContactSensorCfg(
         prim_path="{ENV_REGEX_NS}/Robot/.*_(Drive|Steer|Boogie|Body)",
@@ -131,7 +132,8 @@ class ObservationCfg:
     @configclass
     class PolicyCfg(ObsGroup):
         actions = ObsTerm(func=mdp.last_action)
-        distance = ObsTerm(func=mdp.distance_to_target_euclidean, params={"command_name": "target_pose"}, scale=0.11)
+        distance = ObsTerm(func=mdp.distance_to_target_euclidean, params={
+                           "command_name": "target_pose"}, scale=0.11)
         heading = ObsTerm(
             func=mdp.angle_to_target_observation,
             params={
@@ -173,7 +175,8 @@ class RewardsCfg:
     angle_to_target = RewTerm(
         func=mdp.angle_to_target_penalty,
         weight=-1.5,
-        params={"asset_cfg": SceneEntityCfg(name="robot"), "command_name": "target_pose"},
+        params={"asset_cfg": SceneEntityCfg(
+            name="robot"), "command_name": "target_pose"},
     )
     heading_soft_contraint = RewTerm(
         func=mdp.heading_soft_contraint,
@@ -183,7 +186,8 @@ class RewardsCfg:
     collision = RewTerm(
         func=mdp.collision_penalty,
         weight=-1.5,
-        params={"sensor_cfg": SceneEntityCfg("contact_sensor"), "threshold": 1.0},
+        params={"sensor_cfg": SceneEntityCfg(
+            "contact_sensor"), "threshold": 1.0},
     )
 
 
@@ -202,7 +206,8 @@ class TerminationsCfg:
     )
     collision = DoneTerm(
         func=mdp.collision_with_obstacles,
-        params={"sensor_cfg": SceneEntityCfg("contact_sensor"), "threshold": 1.0},
+        params={"sensor_cfg": SceneEntityCfg(
+            "contact_sensor"), "threshold": 1.0},
     )
 
 
@@ -216,7 +221,8 @@ class CommandsCfg:
         rel_standing_envs=0.0,
         simple_heading=False,
         resampling_time_range=(150.0, 150.0),
-        ranges=mdp.TerrainBasedPositionCommandCfg.Ranges(heading=(-math.pi, math.pi)),
+        ranges=mdp.TerrainBasedPositionCommandCfg.Ranges(
+            heading=(-math.pi, math.pi)),
         debug_vis=True,
     )
 
@@ -239,7 +245,8 @@ class RoverEnvCfg(RLTaskEnvCfg):
     """Configuration for the rover environment."""
 
     # Create scene
-    scene: RoverSceneCfg = RoverSceneCfg(num_envs=256, env_spacing=4.0, replicate_physics=False)
+    scene: RoverSceneCfg = RoverSceneCfg(
+        num_envs=256, env_spacing=4.0, replicate_physics=False)
 
     # Setup PhysX Settings
     sim: SimCfg = SimCfg(
