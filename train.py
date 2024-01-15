@@ -14,7 +14,7 @@ from skrl.agents.torch.ppo import PPO, PPO_DEFAULT_CONFIG
 from skrl.memories.torch import RandomMemory
 from skrl.utils import set_seed
 
-import rover_envs.envs
+import rover_envs.envs  # noqa: F401
 from rover_envs.envs.rover.learning.models import DeterministicNeuralNetwork, GaussianNeuralNetwork
 from rover_envs.utils.config import convert_skrl_cfg, parse_skrl_cfg
 from rover_envs.utils.skrl_wrapper import IsaacOrbitWrapperFixed
@@ -30,7 +30,7 @@ parser.add_argument("--num_envs", type=int, default=None, help="Number of enviro
 parser.add_argument("--task", type=str, default=None, help="Name of the task.")
 parser.add_argument("--seed", type=int, default=None, help="Seed used for the environment")
 args_cli = parser.parse_args()
-a = rover_envs.envs.rover
+
 # launch the simulator
 config = {"headless": args_cli.headless}
 # load cheaper kit config in headless
