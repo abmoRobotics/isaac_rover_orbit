@@ -63,8 +63,8 @@ class RoverSceneCfg(InteractiveSceneCfg):
         spawn=sim_utils.UsdFileCfg(
             # usd_path="omniverse://127.0.0.1/Projects/P7 - Exam/Big rocks only.usd",
             usd_path=(
-                "/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/mars1/              "
-                "   rocks_merged2.usd"
+                "/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/mars1/"
+                "rocks_merged2.usd"
             )
         ),
         init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0)),
