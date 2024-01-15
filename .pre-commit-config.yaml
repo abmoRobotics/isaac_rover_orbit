@@ -1,9 +1,4 @@
 repos:
-  - repo: https://github.com/python/black
-    rev: 23.10.1
-    hooks:
-      - id: black
-        args: ["--line-length", "120", "--preview"]
   - repo: https://github.com/pycqa/flake8
     rev: 6.1.0
     hooks:
