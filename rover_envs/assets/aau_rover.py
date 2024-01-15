@@ -1,15 +1,14 @@
-import os
-
 import omni.isaac.orbit.sim as sim_utils
 from omni.isaac.orbit.actuators import ImplicitActuatorCfg
 from omni.isaac.orbit.assets.articulation import ArticulationCfg
 
-from rover_envs.envs.rover.utils.articulation.articulation import \
-    RoverArticulation
+from rover_envs.envs.rover.utils.articulation.articulation import RoverArticulation
 
-#_AAU_ROVER_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '..', 'assets', 'rover' ,'rover_instance.usd')
-#_AAU_ROVER_PATH = "http://localhost:8080/omniverse://127.0.0.1/Projects/simple_instanceable_new/rover_instance.usd"
-#_AAU_ROVER_PATH = "http://localhost:8080/omniverse://127.0.0.1/Projects/simplified9.usd"
+# _AAU_ROVER_PATH = os.path.join(
+#     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "..", "assets", "rover", "rover_instance.usd"
+# )
+# _AAU_ROVER_PATH = "http://localhost:8080/omniverse://127.0.0.1/Projects/simple_instanceable_new/rover_instance.usd"
+# _AAU_ROVER_PATH = "http://localhost:8080/omniverse://127.0.0.1/Projects/simplified9.usd"
 _AAU_ROVER_PATH = "http://localhost:8080/omniverse://127.0.0.1/Projects/simple_instanceable_new/rover_instance.usd"
 
 AAU_ROVER_CFG = ArticulationCfg(
@@ -25,18 +24,18 @@ AAU_ROVER_CFG = ArticulationCfg(
             disable_gravity=False,
         ),
         articulation_props=sim_utils.ArticulationRootPropertiesCfg(
-            #enabled_self_collisions=False, solver_position_iteration_count=16, solver_velocity_iteration_count=4)
-            enabled_self_collisions=False, solver_position_iteration_count=32, solver_velocity_iteration_count=4)
+            # enabled_self_collisions=False, solver_position_iteration_count=16, solver_velocity_iteration_count=4)
+            enabled_self_collisions=False,
+            solver_position_iteration_count=32,
+            solver_velocity_iteration_count=4,
         ),
-
+    ),
     init_state=ArticulationCfg.InitialStateCfg(
         pos=(0.0, 0.0, 0.5),
         joint_pos={".*Steer_Revolute": 0.0},
-        joint_vel={".*Steer_Revolute": 0.0,
-                 ".*Drive_Continuous": 0.0},
+        joint_vel={".*Steer_Revolute": 0.0, ".*Drive_Continuous": 0.0},
     ),
-
-    actuators = {
+    actuators={
         "base_steering": ImplicitActuatorCfg(
             joint_names_expr=[".*Steer_Revolute"],
             velocity_limit=6,
@@ -58,5 +57,5 @@ AAU_ROVER_CFG = ArticulationCfg(
             stiffness=0.0,
             damping=0.0,
         ),
-    }
+    },
 )
