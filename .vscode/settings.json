@@ -1,4 +1,12 @@
 {
+    "autopep8.args": ["--max-line-length", "120"],
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.autopep8",
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4,
+        "editor.formatOnSave": true,
+        "editor.rulers": [120]
+    },
     "python.analysis.extraPaths": [
         "~/.local/share/ov/pkg/isaac_sim-2023.1.0-hotfix.1/exts/omni.isaac.core",
         "~/.local/share/ov/pkg/isaac_sim-2023.1.0-hotfix.1/kit/exts/omni.usd.libs",
@@ -9,6 +17,12 @@
         "~/.local/share/ov/pkg/isaac_sim-2023.1.0-hotfix.1/exts/omni.isaac.kit",
     ],
     "python.defaultInterpreterPath": "~/anaconda3/envs/orbit_env/bin/python",
-    "ros.distro": "humble",
+    "codesnap.boxShadow": "none",
+    "codesnap.containerPadding": "5",
+    "codesnap.showLineNumbers": true,
+    "codesnap.showWindowControls": true,
+    "codesnap.transparentBackground": true,
+    "todo-tree.ripgrep.ripgrep": "/usr/bin/rg",
+
 
 }
