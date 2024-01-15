@@ -150,8 +150,9 @@ def video_record(env: RLTaskEnv, log_dir: str, video: bool, video_length: int, v
         }
         print("[INFO] Recording videos during training.")
         print_dict(video_kwargs, nesting=4)
+        return gym.wrappers.RecordVideo(env, **video_kwargs)
 
-    return gym.wrappers.RecordVideo(env, **video_kwargs)
+    return env
 
 
 def main():
