@@ -4,13 +4,12 @@ from typing import TYPE_CHECKING
 
 import torch
 # Importing necessary modules from the omni.isaac.orbit package
-from omni.isaac.orbit.assets import RigidObject
 from omni.isaac.orbit.managers import SceneEntityCfg
 from omni.isaac.orbit.sensors import ContactSensor
-from omni.isaac.orbit.utils.math import euler_xyz_from_quat
 
 if TYPE_CHECKING:
     from omni.isaac.orbit.envs import RLTaskEnv
+
 
 def distance_to_target_reward(env: RLTaskEnv, command_name: str) -> torch.Tensor:
     """
@@ -28,9 +27,10 @@ def distance_to_target_reward(env: RLTaskEnv, command_name: str) -> torch.Tensor
 
     # Calculating the distance and the reward
     distance = torch.norm(target_position, p=2, dim=-1)
-    reward = (1.0 / (1.0 + (0.11 * distance * distance))) / env.max_episode_length
 
-    return reward
+    # Return the reward, normalized by the maximum episode length
+    return (1.0 / (1.0 + (0.11 * distance * distance))) / env.max_episode_length
+
 
 def reached_target(env: RLTaskEnv, command_name: str, threshold: float) -> torch.Tensor:
     """
@@ -49,9 +49,9 @@ def reached_target(env: RLTaskEnv, command_name: str, threshold: float) -> torch
     time_steps_to_goal = env.max_episode_length - env.episode_length_buf
     reward_scale = time_steps_to_goal / env.max_episode_length
 
-    reward = torch.where(distance < threshold, 1.0 * reward_scale, 0)
+    # Return the reward, scaled depending on the remaining time steps
+    return torch.where(distance < threshold, 1.0 * reward_scale, 0)
 
-    return reward
 
 def oscillation_penalty(env: RLTaskEnv) -> torch.Tensor:
     """
@@ -77,34 +77,24 @@ def oscillation_penalty(env: RLTaskEnv) -> torch.Tensor:
 
     return (angular_penalty + linear_penalty) / env.max_episode_length
 
-def angle_to_target_penalty(env: RLTaskEnv, command_name: str, asset_cfg: SceneEntityCfg) -> torch.Tensor:
+
+def angle_to_target_penalty(env: RLTaskEnv, command_name: str) -> torch.Tensor:
     """
     Calculate the penalty for the angle between the rover and the target.
 
     This function computes the angle between the rover's heading direction and the direction
     towards the target. A penalty is applied if this angle exceeds a certain threshold.
     """
-    # Accessing rover's position and rotation
-    rover_asset: RigidObject = env.scene[asset_cfg.name]
-    _,_, yaw = euler_xyz_from_quat(rover_asset.data.root_state_w[:, :4])
-    rover_position = rover_asset.data.root_state_w[:, :2]
 
-    # Calculating the rover's heading direction
-    direction_vector = torch.zeros([env.num_envs, 2], device=env.device)
-    direction_vector[:, 0] = torch.cos(yaw)
-    direction_vector[:, 1] = torch.sin(yaw)
+    # Get vector(x,y) from rover to target, in base frame of the rover.
+    target_vector_b = env.command_manager.get_command(command_name)[:, :2]
 
-    # Accessing the target's position and calculating the direction vector
-    target = env.command_manager.get_command(command_name)
-    target_position = target[:, :2]
-    target_vector = target_position - rover_position
+    # Calculate the angle between the rover's heading [1, 0] and the vector to the target.
+    angle = torch.atan2(target_vector_b[:, 1], target_vector_b[:, 0])
 
-    # Calculating the angle and applying the penalty
-    cross_product = direction_vector[:, 1] * target_vector[:, 0] - direction_vector[:, 0] * target_vector[:, 1]
-    dot_product = direction_vector[:, 0] * target_vector[:, 0] + direction_vector[:, 1] * target_vector[:, 1]
-    angle = torch.atan2(cross_product, dot_product)
-
+    # Return the absolute value of the angle, normalized by the maximum episode length.
     return torch.where(torch.abs(angle) > 2.0, torch.abs(angle) / env.max_episode_length, 0.0)
+
 
 def heading_soft_contraint(env: RLTaskEnv, asset_cfg: SceneEntityCfg) -> torch.Tensor:
     """
@@ -114,6 +104,7 @@ def heading_soft_contraint(env: RLTaskEnv, asset_cfg: SceneEntityCfg) -> torch.T
     The penalty is normalized by the maximum episode length.
     """
     return torch.where(env.action_manager.action[:, 0] < 0.0, (1.0 / env.max_episode_length), 0.0)
+
 
 def collision_penalty(env: RLTaskEnv, sensor_cfg: SceneEntityCfg, threshold: float) -> torch.Tensor:
     """
