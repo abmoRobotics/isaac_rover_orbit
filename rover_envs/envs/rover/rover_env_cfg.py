@@ -48,7 +48,8 @@ class RoverSceneCfg(InteractiveSceneCfg):
 
     # Ground Terrain
     terrain = TerrainImporterCfg(
-        class_type=RoverTerrainImporter,  # TerrainImporter,
+        # Choose either TerrainImporter(outcomment randomization), # RoverTerrainImporter
+        class_type=RoverTerrainImporter,
         prim_path="/World/terrain",
         terrain_type="usd",
         collision_group=-1,
@@ -137,7 +138,6 @@ class ObservationCfg:
         heading = ObsTerm(
             func=mdp.angle_to_target_observation,
             params={
-                "asset_cfg": SceneEntityCfg(name="robot"),
                 "command_name": "target_pose",
             },
             scale=1 / math.pi,
@@ -175,8 +175,7 @@ class RewardsCfg:
     angle_to_target = RewTerm(
         func=mdp.angle_to_target_penalty,
         weight=-1.5,
-        params={"asset_cfg": SceneEntityCfg(
-            name="robot"), "command_name": "target_pose"},
+        params={"command_name": "target_pose"},
     )
     heading_soft_contraint = RewTerm(
         func=mdp.heading_soft_contraint,
