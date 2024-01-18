@@ -8,15 +8,9 @@ import torch
 
 from ..terrains.usd_utils import get_triangles_and_vertices_from_prim
 
-try:
-    from ..terrains.usd_utils import (add_material_to_stage_from_mdl,
-                                      apply_material, trimesh_to_usd)
-except Exception as e:
-    print(f'Error importing trimesh_to_usd: {e}')
-#from .usd_utils import trimesh_to_usd
-#from envs.rover.utils.terrain_utils.usd_utils import trimesh_to_usd, apply_material, add_material_to_stage_from_mdl
-# Get the directory containing the script
 directory_terrain_utils = os.path.dirname(os.path.abspath(__file__))
+
+
 class HeightmapManager():
 
     def __init__(self, resolution_in_m, vertices, faces):
@@ -34,14 +28,12 @@ class HeightmapManager():
         max_x, max_y, _ = np.max(vertices, axis=0) - border_margin
 
         # Calculate the grid size
-        #grid_size = grid_size_in_m / resolution_in_m
+        # grid_size = grid_size_in_m / resolution_in_m
         grid_size_x = (max_x - min_x) / self.resolution_in_m
         grid_size_y = (max_y - min_y) / self.resolution_in_m
 
         # Initialize the heightmap
         heightmap = np.ones((int(grid_size_x+1), int(grid_size_y+1)), dtype=np.float32) * -99
-
-
 
         # Calculate the size of a grid cell
         cell_size_x = (max_x - min_x) / (grid_size_x)
@@ -67,7 +59,16 @@ class HeightmapManager():
     def get_heightmap(self):
         return self.heightmap
 
-    def get_height_at(self, position: torch.Tensor):
+    def get_height_at(self, position: torch.Tensor) -> torch.Tensor:
+        """
+        Returns the height at the specified position.
+
+        Args:
+            position (torch.Tensor): The position at which to get the height. Shape (N, 2).
+
+        Returns:
+            torch.Tensor: The height at the specified position. Shape (N,).
+        """
         # Find the grid cell in self.heightmap_tensor
 
         # Scale the position to match the heightmap indices
@@ -79,13 +80,12 @@ class HeightmapManager():
         grid_cell[:, 0] = torch.clamp(grid_cell[:, 0], 0, self.heightmap_tensor.shape[1]-1)
         grid_cell[:, 1] = torch.clamp(grid_cell[:, 1], 0, self.heightmap_tensor.shape[0]-1)
 
-        # Lookup the heights
-        heights = self.heightmap_tensor[grid_cell[:,1], grid_cell[:,0]]
-
-        return heights
+        # Return the heights at the specified positions
+        return self.heightmap_tensor[grid_cell[:, 1], grid_cell[:, 0]]
 
     def get_minimums(self):
         return self.min_x, self.min_y
+
 
 class TerrainManager():
 
@@ -102,33 +102,35 @@ class TerrainManager():
             "rock": rock_mesh_path
         }
 
-        ### Terrain Parameters
+        # Terrain Parameters
         self.heightmap = None
         self.resolution_in_m = 0.05
         self.gradient_threshold = 0.3
 
-        ### Load Terrain
+        # Load Terrain
+        print("Getting triangles and vertices from USD file")
         vertices, faces = self.get_mesh(self.meshes["terrain"])
+        print("Generating heightmap")
         self._heightmap_manager = HeightmapManager(self.resolution_in_m, vertices, faces)
 
-        ## Generate Rock Mask
-        self.rock_mask, self.safe_rock_mask = self.find_rocks_in_heightmap(self._heightmap_manager.heightmap, self.gradient_threshold)
+        # Generate Rock Mask
+        print("Generating rock mask")
+        self.rock_mask, self.safe_rock_mask = self.find_rocks_in_heightmap(
+            self._heightmap_manager.heightmap, self.gradient_threshold)
 
-        ## Generate Spawn Locations
-        self.spawn_locations = self.random_rover_spawns(rock_mask=self.safe_rock_mask,heightmap=self._heightmap_manager.heightmap, n_spawns=num_envs*2, seed=41, )
+        # Generate Spawn Locations
+        self.spawn_locations = self.random_rover_spawns(
+            rock_mask=self.safe_rock_mask, heightmap=self._heightmap_manager.heightmap, n_spawns=num_envs*2, seed=41, )
         if device == 'cuda:0':
             self.spawn_locations = torch.from_numpy(self.spawn_locations).cuda()
             self.rock_mask_tensor = torch.from_numpy(self.safe_rock_mask).cuda().unsqueeze(-1)
 
-
-    def get_mesh(self, prim_path = "/") -> Tuple[np.ndarray, np.ndarray]:
+    def get_mesh(self, prim_path="/") -> Tuple[np.ndarray, np.ndarray]:
 
         # Assert that the specified path exists in the list of meshes.
-        #assert path in self.meshes, f"The provided path '{path}' must exist in the 'self.meshes' list."
+        # assert path in self.meshes, f"The provided path '{path}' must exist in the 'self.meshes' list."
 
         # Get faces and vertices from the mesh using the provided prim path
-        print("OKER ")
-
         faces, vertices = get_triangles_and_vertices_from_prim(prim_path)
 
         # Create pymeshlab mesh and meshset
@@ -138,7 +140,7 @@ class TerrainManager():
         ms.add_mesh(mesh)
 
         # get the mesh
-        mesh = ms.current_mesh() # get the mesh
+        mesh = ms.current_mesh()  # get the mesh
 
         # Get vertices as float32 array
         vertices = mesh.vertex_matrix().astype('float32')
@@ -148,18 +150,19 @@ class TerrainManager():
 
         return vertices, faces
 
+    # TODO Remove this function
     def get_valid_targets(self, target_positions: torch.Tensor, device: str = "cuda:0") -> torch.Tensor:
         """
         Computes the closest valid target positions from a set of potential target positions.
         Valid targets are determined based on a rock mask, which indicates traversable terrain.
         The computations are performed on the specified device (e.g., 'cuda' or 'cpu').
 
-        Parameters:
-        target_positions (torch.Tensor): A tensor of potential target positions.
-        device (str, optional): The device on which to perform the computations. Defaults to 'cuda:0'.
+        Args:
+            target_positions (torch.Tensor): A tensor of shape (N, 2) containing the target positions.
+            device (str, optional): The device on which to perform the computations. Defaults to "cuda:0".
 
         Returns:
-        torch.Tensor: A tensor of the closest valid target positions.
+            torch.Tensor: A tensor of the closest valid target positions.
         """
 
         # Generate a coordinate grid based on the rock mask dimensions
@@ -169,7 +172,6 @@ class TerrainManager():
             indexing='ij'
         )
         coordinate_grid = torch.stack((coordinate_grid_x, coordinate_grid_y), dim=-1).view(-1, 2)
-
 
         # Adjust grid coordinates based on resolution and offset
         scaled_grid = coordinate_grid.float()
@@ -188,16 +190,22 @@ class TerrainManager():
 
         # Find the closest valid target positions
         min_distances, min_indices = torch.min(distances_masked.view(-1, distances_masked.size(2)), dim=0)
-        closest_valid_targets = scaled_grid[min_indices]
 
-        return closest_valid_targets
+        # Returns closest valid target positions
+        return scaled_grid[min_indices]
 
     # TODO finish this function
-    def check_if_target_is_valid(self, env_ids: torch.Tensor, target_positions: torch.Tensor, device: str = "cuda:0") -> torch.Tensor:
+    def check_if_target_is_valid(
+            self,
+            env_ids: torch.Tensor,
+            target_positions: torch.Tensor,
+            device: str = "cuda:0"
+    ) -> torch.Tensor:
         # Find the grid cell in self.heightmap_tensor
 
         # Scale the position to match the heightmap indices
-        scaled_position = target_positions[:,0:2] / self._heightmap_manager.resolution_in_m + self._heightmap_manager.offset_tensor
+        scaled_position = target_positions[:, 0:2] / \
+            self._heightmap_manager.resolution_in_m + self._heightmap_manager.offset_tensor
         # Convert to long to get the grid cell
         grid_cell = scaled_position.long()
 
@@ -205,9 +213,7 @@ class TerrainManager():
         grid_cell[:, 0] = torch.clamp(grid_cell[:, 0], 0, self._heightmap_manager.heightmap_tensor.shape[1]-1)
         grid_cell[:, 1] = torch.clamp(grid_cell[:, 1], 0, self._heightmap_manager.heightmap_tensor.shape[0]-1)
 
-        ones = torch.ones_like(env_ids)
-        zeros = torch.zeros_like(env_ids)
-        reset_buf = torch.where(self.rock_mask_tensor[grid_cell[:,1], grid_cell[:,0]] == 1, 1, 0).squeeze(-1)
+        reset_buf = torch.where(self.rock_mask_tensor[grid_cell[:, 1], grid_cell[:, 0]] == 1, 1, 0).squeeze(-1)
         env_ids = env_ids[reset_buf == 1]
         reset_buf_len = len(env_ids)
         return env_ids, reset_buf_len
@@ -221,14 +227,12 @@ class TerrainManager():
         max_x, max_y, _ = np.max(vertices, axis=0) - border_margin
 
         # Calculate the grid size
-        #grid_size = grid_size_in_m / resolution_in_m
+        # grid_size = grid_size_in_m / resolution_in_m
         grid_size_x = (max_x - min_x) / resolution_in_m
         grid_size_y = (max_y - min_y) / resolution_in_m
 
         # Initialize the heightmap
         heightmap = np.ones((int(grid_size_x+1), int(grid_size_y+1)), dtype=np.float32) * -99
-
-
 
         # Calculate the size of a grid cell
         cell_size_x = (max_x - min_x) / (grid_size_x)
@@ -254,11 +258,9 @@ class TerrainManager():
 
         return heightmap
 
-
     def find_rocks_in_heightmap(self, heightmap, threshold=0.1):
         import cv2
         from scipy import ndimage
-        from scipy.ndimage import binary_dilation
         from scipy.signal import convolve2d
 
         # Sobel operators for gradient in x and y directions
@@ -287,11 +289,11 @@ class TerrainManager():
         kernel = np.ones((3, 3), np.uint8)
         rock_mask = cv2.morphologyEx(rock_mask.astype(np.uint8), cv2.MORPH_CLOSE, kernel)
 
-        #= cv2.morphologyEx(rock_mask.astype(np.uint8), cv2.MORPH_OPEN, kernel)
+        # = cv2.morphologyEx(rock_mask.astype(np.uint8), cv2.MORPH_OPEN, kernel)
 
         # # Perform dilation to add a safety margin around the rocks
-        #closed_rock_mask = binary_dilation(rock_mask, iterations=1)
-        #filled_rock_mask = ndimage.binary_fill_holes(closed_rock_mask).astype(int)
+        # closed_rock_mask = binary_dilation(rock_mask, iterations=1)
+        # filled_rock_mask = ndimage.binary_fill_holes(closed_rock_mask).astype(int)
         rock_mask = ndimage.binary_fill_holes(rock_mask).astype(int)
 
         kernel = np.ones((7, 7), np.uint8)
@@ -321,7 +323,14 @@ class TerrainManager():
         # Show the plot
         plt.show()
 
-    def random_rover_spawns(self, rock_mask: np.ndarray, heightmap, n_spawns: int = 100, min_xy: float = 20.0, max_xy: float = 180, seed = None) -> np.ndarray:
+    def random_rover_spawns(
+            self,
+            rock_mask: np.ndarray,
+            heightmap, n_spawns: int = 100,
+            min_xy: float = 20.0,
+            max_xy: float = 180,
+            seed=None
+    ) -> np.ndarray:
         """Generate random rover spawn locations. Calculates random x,y checks if it is a rock, if not,
         add to list of spawn locations with corresponding z value from heightmap.
 
@@ -370,6 +379,7 @@ class TerrainManager():
         spawn_locations[:, 1] = spawn_locations[:, 1] * self.resolution_in_m + self._heightmap_manager.min_y
         return spawn_locations
 
+
 def show_heightmap(heightmap, cmap="terrain"):
     plt.figure(figsize=(10, 10))
     vmin = np.min(heightmap)
@@ -385,7 +395,7 @@ def show_heightmap(heightmap, cmap="terrain"):
     x_ticks_scaled = x_ticks * 0.05
     y_ticks_scaled = y_ticks * 0.05
 
-        # Set new ticks and labels
+    # Set new ticks and labels
     plt.xticks(x_ticks, x_ticks_scaled)
     plt.yticks(y_ticks, y_ticks_scaled)
 
@@ -399,6 +409,7 @@ def show_heightmap(heightmap, cmap="terrain"):
 
     # Show the plot
     plt.show()
+
 
 def visualize_spawn_points(spawn_locations: np.ndarray, heightmap: np.ndarray):
     """
@@ -420,13 +431,11 @@ def visualize_spawn_points(spawn_locations: np.ndarray, heightmap: np.ndarray):
     ax1.set_xlabel('X Coordinate')
     ax1.set_ylabel('Y Coordinate')
     ax1.set_zlabel('Z Coordinate (Height)')
-    #ax1.set_xlim([0, 600])  # Set the limits for the X-axis
+    # ax1.set_xlim([0, 600])  # Set the limits for the X-axis
     ax1.set_zlim([0, 10])
     x = np.linspace(0, heightmap.shape[1] - 1, heightmap.shape[1])
     y = np.linspace(0, heightmap.shape[0] - 1, heightmap.shape[0])
     X, Y = np.meshgrid(x, y)
-
-
 
     ax1.plot_surface(X, Y, heightmap, alpha=0.5, cmap='viridis')
     ax1.scatter(spawn_locations[:, 0], spawn_locations[:, 1], spawn_locations[:, 2]+0.5, c='r', marker='o', s=50)
@@ -439,15 +448,14 @@ def visualize_spawn_points(spawn_locations: np.ndarray, heightmap: np.ndarray):
     ax2.set_ylabel('Y Coordinate')
 
     ax2.imshow(heightmap, cmap='terrain', origin='lower')
-    #ax2.imshow(np.ma.masked_where(rock_mask == 0, rock_mask), cmap='coolwarm', alpha=0.4)
+    # ax2.imshow(np.ma.masked_where(rock_mask == 0, rock_mask), cmap='coolwarm', alpha=0.4)
     ax2.scatter(spawn_locations[:, 0], spawn_locations[:, 1], c='r', marker='o')
 
     plt.show()
 
+
 if __name__ == "__main__":
     terrain = TerrainManager(device='cuda:0')
-
-
 
     # vertices, faces = terrain.load_mesh(terrain.meshes[0])
     # heightmap = terrain.mesh_to_heightmap(vertices, faces, grid_size_in_m=60, resolution_in_m=0.1)
@@ -463,39 +471,37 @@ if __name__ == "__main__":
     # # rock_mask = np.random.randint(0, 2, (100, 100))  # Replace with your actual rock mask
 
     # Generate spawn locations using the random_rover_spawns function
-    #spawn_locations = random_rover_spawns(rock_mask=rock_mask, n_spawns=1000, min_dist=1.0, seed=41)
+    # spawn_locations = random_rover_spawns(rock_mask=rock_mask, n_spawns=1000, min_dist=1.0, seed=41)
 
     # Visualize the spawn locations using the visualize_spawn_points function
-    #show_heightmap(terrain._heightmap_manager.heightmap)
-    #generate_random_grid_cell_tensor_100_by_100 = torch.randint(0, 100, (100, 100), device='cuda:0')
-    #print(f'generate_random_grid_cell_tensor_100_by_100 shape: {generate_random_grid_cell_tensor_100_by_100.shape}')
+    # show_heightmap(terrain._heightmap_manager.heightmap)
+    # generate_random_grid_cell_tensor_100_by_100 = torch.randint(0, 100, (100, 100), device='cuda:0')
+    # print(f'generate_random_grid_cell_tensor_100_by_100 shape: {generate_random_grid_cell_tensor_100_by_100.shape}')
     # Create x,y rand indices 2d tensor
-    #random_indices = torch.randint(0, 100, (10, 2), device='cuda:0')
-    #get_height_at = terrain._heightmap_manager.get_height_at(random_indices)
-    #print(generate_random_grid_cell_tensor_100_by_100[random_indices[0], random_indices[1]])
-    #print(get_height_at)
+    # random_indices = torch.randint(0, 100, (10, 2), device='cuda:0')
+    # get_height_at = terrain._heightmap_manager.get_height_at(random_indices)
+    # print(generate_random_grid_cell_tensor_100_by_100[random_indices[0], random_indices[1]])
+    # print(get_height_at)
 
-    target_positionss = torch.tensor([[5, 5], [10, 10], [15, 15],[11.1,12.2],[50,37]], device='cuda:0')
+    target_positionss = torch.tensor([[5, 5], [10, 10], [15, 15], [11.1, 12.2], [50, 37]], device='cuda:0')
     # set torch seed
     torch.manual_seed(41)
 
     # Generate 100 random target float positions between 5 and 50
     target_positionss = torch.rand(100, 2, device='cuda:0') * 45 + 5
-    #target_positionss = torch.rand(2, 2, device='cuda:0') * 45 + 5
-    #print(terrain.get_valid_targets(target_positions=target_positionss,device='cuda:0'))
-    target_poss = terrain.get_valid_targets(target_positions=target_positionss,device='cuda:0')
+    # target_positionss = torch.rand(2, 2, device='cuda:0') * 45 + 5
+    # print(terrain.get_valid_targets(target_positions=target_positionss,device='cuda:0'))
+    target_poss = terrain.get_valid_targets(target_positions=target_positionss, device='cuda:0')
     zero_coloumn = torch.zeros((target_poss.shape[0], 1), device='cuda:0')
     target_poss = torch.cat((target_poss, zero_coloumn), dim=1)
-    target_poss[:,2] = terrain._heightmap_manager.get_height_at(target_poss[:,0:2])
+    target_poss[:, 2] = terrain._heightmap_manager.get_height_at(target_poss[:, 0:2])
     target_poss = target_poss.cpu().numpy()
-    #print(target_poss)
+    # print(target_poss)
     target_poss[:, 0:2] = target_poss[:, 0:2] / terrain._heightmap_manager.resolution_in_m
 
-    #visualize_spawn_points(target_poss, terrain._heightmap_manager.heightmap)
+    # visualize_spawn_points(target_poss, terrain._heightmap_manager.heightmap)
     visualize_spawn_points(target_poss, terrain.rock_mask)
     show_heightmap(terrain.safe_rock_mask, cmap='gray')
-
-
 
     # spawns = terrain.spawn_locations
     # spawns[:, 0:2] = spawns[:, 0:2] / terrain._heightmap_manager.resolution_in_m
