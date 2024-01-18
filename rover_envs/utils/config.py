@@ -9,14 +9,13 @@
 import os
 
 import yaml
-from skrl.resources.preprocessors.torch import \
-    RunningStandardScaler  # noqa: F401
+from skrl.resources.preprocessors.torch import RunningStandardScaler  # noqa: F401
 from skrl.resources.schedulers.torch import KLAdaptiveRL  # noqa: F401
 
-# Convinient way to switch between skrl versions
+# Convenient way to switch between skrl versions
 try:
     from skrl.utils.model_instantiators import Shape  # noqa: F401
-except:
+except ImportError:
     from skrl.utils.model_instantiators.torch import Shape  # noqa: F401
 
 from rover_envs.envs import ORBIT_CUSTOM_ENVS_DATA_DIR
@@ -29,8 +28,8 @@ SKRL_PPO_CONFIG_FILE = {
     "Rover-v0": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_ppo.yaml"),
     "RoverCamera-v0": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_ppo.yaml"),
     "RoverNew-v0": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_ppo.yaml"),
-    }
-
+    "RoverNoObstacles-v0": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_ppo.yaml"),
+}
 
 
 def parse_skrl_cfg(task_name) -> dict:
@@ -51,8 +50,8 @@ def parse_skrl_cfg(task_name) -> dict:
 
     # parse agent configuration
     with open(config_file, encoding="utf-8") as f:
-        cfg = yaml.load(f, Loader=yaml.Loader)
-    return cfg
+        cfg = yaml.load(f, Loader=yaml.Loader)  # noqa: R504
+    return cfg  # noqa: R504
 
 
 def convert_skrl_cfg(cfg):
