@@ -1,4 +1,10 @@
+
+import omni.isaac.orbit.sim as sim_utils
 import torch
+from omni.isaac.orbit.envs.mdp.commands.commands_cfg import TerrainBasedPositionCommandCfg
+from omni.isaac.orbit.envs.mdp.commands.position_command import TerrainBasedPositionCommand
+from omni.isaac.orbit.markers import VisualizationMarkers
+from omni.isaac.orbit.markers.visualization_markers import VisualizationMarkersCfg
 from omni.isaac.orbit.terrains import TerrainImporter, TerrainImporterCfg
 
 from .terrain_utils import TerrainManager
@@ -9,6 +15,7 @@ class RoverTerrainImporter(TerrainImporter):
         super().__init__(cfg)
         self._cfg = cfg
         self._terrainManager = TerrainManager(num_envs=self._cfg.num_envs, device=self.device)
+        self.target_distance = 9.0
 
     def sample_new_targets(self, env_ids):
         # We need to keep track of the original env_ids, because we need to resample some of them
@@ -21,13 +28,17 @@ class RoverTerrainImporter(TerrainImporter):
         reset_buf_len = len(env_ids)
         while (reset_buf_len > 0):
             # sample new random targets
+            # print(reset_buf_len)
+            # print(f'env_ids: {env_ids}')
             target_position[env_ids] = self.generate_random_targets(env_ids, target_position)
 
             # Here we check if the target is valid, and if not, we resample a new random target
-            env_ids, reset_buf_len = self._terrainManager.check_if_target_is_valid(env_ids, target_position[env_ids, 0:2], device=self.device)
+            env_ids, reset_buf_len = self._terrainManager.check_if_target_is_valid(
+                env_ids, target_position[env_ids, 0:2], device=self.device)
 
         # Adjust the height of the target, so that it matches the terrain
-        target_position[original_env_ids, 2] = self._terrainManager._heightmap_manager.get_height_at(target_position[original_env_ids, 0:2])
+        target_position[original_env_ids, 2] = self._terrainManager._heightmap_manager.get_height_at(
+            target_position[original_env_ids, 0:2])
 
         return target_position[original_env_ids]
 
@@ -40,7 +51,7 @@ class RoverTerrainImporter(TerrainImporter):
             env_ids: The ids of the environments for which we need to generate targets.
             target_position: The target position buffer.
         """
-        radius = 9
+        radius = self.target_distance
         theta = torch.rand(len(env_ids), device=self.device) * 2 * torch.pi
 
         # set the target x and y positions
@@ -57,3 +68,34 @@ class RoverTerrainImporter(TerrainImporter):
             spawn_locations: The spawn locations buffer. Shape (num_envs, 3).
         """
         return self._terrainManager.spawn_locations
+
+
+class TerrainBasedPositionCommandCustom(TerrainBasedPositionCommand):
+
+    cfg: TerrainBasedPositionCommandCfg
+
+    def __init__(self, cfg: TerrainBasedPositionCommandCfg, env):
+        super().__init__(cfg, env)
+
+    def _set_debug_vis_impl(self, debug_vis: bool):
+        # create markers if necessary for the first tome
+        if debug_vis:
+            if not hasattr(self, "box_goal_visualizer"):
+                marker_cfg = VisualizationMarkersCfg(
+                    prim_path="/Visuals/Command/position_goal",
+                    markers={
+                        "sphere": sim_utils.SphereCfg(
+                            radius=0.2,
+                            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(1.0, 0.0, 0.0)),
+                        ),
+                    },
+                )
+                self.box_goal_visualizer = VisualizationMarkers(marker_cfg)
+            # set their visibility to true
+            self.box_goal_visualizer.set_visibility(True)
+        else:
+            if hasattr(self, "box_goal_visualizer"):
+                self.box_goal_visualizer.set_visibility(False)
+
+    def _debug_vis_callback(self, event):
+        self.box_goal_visualizer.visualize(translations=self.pos_command_w, marker_indices=[0])
