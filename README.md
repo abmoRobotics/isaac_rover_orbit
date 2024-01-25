@@ -1,21 +1,10 @@
 # RL Agent (Mars Rover) for Isaac Gym
-
+[WIP] The rover assets are not available yet.
 ## Introduction
-This project implements a Reinforcement Learning (RL) agent designed to operate within the Isaac Gym environment. Our RL agent leverages the high-performance physics simulation capabilities of Isaac Gym to train on various robotic tasks.
+This project implements a Reinforcement Learning (RL) agent for autonomous mapless navigation in complex environments. The environment is simulated using Isaac Sim and implemented using the [ORBIT](https://isaac-orbit.github.io/orbit/) framework.
 
 ## Implementation Overview
-[Isaac Gym](https://docs.omniverse.nvidia.com/isaacsim/latest/isaac_gym_tutorials/index.html) is NVIDIA's advanced robotics simulation platform. This project utilizes Isaac Gym to simulate complex environments where our RL agent learns through interaction.
-
-## Requirements
-### Hardware
-- GPU: NVIDIA RTX 3090 or better
-- CPU: Intel i5/i7 or equivalent
-- RAM: 32GB or more
-
-### Software
-- Python 3.10+
-- PyTorch 2.1+
-- CUDA 11.0+
+[WIP]
 
 # Installation
 ## Requirements
