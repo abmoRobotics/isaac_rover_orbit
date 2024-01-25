@@ -22,7 +22,7 @@ from omni.isaac.orbit.utils import configclass
 from omni.isaac.orbit.utils.noise import AdditiveUniformNoiseCfg as Unoise  # noqa: F401
 
 import rover_envs.envs.rover.mdp as mdp
-from rover_envs.assets.aau_rover import AAU_ROVER_CFG
+from rover_envs.assets.aau_rover_simple import AAU_ROVER_SIMPLE_CFG
 from rover_envs.envs.rover.utils.terrains.terrain_importer import RoverTerrainImporter
 
 ##
@@ -77,7 +77,7 @@ class RoverSceneCfg(InteractiveSceneCfg):
         init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, -180.0, 80.0)),
     )
 
-    robot: ArticulationCfg = AAU_ROVER_CFG.replace(
+    robot: ArticulationCfg = AAU_ROVER_SIMPLE_CFG.replace(
         prim_path="{ENV_REGEX_NS}/Robot")
 
     height_scanner = RayCasterCfg(
