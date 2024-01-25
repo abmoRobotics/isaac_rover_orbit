@@ -13,7 +13,7 @@ from omni.isaac.orbit.managers import RandomizationTermCfg as RandTerm
 from omni.isaac.orbit.managers import RewardTermCfg as RewTerm
 from omni.isaac.orbit.managers import SceneEntityCfg
 from omni.isaac.orbit.managers import TerminationTermCfg as DoneTerm
-from omni.isaac.orbit.scene import InteractiveSceneCfg
+from omni.isaac.orbit.scene import InteractiveSceneCfg  # noqa: F401
 from omni.isaac.orbit.sensors import ContactSensorCfg, RayCasterCfg, patterns
 from omni.isaac.orbit.sim import PhysxCfg
 from omni.isaac.orbit.sim import SimulationCfg as SimCfg
@@ -22,8 +22,10 @@ from omni.isaac.orbit.utils import configclass
 from omni.isaac.orbit.utils.noise import AdditiveUniformNoiseCfg as Unoise  # noqa: F401
 
 import rover_envs.envs.rover.mdp as mdp
-from rover_envs.assets.aau_rover import AAU_ROVER_CFG
-from rover_envs.envs.rover.utils.terrains.terrain_importer import RoverTerrainImporter
+from rover_envs.assets.aau_rover_simple import AAU_ROVER_SIMPLE_CFG
+from rover_envs.assets.terrains.mars import MarsTerrainSceneCfg
+from rover_envs.envs.rover.utils.terrains.terrain_importer import RoverTerrainImporter  # noqa: F401
+from rover_envs.envs.rover.utils.terrains.terrain_importer import TerrainBasedPositionCommandCustom
 
 ##
 # Scene Description
@@ -31,45 +33,86 @@ from rover_envs.envs.rover.utils.terrains.terrain_importer import RoverTerrainIm
 
 
 @configclass
-class RoverSceneCfg(InteractiveSceneCfg):
+class RoverSceneCfg(MarsTerrainSceneCfg):
+    """
+    Rover Scene Configuration
+
+    Note:
+        Terrains can be changed by changing the parent class e.g.
+        RoverSceneCfg(MarsTerrainSceneCfg) -> RoverSceneCfg(DebugTerrainSceneCfg)
+
+    """
     # Hidden Terrain (merged terrain of ground and obstacles) for raycaster.
     # This is done because the raycaster doesn't work with multiple meshes
-    hidden_terrain = AssetBaseCfg(
-        prim_path="/World/terrain/hidden_terrain",
-        spawn=sim_utils.UsdFileCfg(
-            visible=False,
-            usd_path=(
-                "/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/mars1/"
-                "terrain_merged3.usd"
-            ),
-        ),
-        init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0)),
-    )
+    # hidden_terrain = AssetBaseCfg(
+    #     prim_path="/World/terrain/hidden_terrain",
+    #     spawn=sim_utils.UsdFileCfg(
+    #         visible=False,
+    #         usd_path=(
+    #             "/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/mars1/"
+    #             "terrain_merged3.usd"
+    #         ),
+    #     ),
+    #     init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0)),
+    # )
 
-    # Ground Terrain
-    terrain = TerrainImporterCfg(
-        # Choose either TerrainImporter(outcomment randomization), # RoverTerrainImporter
-        class_type=RoverTerrainImporter,
-        prim_path="/World/terrain",
-        terrain_type="usd",
-        collision_group=-1,
-        usd_path=(
-            "/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/mars1/terrain_only.usd"
-        ),
-    )
+    # # Ground Terrain
+    # terrain = TerrainImporterCfg(
+    #     # Choose either TerrainImporter(outcomment randomization), # RoverTerrainImporter
+    #     class_type=RoverTerrainImporter,
+    #     prim_path="/World/terrain",
+    #     terrain_type="usd",
+    #     collision_group=-1,
+    #     usd_path=(
+    #         "/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/mars1/terrain_only.usd"
+    #     ),
+    # )
 
-    # Obstacles
-    obstacles = AssetBaseCfg(
-        prim_path="/World/terrain/obstacles",
-        spawn=sim_utils.UsdFileCfg(
-            # usd_path="omniverse://127.0.0.1/Projects/P7 - Exam/Big rocks only.usd",
-            usd_path=(
-                "/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/mars1/"
-                "rocks_merged2.usd"
-            )
-        ),
-        init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0)),
-    )
+    # # Obstacles
+    # obstacles = AssetBaseCfg(
+    #     prim_path="/World/terrain/obstacles",
+    #     spawn=sim_utils.UsdFileCfg(
+    #         # usd_path="omniverse://127.0.0.1/Projects/P7 - Exam/Big rocks only.usd",
+    #         usd_path=(
+    #             "/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/mars1/"
+    #             "rocks_merged2.usd"
+    #         )
+    #     ),
+    #     init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0)),
+    # )
+    # hidden_terrain = AssetBaseCfg(
+    #     prim_path="/World/terrain/hidden_terrain",
+    #     spawn=sim_utils.UsdFileCfg(
+    #         visible=False,
+    #         usd_path=(
+    #             "/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/original/"
+    #             "terrain_merged.usd"
+    #         ),
+    #     ),
+    #     init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0)),
+    # )
+
+    # # Ground Terrain
+    # terrain = TerrainImporterCfg(
+    #     # Choose either TerrainImporter(outcomment randomization), # RoverTerrainImporter
+    #     class_type=RoverTerrainImporter,
+    #     prim_path="/World/terrain",
+    #     terrain_type="usd",
+    #     collision_group=-1,
+    #     usd_path=(
+    #         "/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/original/terrain_only.usd"
+    #     ),
+    # )
+
+    # # Obstacles
+    # obstacles = AssetBaseCfg(
+    #     prim_path="/World/terrain/obstacles",
+    #     spawn=sim_utils.UsdFileCfg(
+    #         usd_path=("/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/original/"
+    #                   "rocks_merged.usd")
+    #     ),
+    #     init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0)),
+    # )
 
     dome_light = AssetBaseCfg(
         prim_path="/World/DomeLight",
@@ -90,7 +133,7 @@ class RoverSceneCfg(InteractiveSceneCfg):
         init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, -180.0, 80.0)),
     )
 
-    robot: ArticulationCfg = AAU_ROVER_CFG.replace(
+    robot: ArticulationCfg = AAU_ROVER_SIMPLE_CFG.replace(
         prim_path="{ENV_REGEX_NS}/Robot")
 
     contact_sensor = ContactSensorCfg(
@@ -102,8 +145,8 @@ class RoverSceneCfg(InteractiveSceneCfg):
     height_scanner = RayCasterCfg(
         prim_path="{ENV_REGEX_NS}/Robot/Body",
         offset=RayCasterCfg.OffsetCfg(pos=[0.0, 0.0, 10.0]),
-        attach_yaw_only=False,
-        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[6.0, 6.0]),
+        attach_yaw_only=True,
+        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[3.0, 3.0]),
         debug_vis=False,
         mesh_prim_paths=["/World/terrain/hidden_terrain"],
         max_distance=100.0,
@@ -184,9 +227,14 @@ class RewardsCfg:
     )
     collision = RewTerm(
         func=mdp.collision_penalty,
-        weight=-1.5,
+        weight=-2.0,
         params={"sensor_cfg": SceneEntityCfg(
             "contact_sensor"), "threshold": 1.0},
+    )
+    far_from_target = RewTerm(
+        func=mdp.far_from_target_reward,
+        weight=-2.0,
+        params={"command_name": "target_pose", "threshold": 11.0},
     )
 
 
@@ -201,7 +249,7 @@ class TerminationsCfg:
     )
     far_from_target = DoneTerm(
         func=mdp.far_from_target,
-        params={"command_name": "target_pose", "threshold": 20.0},
+        params={"command_name": "target_pose", "threshold": 11.0},
     )
     collision = DoneTerm(
         func=mdp.collision_with_obstacles,
@@ -216,6 +264,7 @@ class CommandsCfg:
     """Command terms for the MDP."""
 
     target_pose = mdp.TerrainBasedPositionCommandCfg(
+        class_type=TerrainBasedPositionCommandCustom,
         asset_name="robot",
         rel_standing_envs=0.0,
         simple_heading=False,
@@ -229,7 +278,13 @@ class CommandsCfg:
 @configclass
 class RandomizationCfg:
     """Randomization configuration for the task."""
-
+    # startup_state = RandTerm(
+    #     func=mdp.reset_root_state_rover,
+    #     mode="startup",
+    #     params={
+    #         "asset_cfg": SceneEntityCfg(name="robot"),
+    #     },
+    # )
     reset_state = RandTerm(
         func=mdp.reset_root_state_rover,
         mode="reset",
@@ -237,6 +292,12 @@ class RandomizationCfg:
             "asset_cfg": SceneEntityCfg(name="robot"),
         },
     )
+
+
+# @configclass
+# class CurriculumCfg:
+#     """ Curriculum configuration for the task. """
+#     target_distance = CurrTerm(func=mdp.goal_distance_curriculum)
 
 
 @configclass
@@ -253,9 +314,9 @@ class RoverEnvCfg(RLTaskEnvCfg):
             enable_stabilization=True,
             gpu_max_rigid_contact_count=8388608,
             gpu_max_rigid_patch_count=262144,
-            gpu_found_lost_pairs_capacity=4096,
-            gpu_found_lost_aggregate_pairs_capacity=1048576,
-            gpu_total_aggregate_pairs_capacity=4096,
+            gpu_found_lost_pairs_capacity=2**13,
+            gpu_found_lost_aggregate_pairs_capacity=2**21,
+            gpu_total_aggregate_pairs_capacity=2**13,
             gpu_max_soft_body_contacts=1048576,
             gpu_max_particle_contacts=1048576,
             gpu_heap_capacity=67108864,
@@ -277,10 +338,11 @@ class RoverEnvCfg(RLTaskEnvCfg):
     rewards: RewardsCfg = RewardsCfg()
     terminations: TerminationsCfg = TerminationsCfg()
     commands: CommandsCfg = CommandsCfg()
+    # curriculum: CurriculumCfg = CurriculumCfg()
 
     def __post_init__(self):
-        self.sim.dt = 1 / 20.0
-        self.decimation = 4
+        self.sim.dt = 1 / 30.0
+        self.decimation = 6
         self.episode_length_s = 150
         self.viewer.eye = (-6.0, -6.0, 3.5)
 
