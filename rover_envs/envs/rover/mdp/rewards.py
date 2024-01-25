@@ -69,8 +69,8 @@ def oscillation_penalty(env: RLTaskEnv) -> torch.Tensor:
     angular_diff = action[:, 0] - prev_action[:, 0]
 
     # TODO combine these 5 lines into two lines
-    angular_penalty = torch.where(angular_diff > 0.05, torch.square(angular_diff), 0.0)
-    linear_penalty = torch.where(linear_diff > 0.05, torch.square(linear_diff), 0.0)
+    angular_penalty = torch.where(angular_diff*3 > 0.05, torch.square(angular_diff*3), 0.0)
+    linear_penalty = torch.where(linear_diff*3 > 0.05, torch.square(linear_diff*3), 0.0)
 
     angular_penalty = torch.pow(angular_penalty, 2)
     linear_penalty = torch.pow(linear_penalty, 2)
@@ -122,3 +122,16 @@ def collision_penalty(env: RLTaskEnv, sensor_cfg: SceneEntityCfg, threshold: flo
     normalized_forces = torch.norm(force_matrix, dim=1)
     forces_active = torch.sum(normalized_forces, dim=-1) > 1
     return torch.where(forces_active, 1.0, 0.0)
+
+
+def far_from_target_reward(env: RLTaskEnv, command_name: str, threshold: float) -> torch.Tensor:
+    """
+    Gives a penalty if the rover is too far from the target.
+    """
+
+    target = env.command_manager.get_command(command_name)
+    target_position = target[:, :2]
+
+    distance = torch.norm(target_position, p=2, dim=-1)
+
+    return torch.where(distance > threshold, 1.0, 0.0)
