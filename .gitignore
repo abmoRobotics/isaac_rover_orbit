@@ -322,3 +322,5 @@ wandb/*
 #*.hdf5
 Delete
 testers
+
+!docker/.env
