@@ -276,7 +276,7 @@ cython_debug/
 **/.thumbs
 
 # No USD files allowed in the repo
-# **/*.usd
+**/*.usd
 **/*.usda
 **/*.usdc
 **/*.usdz
@@ -311,6 +311,10 @@ _build
 **/runs/*
 **/logs/*
 logs/*
+
+# Other omniverse files
+**/*.mdl
+rover_envs/assets/**/*.png
 
 # TODO remove this
 example*
