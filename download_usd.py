@@ -1,4 +1,5 @@
 import os
+import time
 
 import gdown
 
@@ -21,3 +22,6 @@ script_dir = os.path.dirname(__file__)
 for url, path in downloads:
     absolute_path = os.path.join(script_dir, path)
     download_google_drive_folder(url, absolute_path)
+
+    # Time to sleep to avoid getting blocked by Google Drive
+    time.sleep(10)
