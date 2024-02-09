@@ -5,6 +5,7 @@ import math
 import omni.isaac.orbit.sim as sim_utils
 from omni.isaac.orbit.assets import ArticulationCfg, AssetBaseCfg
 from omni.isaac.orbit.envs import RLTaskEnvCfg
+from omni.isaac.orbit.envs.mdp.commands.position_command import TerrainBasedPositionCommand
 from omni.isaac.orbit.managers import ActionTermCfg as ActionTerm
 from omni.isaac.orbit.managers import CurriculumTermCfg as CurrTerm  # noqa: F401
 from omni.isaac.orbit.managers import ObservationGroupCfg as ObsGroup
@@ -23,9 +24,11 @@ from omni.isaac.orbit.utils.noise import AdditiveUniformNoiseCfg as Unoise  # no
 
 import rover_envs.envs.rover.mdp as mdp
 from rover_envs.assets.aau_rover_simple import AAU_ROVER_SIMPLE_CFG
-from rover_envs.assets.terrains.mars import MarsTerrainSceneCfg
+from rover_envs.assets.terrains.debug import DebugTerrainSceneCfg  # noqa: F401
+from rover_envs.assets.terrains.mars import MarsTerrainSceneCfg  # noqa: F401
 from rover_envs.envs.rover.utils.terrains.terrain_importer import RoverTerrainImporter  # noqa: F401
-from rover_envs.envs.rover.utils.terrains.terrain_importer import TerrainBasedPositionCommandCustom
+
+# from rover_envs.envs.rover.utils.terrains.terrain_importer import TerrainBasedPositionCommandCustom
 
 ##
 # Scene Description
@@ -264,7 +267,7 @@ class CommandsCfg:
     """Command terms for the MDP."""
 
     target_pose = mdp.TerrainBasedPositionCommandCfg(
-        class_type=TerrainBasedPositionCommandCustom,
+        class_type=TerrainBasedPositionCommand,  # TerrainBasedPositionCommandCustom,
         asset_name="robot",
         rel_standing_envs=0.0,
         simple_heading=False,

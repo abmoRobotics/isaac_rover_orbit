@@ -28,7 +28,7 @@ class MarsTerrainSceneCfg(InteractiveSceneCfg):
             usd_path=os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
                 "terrain1",
-                "terrain_merged.usd",
+                "terrain_merged3.usd",
             ),
         ),
         init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0)),
@@ -55,7 +55,7 @@ class MarsTerrainSceneCfg(InteractiveSceneCfg):
             usd_path=os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
                 "terrain1",
-                "rocks_merged.usd",
+                "rocks_merged2.usd",
             ),
         ),
         init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0)),
