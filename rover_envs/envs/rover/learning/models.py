@@ -159,3 +159,122 @@ class DeterministicNeuralNetwork(DeterministicMixin, BaseModel):
             x = layer(x)
 
         return x, {}
+
+
+class DeterministicActor(DeterministicMixin, BaseModel):
+    """Deterministic actor model."""
+
+    def __init__(
+        self,
+        observation_space,
+        action_space,
+        device,
+        mlp_input_size=4,
+        mlp_layers=[256, 160, 128],
+        mlp_activation="leaky_relu",
+        encoder_input_size=None,
+        encoder_layers=[80, 60],
+        encoder_activation="leaky_relu",
+        **kwargs,
+    ):
+        """Initialize the deterministic actor model.
+
+        Args:
+            observation_space (gym.spaces.Space): The observation space of the environment.
+            action_space (gym.spaces.Space): The action space of the environment.
+            device (torch.device): The device to use for computation.
+            encoder_features (list): The number of features for each encoder layer.
+            encoder_activation (str): The activation function to use for each encoder layer.
+        """
+        BaseModel.__init__(self, observation_space, action_space, device)
+        DeterministicMixin.__init__(self, clip_actions=False)
+
+        self.mlp_input_size = mlp_input_size
+        self.encoder_input_size = encoder_input_size
+
+        in_channels = self.mlp_input_size
+        if self.encoder_input_size is not None:
+            self.dense_encoder = HeightmapEncoder(self.encoder_input_size, encoder_layers, encoder_activation)
+            in_channels += encoder_layers[-1]
+
+        self.mlp = nn.ModuleList()
+
+        action_space = action_space.shape[0]
+        for feature in mlp_layers:
+            self.mlp.append(nn.Linear(in_channels, feature))
+            self.mlp.append(get_activation(mlp_activation))
+            in_channels = feature
+
+        self.mlp.append(nn.Linear(in_channels, action_space))
+
+    def compute(self, states, role="actor"):
+        if self.encoder_input_size is None:
+            x = states["states"]
+        else:
+            x = states["states"][:, :self.mlp_input_size]
+            encoder_output = self.dense_encoder(states["states"][:, self.mlp_input_size - 1:-1])
+            x = torch.cat([x, encoder_output], dim=1)
+
+        for layer in self.mlp:
+            x = layer(x)
+
+        return x, {}
+
+
+class Critic(DeterministicMixin, BaseModel):
+    """Critic model."""
+
+    def __init__(
+        self,
+        observation_space,
+        action_space,
+        device,
+        mlp_input_size=4,
+        mlp_layers=[256, 160, 128],
+        mlp_activation="leaky_relu",
+        encoder_input_size=None,
+        encoder_layers=[80, 60],
+        encoder_activation="leaky_relu",
+        **kwargs,
+    ):
+        """Initialize the critic model.
+
+        Args:
+            observation_space (gym.spaces.Space): The observation space of the environment.
+            action_space (gym.spaces.Space): The action space of the environment.
+            device (torch.device): The device to use for computation.
+            encoder_features (list): The number of features for each encoder layer.
+            encoder_activation (str): The activation function to use for each encoder layer.
+        """
+        BaseModel.__init__(self, observation_space, action_space, device)
+        DeterministicMixin.__init__(self, clip_actions=False)
+
+        self.mlp_input_size = mlp_input_size
+        self.encoder_input_size = encoder_input_size
+
+        in_channels = self.mlp_input_size
+        if self.encoder_input_size is not None:
+            self.dense_encoder = HeightmapEncoder(self.encoder_input_size, encoder_layers, encoder_activation)
+            in_channels += encoder_layers[-1]
+
+        self.mlp = nn.ModuleList()
+
+        for feature in mlp_layers:
+            self.mlp.append(nn.Linear(in_channels, feature))
+            self.mlp.append(get_activation(mlp_activation))
+            in_channels = feature
+
+        self.mlp.append(nn.Linear(in_channels, 1))
+
+    def compute(self, states, role="actor"):
+        if self.encoder_input_size is None:
+            x = torch.cat([states["states"], states["taken_actions"]], dim=1)
+        else:
+            x = states["states"][:, :self.mlp_input_size]
+            encoder_output = self.dense_encoder(states["states"][:, self.mlp_input_size - 1:-1])
+            x = torch.cat([x, encoder_output], dim=1)
+
+        for layer in self.mlp:
+            x = layer(x)
+
+        return x, {}

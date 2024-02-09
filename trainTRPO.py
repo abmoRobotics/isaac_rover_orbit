@@ -36,7 +36,7 @@ from omni.isaac.orbit.utils.dict import print_dict  # noqa: E402
 from omni.isaac.orbit.utils.io import dump_pickle, dump_yaml  # noqa: E402
 from omni.isaac.orbit_tasks.utils import parse_env_cfg  # noqa: E402
 from omni.isaac.orbit_tasks.utils.wrappers.skrl import SkrlSequentialLogTrainer  # noqa: E402
-from skrl.agents.torch.ppo import PPO, PPO_DEFAULT_CONFIG  # noqa: E402
+from skrl.agents.torch.trpo import TRPO, TRPO_DEFAULT_CONFIG  # noqa: E402
 from skrl.memories.torch import RandomMemory  # noqa: E402
 from skrl.utils import set_seed  # noqa: E402
 
@@ -158,7 +158,7 @@ def video_record(env: RLTaskEnv, log_dir: str, video: bool, video_length: int, v
 def main():
     args_cli_seed = args_cli.seed
     env_cfg = parse_env_cfg(args_cli.task, use_gpu=not args_cli.cpu, num_envs=args_cli.num_envs)
-    experiment_cfg = parse_skrl_cfg(args_cli.task)
+    experiment_cfg = parse_skrl_cfg("Rover-v0TRPO")
 
     log_dir = log_setup(experiment_cfg, env_cfg)
 
@@ -181,7 +181,8 @@ def main():
     memory = RandomMemory(memory_size=memory_size, num_envs=env.num_envs, device=env.device)
 
     # Get the standard agent config and update it with the experiment config
-    agent_cfg = PPO_DEFAULT_CONFIG.copy()
+    # agent_cfg = PPO_DEFAULT_CONFIG.copy()
+    agent_cfg = TRPO_DEFAULT_CONFIG.copy()
     agent_cfg.update(convert_skrl_cfg(experiment_cfg["agent"]))
 
     # experiment_cfg["agent"]["rewards_shaper"] = None  # avoid 'dictionary changed size during iteration'
@@ -192,7 +193,15 @@ def main():
     models = get_models(env, observation_space, action_space)
 
     # Create the agent
-    agent = PPO(
+    # agent = PPO(
+    #     models=models,
+    #     memory=memory,
+    #     cfg=agent_cfg,
+    #     observation_space=observation_space,
+    #     action_space=action_space,
+    #     device=env.device,
+    # )
+    agent = TRPO(
         models=models,
         memory=memory,
         cfg=agent_cfg,
