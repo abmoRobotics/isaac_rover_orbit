@@ -38,6 +38,7 @@ from omni.isaac.orbit_tasks.utils import parse_env_cfg  # noqa: E402
 from omni.isaac.orbit_tasks.utils.wrappers.skrl import SkrlSequentialLogTrainer  # noqa: E402
 from skrl.agents.torch.td3 import TD3, TD3_DEFAULT_CONFIG  # noqa: E402
 from skrl.memories.torch import RandomMemory  # noqa: E402
+from skrl.resources.noises.torch import GaussianNoise  # noqa: E402
 from skrl.utils import set_seed  # noqa: E402
 
 import rover_envs.envs  # noqa: F401, E402
@@ -231,7 +232,9 @@ def main():
     # agent_cfg = PPO_DEFAULT_CONFIG.copy()
     agent_cfg = TD3_DEFAULT_CONFIG.copy()
     agent_cfg.update(convert_skrl_cfg(experiment_cfg["agent"]))
-
+    agent_cfg["exploration"]["noise"] = GaussianNoise(0, 0.1, device=env.device)
+    agent_cfg["smooth_regularization_noise"] = GaussianNoise(0, 0.2, device=env.device)
+    agent_cfg["smooth_regularization_clip"] = 0.5
     # experiment_cfg["agent"]["rewards_shaper"] = None  # avoid 'dictionary changed size during iteration'
     # agent_cfg["state_preprocessor_kwargs"].update({"size": env.observation_space, "device": env.device})
     # agent_cfg["value_preprocessor_kwargs"].update({"size": 1, "device": env.device})
@@ -268,6 +271,7 @@ def main():
     # agent.load("best_agents/Nov26_17-18-32/checkpoints/best_agent.pt")
     trainer_cfg = experiment_cfg["trainer"]
     trainer_cfg["timesteps"] = 50000
+    trainer_cfg["batch_size"] = 4096
     print(trainer_cfg)
 
     trainer = SkrlSequentialLogTrainer(cfg=trainer_cfg, agents=agent, env=env)
