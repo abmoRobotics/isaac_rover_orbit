@@ -133,7 +133,7 @@ class TerrainManager():
 
         # Get faces and vertices from the mesh using the provided prim path
         faces, vertices = get_triangles_and_vertices_from_prim(prim_path)
-
+        print(faces)
         # Create pymeshlab mesh and meshset
         mesh = pymeshlab.Mesh(vertices, faces)
 
@@ -148,7 +148,8 @@ class TerrainManager():
 
         # Get faces as uint32 array
         faces = mesh.face_matrix().astype('uint32')
-
+        print(faces)
+        exit()
         return vertices, faces
 
     # TODO Remove this function
@@ -328,7 +329,7 @@ class TerrainManager():
             self,
             rock_mask: np.ndarray,
             heightmap, n_spawns: int = 100,
-            border_offset: float = 10.0,
+            border_offset: float = 20.0,
             seed=None
     ) -> np.ndarray:
         """Generate random rover spawn locations. Calculates random x,y checks if it is a rock, if not,
