@@ -219,7 +219,7 @@ def main():
     # Get the standard agent config and update it with the experiment config
     # agent_cfg = PPO_DEFAULT_CONFIG.copy()
     agent_cfg = SAC_DEFAULT_CONFIG.copy()
-    # agent_cfg.update(convert_skrl_cfg(experiment_cfg["agent"]))
+    agent_cfg.update(convert_skrl_cfg(experiment_cfg["agent"]))
     # agent_cfg["exploration"]["noise"] = GaussianNoise(0, 0.1, device=env.device)
     # agent_cfg["smooth_regularization_noise"] = GaussianNoise(0, 0.2, device=env.device)
     # agent_cfg["smooth_regularization_clip"] = 0.5
