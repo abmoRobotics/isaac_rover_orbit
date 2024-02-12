@@ -20,7 +20,7 @@ class DebugTerrainSceneCfg(InteractiveSceneCfg):
             visible=False,
             usd_path=os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
-                "terrain_merged.usd",
+                "debug1/terrain_merged.usd",
             ),
         ),
         init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0)),
@@ -34,7 +34,7 @@ class DebugTerrainSceneCfg(InteractiveSceneCfg):
         collision_group=-1,
         usd_path=os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
-            "terrain_only.usd",
+            "debug1/terrain_only.usd",
         ),
     )
 
@@ -45,7 +45,7 @@ class DebugTerrainSceneCfg(InteractiveSceneCfg):
             visible=True,
             usd_path=os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
-                "rocks_merged.usd",
+                "debug1/rocks_merged.usd",
             ),
         ),
         init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0)),

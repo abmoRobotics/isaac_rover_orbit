@@ -6,7 +6,7 @@ import numpy as np
 import pymeshlab
 import torch
 
-from ..terrains.usd_utils import get_triangles_and_vertices_from_prim
+from rover_envs.envs.rover.utils.terrains.usd_utils import get_triangles_and_vertices_from_prim
 
 directory_terrain_utils = os.path.dirname(os.path.abspath(__file__))
 
@@ -93,7 +93,8 @@ class TerrainManager():
         self.dir_path = os.path.dirname(os.path.realpath(__file__))
         terrain_path = os.path.join(self.dir_path, "../terrain_data/map.ply")
         rock_mesh_path = os.path.join(self.dir_path, "../terrain_data/big_stones.ply")
-        terrain_path = "/World/terrain/terrain/ground"
+        terrain_path = "/World/terrain/hidden_terrain/terrain"
+        rock_mesh_path = "/World/terrain/obstacles/obstacles"
 
         self.meshes = [terrain_path, rock_mesh_path]
 
@@ -327,8 +328,7 @@ class TerrainManager():
             self,
             rock_mask: np.ndarray,
             heightmap, n_spawns: int = 100,
-            min_xy: float = 20.0,
-            max_xy: float = 180,
+            border_offset: float = 10.0,
             seed=None
     ) -> np.ndarray:
         """Generate random rover spawn locations. Calculates random x,y checks if it is a rock, if not,
@@ -342,8 +342,8 @@ class TerrainManager():
         Returns:
             np.ndarray: An array of shape (n_spawns, 3) containing the spawn locations.
         """
-        max_xy = int(max_xy / self.resolution_in_m)
-        min_xy = int(min_xy / self.resolution_in_m)
+        # max_xy = int(max_xy / self.resolution_in_m)
+        # min_xy = int(min_xy / self.resolution_in_m)
 
         # Set the random seed if provided
         if seed is not None:
@@ -351,6 +351,8 @@ class TerrainManager():
 
         # Get the heightmap dimensions
         height, width = rock_mask.shape
+        min_xy = int(border_offset / self.resolution_in_m)
+        max_xy = int((min(height, width) - min_xy))
 
         assert max_xy < width, f"max_xy ({max_xy}) must be less than width ({width})"
         assert max_xy < height, f"max_xy ({max_xy}) must be less than height ({height})"
