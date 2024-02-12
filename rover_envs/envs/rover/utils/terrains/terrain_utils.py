@@ -127,13 +127,16 @@ class TerrainManager():
             self.rock_mask_tensor = torch.from_numpy(self.safe_rock_mask).cuda().unsqueeze(-1)
 
     def get_mesh(self, prim_path="/") -> Tuple[np.ndarray, np.ndarray]:
+        """ This function reads a USD from the specified prim path and return vertices and faces.
+
+        """
 
         # Assert that the specified path exists in the list of meshes.
         # assert path in self.meshes, f"The provided path '{path}' must exist in the 'self.meshes' list."
 
         # Get faces and vertices from the mesh using the provided prim path
         faces, vertices = get_triangles_and_vertices_from_prim(prim_path)
-        print(faces)
+
         # Create pymeshlab mesh and meshset
         mesh = pymeshlab.Mesh(vertices, faces)
 
@@ -148,8 +151,7 @@ class TerrainManager():
 
         # Get faces as uint32 array
         faces = mesh.face_matrix().astype('uint32')
-        print(faces)
-        exit()
+
         return vertices, faces
 
     # TODO Remove this function
