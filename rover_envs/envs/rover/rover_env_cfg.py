@@ -45,77 +45,6 @@ class RoverSceneCfg(MarsTerrainSceneCfg):
         RoverSceneCfg(MarsTerrainSceneCfg) -> RoverSceneCfg(DebugTerrainSceneCfg)
 
     """
-    # Hidden Terrain (merged terrain of ground and obstacles) for raycaster.
-    # This is done because the raycaster doesn't work with multiple meshes
-    # hidden_terrain = AssetBaseCfg(
-    #     prim_path="/World/terrain/hidden_terrain",
-    #     spawn=sim_utils.UsdFileCfg(
-    #         visible=False,
-    #         usd_path=(
-    #             "/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/mars1/"
-    #             "terrain_merged3.usd"
-    #         ),
-    #     ),
-    #     init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0)),
-    # )
-
-    # # Ground Terrain
-    # terrain = TerrainImporterCfg(
-    #     # Choose either TerrainImporter(outcomment randomization), # RoverTerrainImporter
-    #     class_type=RoverTerrainImporter,
-    #     prim_path="/World/terrain",
-    #     terrain_type="usd",
-    #     collision_group=-1,
-    #     usd_path=(
-    #         "/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/mars1/terrain_only.usd"
-    #     ),
-    # )
-
-    # # Obstacles
-    # obstacles = AssetBaseCfg(
-    #     prim_path="/World/terrain/obstacles",
-    #     spawn=sim_utils.UsdFileCfg(
-    #         # usd_path="omniverse://127.0.0.1/Projects/P7 - Exam/Big rocks only.usd",
-    #         usd_path=(
-    #             "/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/mars1/"
-    #             "rocks_merged2.usd"
-    #         )
-    #     ),
-    #     init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0)),
-    # )
-    # hidden_terrain = AssetBaseCfg(
-    #     prim_path="/World/terrain/hidden_terrain",
-    #     spawn=sim_utils.UsdFileCfg(
-    #         visible=False,
-    #         usd_path=(
-    #             "/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/original/"
-    #             "terrain_merged.usd"
-    #         ),
-    #     ),
-    #     init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0)),
-    # )
-
-    # # Ground Terrain
-    # terrain = TerrainImporterCfg(
-    #     # Choose either TerrainImporter(outcomment randomization), # RoverTerrainImporter
-    #     class_type=RoverTerrainImporter,
-    #     prim_path="/World/terrain",
-    #     terrain_type="usd",
-    #     collision_group=-1,
-    #     usd_path=(
-    #         "/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/original/terrain_only.usd"
-    #     ),
-    # )
-
-    # # Obstacles
-    # obstacles = AssetBaseCfg(
-    #     prim_path="/World/terrain/obstacles",
-    #     spawn=sim_utils.UsdFileCfg(
-    #         usd_path=("/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/original/"
-    #                   "rocks_merged.usd")
-    #     ),
-    #     init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0)),
-    # )
 
     dome_light = AssetBaseCfg(
         prim_path="/World/DomeLight",
@@ -318,8 +247,8 @@ class RoverEnvCfg(RLTaskEnvCfg):
             gpu_max_rigid_contact_count=8388608,
             gpu_max_rigid_patch_count=262144,
             gpu_found_lost_pairs_capacity=2**13,
-            gpu_found_lost_aggregate_pairs_capacity=2**21,
-            gpu_total_aggregate_pairs_capacity=2**13,
+            gpu_found_lost_aggregate_pairs_capacity=2**25,  # 2**21,
+            gpu_total_aggregate_pairs_capacity=2**21,   # 2**13,
             gpu_max_soft_body_contacts=1048576,
             gpu_max_particle_contacts=1048576,
             gpu_heap_capacity=67108864,
