@@ -246,7 +246,7 @@ class RoverEnvCfg(RLTaskEnvCfg):
             enable_stabilization=True,
             gpu_max_rigid_contact_count=8388608,
             gpu_max_rigid_patch_count=262144,
-            gpu_found_lost_pairs_capacity=2**25,
+            gpu_found_lost_pairs_capacity=2**21,
             gpu_found_lost_aggregate_pairs_capacity=2**29,  # 2**21,
             gpu_total_aggregate_pairs_capacity=2**25,   # 2**13,
             gpu_max_soft_body_contacts=1048576,
