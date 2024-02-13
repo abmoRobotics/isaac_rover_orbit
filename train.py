@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 
 import gymnasium as gym
-from omni.isaac.kit import SimulationApp
+from omni.isaac.orbit.app import AppLauncher
 
 # add argparse arguments
 parser = argparse.ArgumentParser("Welcome to Orbit: Omniverse Robotics Environments!")
@@ -28,8 +28,9 @@ else:
 # app_experience = f"{os.environ['EXP_PATH']}/omni.isaac.sim.python.gym.kit"
 # launch the simulator
 
-simulation_app = SimulationApp(config, experience=app_experience)
-
+# simulation_app = SimulationApp(config, experience=app_experience)
+app_launcher = AppLauncher(launcher_args=args_cli, experience=app_experience)
+simulation_app = app_launcher.app
 
 from omni.isaac.orbit.envs import RLTaskEnv  # noqa: E402
 from omni.isaac.orbit.utils.dict import print_dict  # noqa: E402
