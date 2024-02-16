@@ -203,6 +203,7 @@ def main():
     )
     # agent.load("logs/skrl/rover/Nov15_13-24-49/checkpoints/best_agent.pt")
     # agent.load("best_agents/Nov26_17-18-32/checkpoints/best_agent.pt")
+    # agent.load("best_agent.pt")
     trainer_cfg = experiment_cfg["trainer"]
     trainer_cfg["timesteps"] = 50000
     print(trainer_cfg)

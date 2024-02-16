@@ -32,6 +32,7 @@ SKRL_PPO_CONFIG_FILE = {
     "Rover-v0TRPO": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_trpo.yaml"),
     "Rover-v0TD3": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_td3.yaml"),
     "Rover-v0SAC": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_sac.yaml"),
+    "Rover-v0RPO": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_rpo.yaml"),
 }
 
 

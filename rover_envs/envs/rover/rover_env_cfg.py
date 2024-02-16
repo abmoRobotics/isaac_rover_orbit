@@ -36,7 +36,7 @@ from rover_envs.envs.rover.utils.terrains.terrain_importer import RoverTerrainIm
 
 
 @configclass
-class RoverSceneCfg(MarsTerrainSceneCfg):
+class RoverSceneCfg(DebugTerrainSceneCfg):
     """
     Rover Scene Configuration
 
