@@ -312,6 +312,11 @@ _build
 **/logs/*
 logs/*
 
+# Other omniverse files
+**/*.mdl
+rover_envs/assets/**/*.png
+rover_envs/assets/**/*.jpg
+
 # TODO remove this
 example*
 best_agent*
@@ -322,3 +327,5 @@ wandb/*
 #*.hdf5
 Delete
 testers
+
+!docker/.env

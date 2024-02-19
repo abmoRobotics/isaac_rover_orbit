@@ -1,30 +1,20 @@
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING  # noqa: F401
 
 import torch
-from omni.isaac.orbit.assets import Articulation, RigidObject
+from omni.isaac.orbit.assets import RigidObject
 from omni.isaac.orbit.envs import BaseEnv
 from omni.isaac.orbit.managers import SceneEntityCfg
-from omni.isaac.orbit.utils.math import quat_from_euler_xyz, sample_uniform
 
 from ..utils.terrains.terrain_importer import RoverTerrainImporter
-
-if TYPE_CHECKING:
-    from omni.isaac.orbit.envs import BaseEnv
-
-    from ..rover_env import RoverEnv
-
 
 
 def reset_root_state_rover(env: BaseEnv, env_ids: torch.Tensor, asset_cfg: SceneEntityCfg, z_offset: float = 0.5):
     """
-    Genereate random root states for the rovers, based on terrain_based_spawn_locations.
+    Generate random root states for the rovers, based on terrain_based_spawn_locations.
     """
     # Get the rover asset
     asset: RigidObject = env.scene[asset_cfg.name]
-
-    # Get the default root state
-    reset_state = asset.data.default_root_state[env_ids].clone()
 
     # Get the terrain and sample new spawn locations
     terrain: RoverTerrainImporter = env.scene.terrain

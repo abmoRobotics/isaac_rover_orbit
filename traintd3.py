@@ -28,7 +28,6 @@ else:
 # app_experience = f"{os.environ['EXP_PATH']}/omni.isaac.sim.python.gym.kit"
 # launch the simulator
 
-# simulation_app = SimulationApp(config, experience=app_experience)
 app_launcher = AppLauncher(launcher_args=args_cli, experience=app_experience)
 simulation_app = app_launcher.app
 
@@ -37,12 +36,14 @@ from omni.isaac.orbit.utils.dict import print_dict  # noqa: E402
 from omni.isaac.orbit.utils.io import dump_pickle, dump_yaml  # noqa: E402
 from omni.isaac.orbit_tasks.utils import parse_env_cfg  # noqa: E402
 from omni.isaac.orbit_tasks.utils.wrappers.skrl import SkrlSequentialLogTrainer  # noqa: E402
-from skrl.agents.torch.ppo import PPO, PPO_DEFAULT_CONFIG  # noqa: E402
+from skrl.agents.torch.td3 import TD3, TD3_DEFAULT_CONFIG  # noqa: E402
 from skrl.memories.torch import RandomMemory  # noqa: E402
+from skrl.resources.noises.torch import GaussianNoise  # noqa: E402
 from skrl.utils import set_seed  # noqa: E402
 
 import rover_envs.envs  # noqa: F401, E402
-from rover_envs.envs.rover.learning.models import DeterministicNeuralNetwork, GaussianNeuralNetwork  # noqa: E402
+from rover_envs.envs.rover.learning.models import (Critic, DeterministicActor,  # noqa: E402, F401
+                                                   DeterministicNeuralNetwork, GaussianNeuralNetwork)
 from rover_envs.utils.config import convert_skrl_cfg, parse_skrl_cfg  # noqa: E402
 from rover_envs.utils.skrl_wrapper import IsaacOrbitWrapperFixed  # noqa: E402
 
@@ -100,7 +101,7 @@ def get_models(env: RLTaskEnv, observation_space, action_space):
 
     mlp_input_size = 4
 
-    models["policy"] = GaussianNeuralNetwork(
+    models["policy"] = DeterministicActor(
         observation_space=observation_space,
         action_space=action_space,
         device=env.device,
@@ -111,7 +112,7 @@ def get_models(env: RLTaskEnv, observation_space, action_space):
         encoder_layers=[80, 60],
         encoder_activation="leaky_relu",
     )
-    models["value"] = DeterministicNeuralNetwork(
+    models["target_policy"] = DeterministicActor(
         observation_space=observation_space,
         action_space=action_space,
         device=env.device,
@@ -122,6 +123,52 @@ def get_models(env: RLTaskEnv, observation_space, action_space):
         encoder_layers=[80, 60],
         encoder_activation="leaky_relu",
     )
+
+    models["critic_1"] = Critic(
+        observation_space=observation_space,
+        action_space=action_space,
+        device=env.device,
+        mlp_input_size=mlp_input_size,
+        mlp_layers=[256, 160, 128],
+        mlp_activation="leaky_relu",
+        encoder_input_size=encoder_input_size,
+        encoder_layers=[80, 60],
+        encoder_activation="leaky_relu",
+    )
+    models["critic_2"] = Critic(
+        observation_space=observation_space,
+        action_space=action_space,
+        device=env.device,
+        mlp_input_size=mlp_input_size,
+        mlp_layers=[256, 160, 128],
+        mlp_activation="leaky_relu",
+        encoder_input_size=encoder_input_size,
+        encoder_layers=[80, 60],
+        encoder_activation="leaky_relu",
+    )
+    models["target_critic_1"] = Critic(
+        observation_space=observation_space,
+        action_space=action_space,
+        device=env.device,
+        mlp_input_size=mlp_input_size,
+        mlp_layers=[256, 160, 128],
+        mlp_activation="leaky_relu",
+        encoder_input_size=encoder_input_size,
+        encoder_layers=[80, 60],
+        encoder_activation="leaky_relu",
+    )
+    models["target_critic_2"] = Critic(
+        observation_space=observation_space,
+        action_space=action_space,
+        device=env.device,
+        mlp_input_size=mlp_input_size,
+        mlp_layers=[256, 160, 128],
+        mlp_activation="leaky_relu",
+        encoder_input_size=encoder_input_size,
+        encoder_layers=[80, 60],
+        encoder_activation="leaky_relu",
+    )
+
     return models
 
 
@@ -159,7 +206,7 @@ def video_record(env: RLTaskEnv, log_dir: str, video: bool, video_length: int, v
 def main():
     args_cli_seed = args_cli.seed
     env_cfg = parse_env_cfg(args_cli.task, use_gpu=not args_cli.cpu, num_envs=args_cli.num_envs)
-    experiment_cfg = parse_skrl_cfg(args_cli.task)
+    experiment_cfg = parse_skrl_cfg("Rover-v0TD3")
 
     log_dir = log_setup(experiment_cfg, env_cfg)
 
@@ -178,13 +225,16 @@ def main():
     action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(num_actions,))
 
     # Memory for the agent
-    memory_size = experiment_cfg["agent"]["rollouts"]  # memory_size is the agent's number of rollouts
-    memory = RandomMemory(memory_size=memory_size, num_envs=env.num_envs, device=env.device)
-
+    # memory_size = experiment_cfg["agent"]["rollouts"]  # memory_size is the agent's number of rollouts
+    # memory = RandomMemory(memory_size=memory_size, num_envs=env.num_envs, device=env.device)
+    memory = RandomMemory(memory_size=4096, num_envs=env.num_envs, device=env.device)
     # Get the standard agent config and update it with the experiment config
-    agent_cfg = PPO_DEFAULT_CONFIG.copy()
+    # agent_cfg = PPO_DEFAULT_CONFIG.copy()
+    agent_cfg = TD3_DEFAULT_CONFIG.copy()
     agent_cfg.update(convert_skrl_cfg(experiment_cfg["agent"]))
-
+    agent_cfg["exploration"]["noise"] = GaussianNoise(0, 0.1, device=env.device)
+    agent_cfg["smooth_regularization_noise"] = GaussianNoise(0, 0.2, device=env.device)
+    agent_cfg["smooth_regularization_clip"] = 0.5
     # experiment_cfg["agent"]["rewards_shaper"] = None  # avoid 'dictionary changed size during iteration'
     # agent_cfg["state_preprocessor_kwargs"].update({"size": env.observation_space, "device": env.device})
     # agent_cfg["value_preprocessor_kwargs"].update({"size": 1, "device": env.device})
@@ -193,7 +243,23 @@ def main():
     models = get_models(env, observation_space, action_space)
 
     # Create the agent
-    agent = PPO(
+    # agent = PPO(
+    #     models=models,
+    #     memory=memory,
+    #     cfg=agent_cfg,
+    #     observation_space=observation_space,
+    #     action_space=action_space,
+    #     device=env.device,
+    # )
+    # agent = TRPO(
+    #     models=models,
+    #     memory=memory,
+    #     cfg=agent_cfg,
+    #     observation_space=observation_space,
+    #     action_space=action_space,
+    #     device=env.device,
+    # )
+    agent = TD3(
         models=models,
         memory=memory,
         cfg=agent_cfg,
@@ -203,9 +269,9 @@ def main():
     )
     # agent.load("logs/skrl/rover/Nov15_13-24-49/checkpoints/best_agent.pt")
     # agent.load("best_agents/Nov26_17-18-32/checkpoints/best_agent.pt")
-    # agent.load("best_agent.pt")
     trainer_cfg = experiment_cfg["trainer"]
     trainer_cfg["timesteps"] = 50000
+    trainer_cfg["batch_size"] = 4096
     print(trainer_cfg)
 
     trainer = SkrlSequentialLogTrainer(cfg=trainer_cfg, agents=agent, env=env)

@@ -8,9 +8,10 @@ from skrl.envs.torch.wrappers import IsaacOrbitWrapper
 class IsaacOrbitWrapperFixed(IsaacOrbitWrapper):
     """ Wrapper for the Isaac Orbit environment.
 
-    Note: The wrapper from SKRL broke in ORBIT version 0.2.0, due to RlTaskEnv.step() and RlTaskEnv.reset() being changed
-    this is just a simple fix to make it work again.
+    Note: The wrapper from SKRL broke in ORBIT version 0.2.0, due to RlTaskEnv.step() and RlTaskEnv.reset() being
+    changed this is just a simple fix to make it work again.
     """
+
     def __init__(self, env: RLTaskEnv):
         super().__init__(env)
         self._env = env
@@ -29,4 +30,4 @@ class IsaacOrbitWrapperFixed(IsaacOrbitWrapper):
             self._obs_dict, info = self._env.reset()
 
         self._obs_dict["policy"] = torch.nan_to_num(self._obs_dict["policy"], nan=0.0, posinf=0.0, neginf=0.0)
-        return self._obs_dict["policy"].nan_to_num(nan=0.01), info
+        return self._obs_dict["policy"].nan_to_num(nan=0.01), {}
