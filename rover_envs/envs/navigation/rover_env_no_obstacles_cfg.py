@@ -5,7 +5,6 @@ import math
 import omni.isaac.orbit.sim as sim_utils
 from omni.isaac.orbit.assets import ArticulationCfg, AssetBaseCfg
 from omni.isaac.orbit.envs import RLTaskEnvCfg
-from omni.isaac.orbit.envs.mdp.commands.position_command import TerrainBasedPositionCommand
 from omni.isaac.orbit.managers import ActionTermCfg as ActionTerm
 from omni.isaac.orbit.managers import CurriculumTermCfg as CurrTerm  # noqa: F401
 from omni.isaac.orbit.managers import ObservationGroupCfg as ObsGroup
@@ -14,21 +13,17 @@ from omni.isaac.orbit.managers import RandomizationTermCfg as RandTerm
 from omni.isaac.orbit.managers import RewardTermCfg as RewTerm
 from omni.isaac.orbit.managers import SceneEntityCfg
 from omni.isaac.orbit.managers import TerminationTermCfg as DoneTerm
-from omni.isaac.orbit.scene import InteractiveSceneCfg  # noqa: F401
-from omni.isaac.orbit.sensors import ContactSensorCfg, RayCasterCfg, patterns
+from omni.isaac.orbit.scene import InteractiveSceneCfg
+from omni.isaac.orbit.sensors import RayCasterCfg, patterns
 from omni.isaac.orbit.sim import PhysxCfg
 from omni.isaac.orbit.sim import SimulationCfg as SimCfg
 from omni.isaac.orbit.terrains import TerrainImporter, TerrainImporterCfg  # noqa: F401
 from omni.isaac.orbit.utils import configclass
 from omni.isaac.orbit.utils.noise import AdditiveUniformNoiseCfg as Unoise  # noqa: F401
 
-import rover_envs.envs.rover.mdp as mdp
+import rover_envs.envs.navigation.mdp as mdp
 from rover_envs.assets.aau_rover_simple import AAU_ROVER_SIMPLE_CFG
-from rover_envs.assets.terrains.debug import DebugTerrainSceneCfg  # noqa: F401
-from rover_envs.assets.terrains.mars import MarsTerrainSceneCfg  # noqa: F401
-from rover_envs.envs.rover.utils.terrains.terrain_importer import RoverTerrainImporter  # noqa: F401
-
-# from rover_envs.envs.rover.utils.terrains.terrain_importer import TerrainBasedPositionCommandCustom
+from rover_envs.envs.navigation.utils.terrains.terrain_importer import RoverTerrainImporter
 
 ##
 # Scene Description
@@ -36,15 +31,32 @@ from rover_envs.envs.rover.utils.terrains.terrain_importer import RoverTerrainIm
 
 
 @configclass
-class RoverSceneCfg(DebugTerrainSceneCfg):
-    """
-    Rover Scene Configuration
+class RoverSceneCfg(InteractiveSceneCfg):
+    # Hidden Terrain (merged terrain of ground and obstacles) for raycaster.
+    # This is done because the raycaster doesn't work with multiple meshes
+    hidden_terrain = AssetBaseCfg(
+        prim_path="/World/terrain/hidden_terrain",
+        spawn=sim_utils.UsdFileCfg(
+            visible=False,
+            usd_path=(
+                "/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/mars1/"
+                "terrain_merged3.usd"
+            ),
+        ),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0)),
+    )
 
-    Note:
-        Terrains can be changed by changing the parent class e.g.
-        RoverSceneCfg(MarsTerrainSceneCfg) -> RoverSceneCfg(DebugTerrainSceneCfg)
-
-    """
+    # Ground Terrain
+    terrain = TerrainImporterCfg(
+        # Choose either TerrainImporter(outcomment randomization), # RoverTerrainImporter
+        class_type=RoverTerrainImporter,
+        prim_path="/World/terrain",
+        terrain_type="usd",
+        collision_group=-1,
+        usd_path=(
+            "/home/anton/1._University/0._Master_Project/Workspace/terrain_generation/terrains/mars1/terrain_only.usd"
+        ),
+    )
 
     dome_light = AssetBaseCfg(
         prim_path="/World/DomeLight",
@@ -68,17 +80,11 @@ class RoverSceneCfg(DebugTerrainSceneCfg):
     robot: ArticulationCfg = AAU_ROVER_SIMPLE_CFG.replace(
         prim_path="{ENV_REGEX_NS}/Robot")
 
-    contact_sensor = ContactSensorCfg(
-        prim_path="{ENV_REGEX_NS}/Robot/.*_(Drive|Steer|Boogie|Body)",
-        filter_prim_paths_expr=["/World/terrain/obstacles/obstacles"],
-    )
-    # contact_sensor = None
-
     height_scanner = RayCasterCfg(
         prim_path="{ENV_REGEX_NS}/Robot/Body",
         offset=RayCasterCfg.OffsetCfg(pos=[0.0, 0.0, 10.0]),
-        attach_yaw_only=True,
-        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[3.0, 3.0]),
+        attach_yaw_only=False,
+        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[0.2, 0.2]),
         debug_vis=False,
         mesh_prim_paths=["/World/terrain/hidden_terrain"],
         max_distance=100.0,
@@ -157,17 +163,6 @@ class RewardsCfg:
         weight=-0.5,
         params={"asset_cfg": SceneEntityCfg(name="robot")},
     )
-    collision = RewTerm(
-        func=mdp.collision_penalty,
-        weight=-2.0,
-        params={"sensor_cfg": SceneEntityCfg(
-            "contact_sensor"), "threshold": 1.0},
-    )
-    far_from_target = RewTerm(
-        func=mdp.far_from_target_reward,
-        weight=-2.0,
-        params={"command_name": "target_pose", "threshold": 11.0},
-    )
 
 
 @configclass
@@ -183,20 +178,15 @@ class TerminationsCfg:
         func=mdp.far_from_target,
         params={"command_name": "target_pose", "threshold": 11.0},
     )
-    collision = DoneTerm(
-        func=mdp.collision_with_obstacles,
-        params={"sensor_cfg": SceneEntityCfg(
-            "contact_sensor"), "threshold": 1.0},
-    )
-
 
 # "mdp.illegal_contact
+
+
 @configclass
 class CommandsCfg:
     """Command terms for the MDP."""
 
     target_pose = mdp.TerrainBasedPositionCommandCfg(
-        class_type=TerrainBasedPositionCommand,  # TerrainBasedPositionCommandCustom,
         asset_name="robot",
         rel_standing_envs=0.0,
         simple_heading=False,
@@ -210,13 +200,7 @@ class CommandsCfg:
 @configclass
 class RandomizationCfg:
     """Randomization configuration for the task."""
-    # startup_state = RandTerm(
-    #     func=mdp.reset_root_state_rover,
-    #     mode="startup",
-    #     params={
-    #         "asset_cfg": SceneEntityCfg(name="robot"),
-    #     },
-    # )
+
     reset_state = RandTerm(
         func=mdp.reset_root_state_rover,
         mode="reset",
@@ -226,14 +210,8 @@ class RandomizationCfg:
     )
 
 
-# @configclass
-# class CurriculumCfg:
-#     """ Curriculum configuration for the task. """
-#     target_distance = CurrTerm(func=mdp.goal_distance_curriculum)
-
-
 @configclass
-class RoverEnvCfg(RLTaskEnvCfg):
+class RoverEnvNoObstaclesCfg(RLTaskEnvCfg):
     """Configuration for the rover environment."""
 
     # Create scene
@@ -246,9 +224,9 @@ class RoverEnvCfg(RLTaskEnvCfg):
             enable_stabilization=True,
             gpu_max_rigid_contact_count=8388608,
             gpu_max_rigid_patch_count=262144,
-            gpu_found_lost_pairs_capacity=2**21,
-            gpu_found_lost_aggregate_pairs_capacity=2**25,  # 2**21,
-            gpu_total_aggregate_pairs_capacity=2**21,   # 2**13,
+            gpu_found_lost_pairs_capacity=4096,
+            gpu_found_lost_aggregate_pairs_capacity=1048576,
+            gpu_total_aggregate_pairs_capacity=4096,
             gpu_max_soft_body_contacts=1048576,
             gpu_max_particle_contacts=1048576,
             gpu_heap_capacity=67108864,
@@ -270,16 +248,13 @@ class RoverEnvCfg(RLTaskEnvCfg):
     rewards: RewardsCfg = RewardsCfg()
     terminations: TerminationsCfg = TerminationsCfg()
     commands: CommandsCfg = CommandsCfg()
-    # curriculum: CurriculumCfg = CurriculumCfg()
 
     def __post_init__(self):
-        self.sim.dt = 1 / 30.0
-        self.decimation = 6
+        self.sim.dt = 1 / 20.0
+        self.decimation = 4
         self.episode_length_s = 150
         self.viewer.eye = (-6.0, -6.0, 3.5)
 
         # update sensor periods
         if self.scene.height_scanner is not None:
             self.scene.height_scanner.update_period = self.sim.dt * self.decimation
-        if self.scene.contact_sensor is not None:
-            self.scene.contact_sensor.update_period = self.sim.dt * self.decimation

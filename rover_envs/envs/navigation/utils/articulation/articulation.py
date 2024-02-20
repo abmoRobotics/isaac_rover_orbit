@@ -2,7 +2,7 @@ import re
 
 from omni.isaac.core.utils.stage import get_current_stage
 from omni.isaac.orbit.assets import Articulation
-from pxr import PhysxSchema, Sdf, Usd, UsdGeom, UsdPhysics
+from pxr import PhysxSchema, Sdf, Usd, UsdGeom
 
 
 class RoverArticulation(Articulation):
@@ -22,5 +22,6 @@ class RoverArticulation(Articulation):
                     matching_prims.append(prim_path)
 
         for prim in matching_prims:
-            contact_api: PhysxSchema._physxSchema.PhysxContactReportAPI = PhysxSchema._physxSchema.PhysxContactReportAPI.Get(stage, prim)
+            contact_api: PhysxSchema._physxSchema.PhysxContactReportAPI = \
+                PhysxSchema._physxSchema.PhysxContactReportAPI.Get(stage, prim)
             contact_api.CreateReportPairsRel().AddTarget("/World/terrain/obstacles/obstacles")
