@@ -4,7 +4,7 @@ import omni.isaac.orbit.sim as sim_utils
 from omni.isaac.orbit.actuators import ImplicitActuatorCfg
 from omni.isaac.orbit.assets.articulation import ArticulationCfg
 
-from rover_envs.envs.rover.utils.articulation.articulation import RoverArticulation
+from rover_envs.envs.navigation.utils.articulation.articulation import RoverArticulation
 
 # _AAU_ROVER_PATH = os.path.join(
 #     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "..", "assets", "rover", "rover_instance.usd"

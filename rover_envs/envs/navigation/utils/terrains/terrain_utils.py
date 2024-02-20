@@ -6,7 +6,7 @@ import numpy as np
 import pymeshlab
 import torch
 
-from rover_envs.envs.rover.utils.terrains.usd_utils import get_triangles_and_vertices_from_prim
+from rover_envs.envs.navigation.utils.terrains.usd_utils import get_triangles_and_vertices_from_prim
 
 directory_terrain_utils = os.path.dirname(os.path.abspath(__file__))
 

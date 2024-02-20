@@ -10,19 +10,19 @@ ORBIT_CUSTOM_ENVS_DATA_DIR = os.path.join(ORBIT_CUSTOM_ENVS_EXT_DIR, "learning")
 gym.register(
     id='Rover-v0',
     # entry_point='omni.isaac.orbit.envs:RLTaskEnv',
-    entry_point='rover_envs.envs.rover:RoverEnv',
+    entry_point='rover_envs.envs.navigation:RoverEnv',
     disable_env_checker=True,
     kwargs={
-        "env_cfg_entry_point": "rover_envs.envs.rover:RoverEnvCfg",
+        "env_cfg_entry_point": "rover_envs.envs.navigation:RoverEnvCfg",
     }
 )
 
 gym.register(
     id='RoverNoObstacles-v0',
-    entry_point='rover_envs.envs.rover:RoverEnv',
+    entry_point='rover_envs.envs.navigation:RoverEnv',
     disable_env_checker=True,
     kwargs={
-        "env_cfg_entry_point": "rover_envs.envs.rover:RoverEnvNoObstaclesCfg",
+        "env_cfg_entry_point": "rover_envs.envs.navigation:RoverEnvNoObstaclesCfg",
     }
 )
 # gym.register(

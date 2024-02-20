@@ -4,13 +4,12 @@ from typing import TYPE_CHECKING
 
 import torch
 # Importing necessary modules from the omni.isaac.orbit package
-from omni.isaac.orbit.assets import RigidObject
 from omni.isaac.orbit.managers import SceneEntityCfg
 from omni.isaac.orbit.sensors import ContactSensor
-from omni.isaac.orbit.utils.math import euler_xyz_from_quat
 
 if TYPE_CHECKING:
     from omni.isaac.orbit.envs import RLTaskEnv
+
 
 def is_success(env: RLTaskEnv, command_name: str, threshold: float) -> torch.Tensor:
     """
@@ -46,7 +45,6 @@ def far_from_target(env: RLTaskEnv, command_name: str, threshold: float) -> torc
     distance = torch.norm(target_position, p=2, dim=-1)
 
     return torch.where(distance > threshold, True, False)
-
 
 
 def collision_with_obstacles(env: RLTaskEnv, sensor_cfg: SceneEntityCfg, threshold: float) -> torch.Tensor:
