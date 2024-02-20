@@ -28,7 +28,7 @@ from rover_envs.assets.terrains.debug import DebugTerrainSceneCfg  # noqa: F401
 from rover_envs.assets.terrains.mars import MarsTerrainSceneCfg  # noqa: F401
 from rover_envs.envs.navigation.utils.terrains.terrain_importer import RoverTerrainImporter  # noqa: F401
 
-# from rover_envs.envs.rover.utils.terrains.terrain_importer import TerrainBasedPositionCommandCustom
+# from rover_envs.envs.navigation.utils.terrains.terrain_importer import TerrainBasedPositionCommandCustom
 
 ##
 # Scene Description
