@@ -27,6 +27,7 @@ models:
 
 #   learning_rate_scheduler: "KLAdaptiveRL"
 agent:
+  batch_size: 4096
   actor_learning_rate: 1.e-4
   critic_learning_rate: 1.e-4
   #learning_rate_scheduler: "None"
@@ -49,3 +50,4 @@ agent:
 
 trainer:
   timesteps: 200000
+  batch_size: 4096

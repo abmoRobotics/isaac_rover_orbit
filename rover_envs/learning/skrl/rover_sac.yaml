@@ -51,3 +51,4 @@ agent:
 
 trainer:
   timesteps: 200000
+  batch_size: 4096
