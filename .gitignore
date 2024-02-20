@@ -329,3 +329,6 @@ Delete
 testers
 
 !docker/.env
+
+!pre_trained/**/**/*
+!pre_trained/**/*
