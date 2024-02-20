@@ -6,7 +6,7 @@ from omni.isaac.orbit.scene import InteractiveSceneCfg
 from omni.isaac.orbit.terrains import TerrainImporterCfg
 from omni.isaac.orbit.utils.configclass import configclass
 
-from rover_envs.envs.rover.utils.terrains.terrain_importer import RoverTerrainImporter
+from rover_envs.envs.navigation.utils.terrains.terrain_importer import RoverTerrainImporter
 
 # base_path = os.path.dirname(os.path.abspath(__file__))
 # ground_terrain_path = os.path.join(base_path, "terrain1", "terrain_only.usd")

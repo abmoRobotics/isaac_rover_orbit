@@ -1,7 +1,20 @@
 import argparse
 import os
+from datetime import datetime
 
+import gym
 from omni.isaac.kit import SimulationApp
+from omni.isaac.orbit.utils.dict import print_dict
+from omni.isaac.orbit.utils.io import dump_pickle, dump_yaml
+from omni.isaac.orbit_tasks.utils import parse_env_cfg
+from omni.isaac.orbit_tasks.utils.wrappers.skrl import SkrlSequentialLogTrainer, SkrlVecEnvWrapper
+from skrl.agents.torch.ppo import PPO, PPO_DEFAULT_CONFIG
+from skrl.memories.torch import RandomMemory
+from skrl.utils import set_seed
+from skrl.utils.model_instantiators import deterministic_model, gaussian_model
+
+from rover_envs.envs.navigation.learning.models import DeterministicNeuralNetwork, GaussianNeuralNetwork
+from rover_envs.utils.config import convert_skrl_cfg, parse_skrl_cfg
 
 # add argparse arguments
 parser = argparse.ArgumentParser("Welcome to Orbit: Omniverse Robotics Environments!")
@@ -22,38 +35,18 @@ if args_cli.headless:
     app_experience = f"{os.environ['EXP_PATH']}/omni.isaac.sim.python.gym.headless.kit"
 else:
     app_experience = f"{os.environ['EXP_PATH']}/omni.isaac.sim.python.kit"
-   # app_experience = f"{os.environ['EXP_PATH']}/omni.isaac.sim.python.gym.kit"
+# app_experience = f"{os.environ['EXP_PATH']}/omni.isaac.sim.python.gym.kit"
 # launch the simulator
 
 simulation_app = SimulationApp(config, experience=app_experience)
 
 
-
-from datetime import datetime
-
-import gym
-from omni.isaac.orbit.utils.dict import print_dict
-from omni.isaac.orbit.utils.io import dump_pickle, dump_yaml
-from omni.isaac.orbit_tasks.utils import parse_env_cfg
-from omni.isaac.orbit_tasks.utils.wrappers.skrl import (
-    SkrlSequentialLogTrainer, SkrlVecEnvWrapper)
-from skrl.agents.torch.ppo import PPO, PPO_DEFAULT_CONFIG
-from skrl.memories.torch import RandomMemory
-from skrl.utils import set_seed
-from skrl.utils.model_instantiators import (deterministic_model,
-                                            gaussian_model, shared_model)
-
-import rover_envs.envs
-from rover_envs.envs.rover.learning.models import (DeterministicNeuralNetwork,
-                                                   GaussianNeuralNetwork)
-from rover_envs.utils.config import convert_skrl_cfg, parse_skrl_cfg
-
-#import omni.isaac.contrib_envs  # noqa: F401
-#import omni.isaac.orbit_envs  # noqa: F401
+# import omni.isaac.contrib_envs  # noqa: F401
+# import omni.isaac.orbit_envs  # noqa: F401
 
 
 def log_setup(experiment_cfg, env_cfg):
-     # specify directory for logging experiments
+    # specify directory for logging experiments
     log_root_path = os.path.join("logs", "skrl", experiment_cfg["agent"]["experiment"]["directory"])
     log_root_path = os.path.abspath(log_root_path)
     print(f"[INFO] Logging experiment in directory: {log_root_path}")
@@ -74,6 +67,7 @@ def log_setup(experiment_cfg, env_cfg):
     dump_pickle(os.path.join(log_dir, "params", "agent.pkl"), experiment_cfg)
     return log_dir
 
+
 def main():
     args_cli_seed = args_cli.seed
     env_cfg = parse_env_cfg(args_cli.task, use_gpu=not args_cli.cpu, num_envs=args_cli.num_envs)
@@ -92,7 +86,7 @@ def main():
         print("[INFO] Recording videos during training.")
         print_dict(video_kwargs, nesting=4)
         env = gym.wrappers.RecordVideo(env, **video_kwargs)
-    env  = SkrlVecEnvWrapper(env)
+    env = SkrlVecEnvWrapper(env)
 
     set_seed(args_cli_seed if args_cli_seed is not None else experiment_cfg["seed"])
     print(env.action_space)
@@ -149,7 +143,6 @@ def main():
 
     env.close()
     simulation_app.close()
-
 
 
 if __name__ == "__main__":
