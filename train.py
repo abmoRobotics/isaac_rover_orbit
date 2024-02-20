@@ -1,6 +1,7 @@
 import argparse
 import math
 import os
+import random
 from datetime import datetime
 
 import gymnasium as gym
@@ -16,6 +17,7 @@ parser.add_argument("--cpu", action="store_true", default=False, help="Use CPU p
 parser.add_argument("--num_envs", type=int, default=None, help="Number of environments to simulate.")
 parser.add_argument("--task", type=str, default=None, help="Name of the task.")
 parser.add_argument("--seed", type=int, default=None, help="Seed used for the environment")
+parser.add_argument("--agent", type=str, default="PPO", help="Name of the agent.")
 args_cli = parser.parse_args()
 
 # launch the simulator
@@ -25,29 +27,16 @@ if args_cli.headless:
     app_experience = f"{os.environ['EXP_PATH']}/omni.isaac.sim.python.gym.headless.kit"
 else:
     app_experience = f"{os.environ['EXP_PATH']}/omni.isaac.sim.python.kit"
-# app_experience = f"{os.environ['EXP_PATH']}/omni.isaac.sim.python.gym.kit"
-# launch the simulator
 
-# simulation_app = SimulationApp(config, experience=app_experience)
 app_launcher = AppLauncher(launcher_args=args_cli, experience=app_experience)
 simulation_app = app_launcher.app
 
 from omni.isaac.orbit.envs import RLTaskEnv  # noqa: E402
 from omni.isaac.orbit.utils.dict import print_dict  # noqa: E402
 from omni.isaac.orbit.utils.io import dump_pickle, dump_yaml  # noqa: E402
-from omni.isaac.orbit_tasks.utils import parse_env_cfg  # noqa: E402
-from omni.isaac.orbit_tasks.utils.wrappers.skrl import SkrlSequentialLogTrainer  # noqa: E402
-from skrl.agents.torch.ppo import PPO, PPO_DEFAULT_CONFIG  # noqa: E402
-from skrl.memories.torch import RandomMemory  # noqa: E402
-from skrl.utils import set_seed  # noqa: E402
-
-import rover_envs.envs  # noqa: F401, E402
-from rover_envs.envs.rover.learning.models import DeterministicNeuralNetwork, GaussianNeuralNetwork  # noqa: E402
-from rover_envs.utils.config import convert_skrl_cfg, parse_skrl_cfg  # noqa: E402
-from rover_envs.utils.skrl_wrapper import IsaacOrbitWrapperFixed  # noqa: E402
 
 
-def log_setup(experiment_cfg, env_cfg):
+def log_setup(experiment_cfg, env_cfg, agent):
     """
     Setup the logging for the experiment.
 
@@ -62,7 +51,9 @@ def log_setup(experiment_cfg, env_cfg):
     # specify directory for logging runs
     log_dir = datetime.now().strftime("%b%d_%H-%M-%S")
     if experiment_cfg["agent"]["experiment"]["experiment_name"]:
-        log_dir += f'_{experiment_cfg["agent"]["experiment"]["experiment_name"]}'
+        log_dir = f'_{experiment_cfg["agent"]["experiment"]["experiment_name"]}'
+
+    log_dir += f"_{agent}"
 
     # set directory into agent config
     experiment_cfg["agent"]["experiment"]["directory"] = log_root_path
@@ -77,52 +68,6 @@ def log_setup(experiment_cfg, env_cfg):
     dump_pickle(os.path.join(log_dir, "params", "env.pkl"), env_cfg)
     dump_pickle(os.path.join(log_dir, "params", "agent.pkl"), experiment_cfg)
     return log_dir
-
-
-def get_models(env: RLTaskEnv, observation_space, action_space):
-    """
-    Placeholder function for getting the models.
-
-    Note:
-        This function will be further improved in the future, by reading the model config from the experiment config.
-
-    Args:
-        env (RLTaskEnv): The environment.
-        observation_space (gym.spaces.Space): The observation space of the environment.
-        action_space (gym.spaces.Space): The action space of the environment.
-
-    Returns:
-        dict: A dictionary containing the models.
-    """
-
-    models = {}
-    encoder_input_size = env.observation_manager.group_obs_term_dim["policy"][-1][0]
-
-    mlp_input_size = 4
-
-    models["policy"] = GaussianNeuralNetwork(
-        observation_space=observation_space,
-        action_space=action_space,
-        device=env.device,
-        mlp_input_size=mlp_input_size,
-        mlp_layers=[256, 160, 128],
-        mlp_activation="leaky_relu",
-        encoder_input_size=encoder_input_size,
-        encoder_layers=[80, 60],
-        encoder_activation="leaky_relu",
-    )
-    models["value"] = DeterministicNeuralNetwork(
-        observation_space=observation_space,
-        action_space=action_space,
-        device=env.device,
-        mlp_input_size=mlp_input_size,
-        mlp_layers=[256, 160, 128],
-        mlp_activation="leaky_relu",
-        encoder_input_size=encoder_input_size,
-        encoder_layers=[80, 60],
-        encoder_activation="leaky_relu",
-    )
-    return models
 
 
 def video_record(env: RLTaskEnv, log_dir: str, video: bool, video_length: int, video_interval: int) -> RLTaskEnv:
@@ -156,19 +101,29 @@ def video_record(env: RLTaskEnv, log_dir: str, video: bool, video_length: int, v
     return env
 
 
-def main():
-    args_cli_seed = args_cli.seed
-    env_cfg = parse_env_cfg(args_cli.task, use_gpu=not args_cli.cpu, num_envs=args_cli.num_envs)
-    experiment_cfg = parse_skrl_cfg(args_cli.task)
+from omni.isaac.orbit_tasks.utils import parse_env_cfg  # noqa: E402
+from omni.isaac.orbit_tasks.utils.wrappers.skrl import SkrlVecEnvWrapper  # noqa: E402
+from skrl.utils import set_seed  # noqa: E402
 
-    log_dir = log_setup(experiment_cfg, env_cfg)
+# Import agents
+from rover_envs.learning.train import get_agent  # noqa: E402
+from rover_envs.utils.config import parse_skrl_cfg  # noqa: E402
+from rover_envs.utils.skrl_utils import SkrlSequentialLogTrainer  # noqa: E402
+
+
+def train():
+    args_cli_seed = args_cli.seed if args_cli.seed is not None else random.randint(0, 100000000)
+    env_cfg = parse_env_cfg(args_cli.task, use_gpu=not args_cli.cpu, num_envs=args_cli.num_envs)
+    experiment_cfg = parse_skrl_cfg(args_cli.task + f"_{args_cli.agent}")
+
+    log_dir = log_setup(experiment_cfg, env_cfg, args_cli.agent)
 
     # Create the environment
     env = gym.make(args_cli.task, cfg=env_cfg, headless=args_cli.headless, viewport=args_cli.video)
     # Check if video recording is enabled
     env = video_record(env, log_dir, args_cli.video, args_cli.video_length, args_cli.video_interval)
     # Wrap the environment
-    env: RLTaskEnv = IsaacOrbitWrapperFixed(env)
+    env: RLTaskEnv = SkrlVecEnvWrapper(env)
     set_seed(args_cli_seed if args_cli_seed is not None else experiment_cfg["seed"])
 
     # Get the observation and action spaces
@@ -177,44 +132,16 @@ def main():
     observation_space = gym.spaces.Box(low=-math.inf, high=math.inf, shape=(num_obs,))
     action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(num_actions,))
 
-    # Memory for the agent
-    memory_size = experiment_cfg["agent"]["rollouts"]  # memory_size is the agent's number of rollouts
-    memory = RandomMemory(memory_size=memory_size, num_envs=env.num_envs, device=env.device)
-
-    # Get the standard agent config and update it with the experiment config
-    agent_cfg = PPO_DEFAULT_CONFIG.copy()
-    agent_cfg.update(convert_skrl_cfg(experiment_cfg["agent"]))
-
-    # experiment_cfg["agent"]["rewards_shaper"] = None  # avoid 'dictionary changed size during iteration'
-    # agent_cfg["state_preprocessor_kwargs"].update({"size": env.observation_space, "device": env.device})
-    # agent_cfg["value_preprocessor_kwargs"].update({"size": 1, "device": env.device})
-
-    # Get the models
-    models = get_models(env, observation_space, action_space)
-
-    # Create the agent
-    agent = PPO(
-        models=models,
-        memory=memory,
-        cfg=agent_cfg,
-        observation_space=observation_space,
-        action_space=action_space,
-        device=env.device,
-    )
-    # agent.load("logs/skrl/rover/Nov15_13-24-49/checkpoints/best_agent.pt")
-    # agent.load("best_agents/Nov26_17-18-32/checkpoints/best_agent.pt")
-    # agent.load("best_agent.pt")
     trainer_cfg = experiment_cfg["trainer"]
-    trainer_cfg["timesteps"] = 50000
-    print(trainer_cfg)
+
+    agent = get_agent(args_cli.agent, env, observation_space, action_space, experiment_cfg)
 
     trainer = SkrlSequentialLogTrainer(cfg=trainer_cfg, agents=agent, env=env)
     trainer.train()
-    # trainer.eval()
 
     env.close()
     simulation_app.close()
 
 
 if __name__ == "__main__":
-    main()
+    train()
