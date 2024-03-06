@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import MISSING
-
 import omni.isaac.orbit.sim as sim_utils
-from omni.isaac.orbit.assets import ArticulationCfg, AssetBaseCfg, RigidObjectCfg
+from omni.isaac.orbit.assets import ArticulationCfg, AssetBaseCfg
 from omni.isaac.orbit.envs import RLTaskEnvCfg
 from omni.isaac.orbit.envs.mdp.commands.position_command import TerrainBasedPositionCommand  # noqa: F401
 from omni.isaac.orbit.managers import ActionTermCfg as ActionTerm  # noqa: F401
@@ -16,18 +14,15 @@ from omni.isaac.orbit.managers import SceneEntityCfg  # noqa: F401
 from omni.isaac.orbit.managers import TerminationTermCfg as DoneTerm  # noqa: F401
 from omni.isaac.orbit.scene import InteractiveSceneCfg  # noqa: F401
 from omni.isaac.orbit.sensors import ContactSensorCfg, RayCasterCfg, patterns  # noqa: F401
-from omni.isaac.orbit.sensors.frame_transformer.frame_transformer_cfg import FrameTransformerCfg
 from omni.isaac.orbit.sim import PhysxCfg
 from omni.isaac.orbit.sim import SimulationCfg as SimCfg
-from omni.isaac.orbit.sim.spawners.from_files.from_files_cfg import GroundPlaneCfg, UsdFileCfg
 from omni.isaac.orbit.terrains import TerrainImporter, TerrainImporterCfg  # noqa: F401
 from omni.isaac.orbit.utils import configclass
-from omni.isaac.orbit.utils.assets import ISAAC_NUCLEUS_DIR
 from omni.isaac.orbit.utils.noise import AdditiveUniformNoiseCfg as Unoise  # noqa: F401
 
-import rover_envs.envs.manipulation.mdp as mdp  # noqa: F401
-# from rover_envs.assets.terrains.debug import DebugTerrainSceneCfg  # noqa: F401
-# from rover_envs.assets.terrains.mars import MarsTerrainSceneCfg  # noqa: F401
+import rover_envs.envs.navigation.mdp as mdp  # noqa: F401
+from rover_envs.assets.terrains.debug import DebugTerrainSceneCfg  # noqa: F401
+from rover_envs.assets.terrains.mars import MarsTerrainSceneCfg  # noqa: F401
 from rover_envs.envs.navigation.utils.terrains.terrain_importer import RoverTerrainImporter  # noqa: F401
 
 # from rover_envs.envs.navigation.utils.terrains.terrain_importer import TerrainBasedPositionCommandCustom
@@ -38,7 +33,7 @@ from rover_envs.envs.navigation.utils.terrains.terrain_importer import RoverTerr
 
 
 @configclass
-class ManipulatorSceneCfg(InteractiveSceneCfg):
+class RoverSceneCfg(DebugTerrainSceneCfg):
     """
     Rover Scene Configuration
 
@@ -67,35 +62,13 @@ class ManipulatorSceneCfg(InteractiveSceneCfg):
         init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, -180.0, 80.0)),
     )
 
-    # Robot
-    robot: ArticulationCfg = MISSING
-
-    # End effector frame
-    ee_frame: FrameTransformerCfg = MISSING
-
-    # Target object
-    object: RigidObjectCfg = MISSING
-
-    # Table
-    table = AssetBaseCfg(
-        prim_path="{ENV_REGEX_NS}/Table",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0, 0], rot=[0.707, 0, 0, 0.707]),
-        spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd"),
-    )
-
-    # Plane
-    plane = AssetBaseCfg(
-        prim_path="/World/GroundPlane",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[0, 0, -1.05]),
-        spawn=GroundPlaneCfg(),
-    )
+    robot: ArticulationCfg = None
 
 
 @configclass
 class ActionsCfg:
     """Action"""
-    body_joint_pos: mdp.JointPositionActionCfg = MISSING
-    finger_joint_pos: mdp.JointPositionActionCfg = MISSING
+    pass
 
 
 @configclass
@@ -104,11 +77,7 @@ class ObservationCfg:
 
     @configclass
     class PolicyCfg(ObsGroup):
-        joint_pos = ObsTerm(func=mdp.joint_pos_rel)
-        joint_vel = ObsTerm(func=mdp.joint_vel_rel)
-        object_pose = ObsTerm(func=mdp.object_position_in_robot_root_frame)
-        target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
-        actions = ObsTerm(func=mdp.last_action)
+        pass
 
         def __post_init__(self):
             self.enable_corruption = True
@@ -119,84 +88,34 @@ class ObservationCfg:
 
 @configclass
 class RewardsCfg:
-    reaching_object = RewTerm(func=mdp.object_ee_distance, params={"std": 0.1}, weight=1.0)
-
-    lifting_object = RewTerm(func=mdp.object_is_lifted, params={"minimal_height": 0.06}, weight=15.0)
-
-    object_goal_tracking = RewTerm(
-        func=mdp.object_goal_distance,
-        params={"std": 0.3, "minimal_height": 0.06, "command_name": "object_pose"},
-        weight=16.0,
-    )
-
-    object_goal_tracking_fine_grained = RewTerm(
-        func=mdp.object_goal_distance,
-        params={"std": 0.05, "minimal_height": 0.06, "command_name": "object_pose"},
-        weight=5.0,
-    )
-
-    action_rate = RewTerm(func=mdp.action_rate_l2, weight=1e-3)
-
-    joint_vel = RewTerm(
-        func=mdp.joint_vel_l2,
-        weight=1e-4,
-        params={"asset_cfg": SceneEntityCfg("robot")},
-    )
+    pass
 
 
 @configclass
 class TerminationsCfg:
     """Termination conditions for the task."""
-    time_out = DoneTerm(func=mdp.time_out, time_out=True)
-
-    object_dropping = DoneTerm(
-        func=mdp.base_height, params={
-            "minimum_height": -0.05,
-            "asset_cfg": SceneEntityCfg("object")
-        }
-    )
+    pass
 
 
 # "mdp.illegal_contact
 @configclass
 class CommandsCfg:
-    """Command configuration for the task."""
-
-    object_pose = mdp.UniformPoseCommandCfg(
-        asset_name="robot",
-        body_name=MISSING,  # Will be filled in the environment cfg
-        resampling_time_range=(5.0, 5.0),
-        debug_vis=True,
-        ranges=mdp.UniformPoseCommandCfg.Ranges(
-            pos_x=(0.3, 0.7), pos_y=(0.3, 0.7), pos_z=(0.0, 0.0), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
-        ),
-    )
+    pass
 
 
 @configclass
 class RandomizationCfg:
-    """Configuration for randomization of the task."""
-
-    reset_all = RandTerm(func=mdp.reset_scene_to_default, mode="reset")
-
-    reset_object_position = RandTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "pose_range": {"x": (-0.1, 0.1), "y": (-0.25, 0.25), "z": (0.0, 0.0)},
-            "velocity_range": {},
-            "asset_cfg": SceneEntityCfg("object", body_names="Object"),
-        },
-    )
+    pass
 
 
 @configclass
-class ManipulatorEnvCfg(RLTaskEnvCfg):
+class RoverEnvCfg(RLTaskEnvCfg):
     """Configuration for the rover environment."""
 
     # Create scene
-    scene: ManipulatorSceneCfg = ManipulatorSceneCfg(
-        num_envs=4096, env_spacing=2.5, replicate_physics=False)
+    scene: RoverSceneCfg = RoverSceneCfg(
+        num_envs=256, env_spacing=4.0, replicate_physics=False)
+
     # Setup PhysX Settings
     sim: SimCfg = SimCfg(
         physx=PhysxCfg(
@@ -230,7 +149,7 @@ class ManipulatorEnvCfg(RLTaskEnvCfg):
     # curriculum: CurriculumCfg = CurriculumCfg()
 
     def __post_init__(self):
-        self.sim.dt = 1 / 100.0  # 100 Hz
-        self.decimation = 2
-        self.episode_length_s = 5
+        self.sim.dt = 1 / 100.0
+        self.decimation = 4
+        self.episode_length_s = 150
         self.viewer.eye = (-6.0, -6.0, 3.5)
