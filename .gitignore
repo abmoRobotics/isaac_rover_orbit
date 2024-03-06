@@ -276,7 +276,7 @@ cython_debug/
 **/.thumbs
 
 # No USD files allowed in the repo
-**/*.usd
+#**/*.usd
 **/*.usda
 **/*.usdc
 **/*.usdz
@@ -314,8 +314,8 @@ logs/*
 
 # Other omniverse files
 **/*.mdl
-rover_envs/assets/**/*.png
-rover_envs/assets/**/*.jpg
+# rover_envs/assets/**/*.png
+# rover_envs/assets/**/*.jpg
 
 # TODO remove this
 example*
@@ -332,3 +332,8 @@ testers
 
 !pre_trained/**/**/*
 !pre_trained/**/*
+
+!rovers_envs/assets/robots/*
+!rovers_envs/assets/robots/aau_rover_simple/rover_instance.usd
+
+rover_envs/assets/terrains/mars/*
