@@ -10,7 +10,7 @@ from omni.isaac.core.utils import prims
 from omni.isaac.orbit.envs.rl_task_env import RLTaskEnv
 
 # ENV
-from .rover_env_cfg import RoverEnvCfg
+from ..rover_env_cfg import RoverEnvCfg
 
 # from omni.replicator.isaac.scripts.writers.pytorch_listener import PytorchListener
 

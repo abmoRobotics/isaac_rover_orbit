@@ -3,7 +3,7 @@ import torch
 from omni.isaac.orbit.envs.rl_task_env import RLTaskEnv
 from omni.isaac.orbit.terrains import TerrainImporter
 
-from .rover_env_cfg import RoverEnvCfg
+from rover_envs.envs.navigation.rover_env_cfg import RoverEnvCfg
 
 
 class RoverEnv(RLTaskEnv):
