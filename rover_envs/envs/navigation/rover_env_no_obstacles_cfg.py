@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from dataclasses import MISSING
 
 import omni.isaac.orbit.sim as sim_utils
 from omni.isaac.orbit.assets import ArticulationCfg, AssetBaseCfg
@@ -22,7 +23,6 @@ from omni.isaac.orbit.utils import configclass
 from omni.isaac.orbit.utils.noise import AdditiveUniformNoiseCfg as Unoise  # noqa: F401
 
 import rover_envs.envs.navigation.mdp as mdp
-from rover_envs.assets.aau_rover_simple import AAU_ROVER_SIMPLE_CFG
 from rover_envs.envs.navigation.utils.terrains.terrain_importer import RoverTerrainImporter
 
 ##
@@ -77,8 +77,7 @@ class RoverSceneCfg(InteractiveSceneCfg):
         init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, -180.0, 80.0)),
     )
 
-    robot: ArticulationCfg = AAU_ROVER_SIMPLE_CFG.replace(
-        prim_path="{ENV_REGEX_NS}/Robot")
+    robot: ArticulationCfg = MISSING  # Will be replaced by the robot configuration, e.g. AAU_ROVER_SIMPLE_CFG
 
     height_scanner = RayCasterCfg(
         prim_path="{ENV_REGEX_NS}/Robot/Body",
