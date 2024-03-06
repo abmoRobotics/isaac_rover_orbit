@@ -105,6 +105,7 @@ from omni.isaac.orbit_tasks.utils import parse_env_cfg  # noqa: E402
 from omni.isaac.orbit_tasks.utils.wrappers.skrl import SkrlVecEnvWrapper  # noqa: E402
 from skrl.utils import set_seed  # noqa: E402
 
+import rover_envs.envs.navigation.robots.aau_rover  # noqa: E402, F401
 # Import agents
 from rover_envs.learning.train import get_agent  # noqa: E402
 from rover_envs.utils.config import parse_skrl_cfg  # noqa: E402
