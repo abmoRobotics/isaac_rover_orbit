@@ -333,3 +333,4 @@ testers
 !pre_trained/**/*
 
 examples/**/wandb*
+!rover_envs/assets/robots/**/*

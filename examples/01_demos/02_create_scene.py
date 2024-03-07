@@ -25,6 +25,7 @@ from omni.isaac.orbit.utils import configclass  # noqa: F401, E402
 
 # Avoid Circular Import
 from rover_envs.assets.aau_rover_simple import AAU_ROVER_SIMPLE_CFG  # noqa: F401, E402
+from rover_envs.assets.exomy import EXOMY_CFG  # noqa: F401, E402
 
 if TYPE_CHECKING:
     from rover_envs.envs.navigation.utils.articulation.articulation import RoverArticulation
@@ -44,8 +45,8 @@ class RoverEmptySceneCfg(InteractiveSceneCfg):
     )
 
     # Add the robot
-    robot: ArticulationCfg = AAU_ROVER_SIMPLE_CFG.replace(
-        prim_path="/World/AAU_Rover")
+    robot: ArticulationCfg = EXOMY_CFG.replace(
+        prim_path="/World/Robot")
 
 
 def setup_scene():
@@ -75,7 +76,7 @@ def run_simulation(sim: sim_utils.SimulationContext, scene: InteractiveScene):
     sim_dt = sim.get_physics_dt()
     count = 0
 
-    def reset_scene(robot, scene):
+    def reset_scene(robot: RoverArticulation, scene: InteractiveScene):
         root_state = robot.data.default_root_state.clone()
         root_state[:, :3] += scene.env_origins
         robot.write_root_state_to_sim(root_state)
