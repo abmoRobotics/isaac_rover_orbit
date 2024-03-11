@@ -154,3 +154,143 @@ class AckermannAction(ActionTerm):
         steering_angles = torch.where(steering_angles > 3.14/2, steering_angles - math.pi, steering_angles)
         # print(torch.stack([steering_angles, motor_velocities], dim=1).shape)
         return torch.cat([steering_angles[:, 0:2], steering_angles[:, 4:6]], dim=1), motor_velocities
+
+
+class AckermannAction2(ActionTerm):
+
+    cfg: actions_cfg.AckermannActionCfg
+
+    _asset: Articulation
+
+    _wheelbase_length: float
+
+    _middle_wheel_distance: float
+
+    _rear_and_front_wheel_distance: float
+
+    _wheel_radius: float
+
+    _min_steering_radius: float
+
+    _steering_joint_names: list[str]
+
+    _drive_joint_names: list[str]
+
+    _scale: torch.Tensor
+
+    _offset: torch.Tensor
+
+    def __init__(self, cfg: actions_cfg.AckermannActionCfg, env: BaseEnv):
+        super().__init__(cfg, env)
+
+        self._drive_joint_ids, self._drive_joint_names = self._asset.find_joints(self.cfg.drive_joint_names)
+        self._steering_joint_ids, self._steering_joint_names = self._asset.find_joints(self.cfg.steering_joint_names)
+
+        # create tensors for raw and processed actions
+        self._raw_actions = torch.zeros(self.num_envs, self.action_dim, device=self.device)
+        self._processed_actions = torch.zeros_like(self.raw_actions)
+        self._joint_vel = torch.zeros(self.num_envs, len(self._drive_joint_ids), device=self.device)
+        self._joint_pos = torch.zeros(self.num_envs, len(self._steering_joint_ids), device=self.device)
+
+        # cfgs
+        self._wheelbase_length = cfg.wheelbase_length
+        self._middle_wheel_distance = cfg.middle_wheel_distance
+        self._rear_and_front_wheel_distance = cfg.rear_and_front_wheel_distance
+        self._wheel_radius = cfg.wheel_radius
+        self._min_steering_radius = cfg.min_steering_radius
+
+        # Save the scale and offset for the actions
+        self._scale = torch.tensor(self.cfg.scale, device=self.device).unsqueeze(0)
+        self._offset = torch.tensor(self.cfg.offset, device=self.device).unsqueeze(0)
+
+    @property
+    def action_dim(self) -> int:
+        return 2  # Assuming a 2D action vector (linear velocity, angular velocity)
+
+    @property
+    def raw_actions(self) -> torch.Tensor:
+        return self._raw_actions
+
+    @property
+    def processed_actions(self) -> torch.Tensor:
+        return self._processed_actions
+
+    """
+    Operations.
+    """
+
+    def process_actions(self, actions):
+        # store the raw actions
+        self._raw_actions[:] = actions
+        self._processed_actions = self.raw_actions * self._scale + self._offset
+
+    def apply_actions(self):
+
+        self._joint_pos, self._joint_vel = self.ackermann(self._processed_actions[:, 0], self._processed_actions[:, 1])
+
+        self._asset.set_joint_velocity_target(self._joint_vel, joint_ids=self._drive_joint_ids)
+        self._asset.set_joint_position_target(self._joint_pos, joint_ids=self._steering_joint_ids)
+
+    def ackermann(self, lin_vel, ang_vel):
+        """
+        Ackermann steering model for the rover
+        wl = wheelbase length
+        d_fr = distance between front and rear wheels
+        d_mw = distance between middle wheels
+        """
+        wheel_radius = self._wheel_radius  # wheel radius
+        d_fr = self._rear_and_front_wheel_distance  # distance between front and rear wheels
+        d_mw = self._middle_wheel_distance  # distance between middle wheels
+        wl = self._wheelbase_length  # wheelbase length
+        device = self.device  # device
+
+        # Checking the direction of the linear and angular velocities
+        direction: torch.Tensor = torch.sign(lin_vel)
+        turn_direction: torch.Tensor = torch.sign(ang_vel)
+
+        # Taking the absolute values of the velocities
+        lin_vel = torch.abs(lin_vel)
+        ang_vel = torch.abs(ang_vel)
+
+        # Calculates the turning radius of the rover, returns inf if ang_vel is 0
+        not_zero_condition = torch.logical_not(ang_vel == 0) & torch.logical_not(lin_vel == 0)
+
+        minimum_radius = (d_mw * 0.8)  # should be 0.5 but 0.8 makes operation more smooth
+        turning_radius: torch.Tensor = torch.where(
+            not_zero_condition, lin_vel / ang_vel, torch.tensor(float('inf'), device=device))
+        turning_radius = torch.where(turning_radius < minimum_radius, minimum_radius, turning_radius)
+
+        # Calculating the turning radius of the front wheels
+        r_ML = turning_radius - (d_mw / 2)
+        r_MR = turning_radius + (d_mw / 2)
+        r_FL = turning_radius - (d_fr / 2)
+        r_FR = turning_radius + (d_fr / 2)
+        r_RL = turning_radius - (d_fr / 2)
+        r_RR = turning_radius + (d_fr / 2)
+
+        # Steering angles
+
+        wl = torch.ones_like(r_FL) * wl  # Repeat wl as tensor
+        # print(turning_radius)
+        theta_FL = torch.atan2(wl, r_FL) * turn_direction
+        theta_FR = torch.atan2(wl, r_FR) * turn_direction
+        theta_RL = -torch.atan2(wl, r_RL) * turn_direction
+        theta_RR = -torch.atan2(wl, r_RR) * turn_direction
+
+        # Wheel velocities (m/s)
+        # if ang_vel is 0, wheel velocity is equal to linear velocity
+        vel_FL = torch.where(ang_vel == 0, lin_vel, (r_FL * ang_vel)) * direction
+        vel_FR = torch.where(ang_vel == 0, lin_vel, (r_FR * ang_vel)) * direction
+        vel_RL = torch.where(ang_vel == 0, lin_vel, (r_RL * ang_vel)) * direction
+        vel_RR = torch.where(ang_vel == 0, lin_vel, (r_RR * ang_vel)) * direction
+        vel_ML = torch.where(ang_vel == 0, lin_vel, (r_ML * ang_vel)) * direction
+        vel_MR = torch.where(ang_vel == 0, lin_vel, (r_MR * ang_vel)) * direction
+
+        # Stack the wheel velocities and steering angles
+        wheel_velocities = torch.stack([vel_FL, vel_FR, vel_RL, vel_RR, vel_ML, vel_MR], dim=1)
+        steering_angles = torch.stack([theta_FL, theta_FR, theta_RL, theta_RR], dim=1)
+
+        # Convert wheel velocities from m/s to rad/s
+        wheel_velocities = wheel_velocities / wheel_radius
+
+        return steering_angles, wheel_velocities  # torch.cat([steering_angles, wheel_velocities], dim=1)
