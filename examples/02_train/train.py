@@ -134,6 +134,7 @@ def train():
     action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(num_actions,))
 
     trainer_cfg = experiment_cfg["trainer"]
+    trainer_cfg["timesteps"] = 1000000
 
     agent = get_agent(args_cli.agent, env, observation_space, action_space, experiment_cfg)
 

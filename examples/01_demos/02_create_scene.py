@@ -98,9 +98,10 @@ def run_simulation(sim: sim_utils.SimulationContext, scene: InteractiveScene):
             reset_scene(robot, scene)
 
         # Step the simulation
-        efforts = torch.zeros_like(robot.data.default_joint_pos)
 
-        robot.set_joint_effort_target(efforts)
+        velocities = torch.ones_like(robot.data.default_joint_pos) * 0.1
+        # robot.set_joint_effort_target(efforts)
+        robot.set_joint_velocity_target(velocities)
 
         scene.write_data_to_sim()
 

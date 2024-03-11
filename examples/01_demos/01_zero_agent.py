@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser(description="Empty Scene")
 parser.add_argument("--cpu", default=False, action="store_true", help="Run on CPU")
 parser.add_argument("--disable_fabric", action="store_true", default=False, help="Disable Fabric")
 parser.add_argument("--num_envs", type=int, default=1, help="Number of environments to create")
-parser.add_argument("--task", type=str, default="Rover-v0", help="Task name")
+parser.add_argument("--task", type=str, default="AAURoverEnv-v0", help="Task name")
 parser.add_argument("--robot", type=str, default="aau_rover", help="Robot name")
 
 args_cli = parser.parse_args()
@@ -23,7 +23,7 @@ simulation_app = app_launcher.app
 
 from omni.isaac.orbit_tasks.utils import parse_env_cfg  # noqa: F401, E402
 
-import rover_envs  # noqa: F401, E402
+import rover_envs.envs.navigation.robots.aau_rover  # noqa: F401, E402
 
 # Import agents
 
