@@ -40,11 +40,11 @@ Once inside the docker container you can train and agent by using the following 
 ## Installing natively
 1. Install ORBIT using the following steps:
 ```bash
-git clone https://github.com/abmoRobotics/Orbit-fork
+git clone https://github.com/NVIDIA-Omniverse/orbit
 cd Orbit
 
 # create aliases
-export ISAACSIM_PATH="${HOME}/.local/share/ov/pkg/isaac_sim-2023.1.0-hotfix.1"
+export ISAACSIM_PATH="${HOME}/.local/share/ov/pkg/isaac_sim-2023.1.1"
 export ISAACSIM_PYTHON_EXE="${ISAACSIM_PATH}/python.sh"
 
 # Create symbolic link
@@ -56,8 +56,6 @@ ln -s ${ISAACSIM_PATH} _isaac_sim
 # Activate Env
 conda activate orbit_env
 
-# Install dependencies
-./orbit.sh --install --extra
 ```
 2. Clone Repo
 
