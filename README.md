@@ -57,6 +57,9 @@ ln -s ${ISAACSIM_PATH} _isaac_sim
 # Activate Env
 conda activate orbit_env
 
+# Install dependencies
+conda --install
+
 ```
 3. Clone Repo
 
@@ -66,7 +69,7 @@ git clone https://github.com/abmoRobotics/isaac_rover_orbit
 cd isaac_rover_orbit
 
 # Install Repo (make sure conda is activated)
-python -m pip install -e .
+python -m pip install -e .[all]
 
 # Run training script or evaluate pre-trained policy
 cd examples/02_train/train.py

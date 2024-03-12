@@ -6,7 +6,6 @@ from dataclasses import MISSING
 import omni.isaac.orbit.sim as sim_utils
 from omni.isaac.orbit.assets import ArticulationCfg, AssetBaseCfg
 from omni.isaac.orbit.envs import RLTaskEnvCfg
-from omni.isaac.orbit.envs.mdp.commands.position_command import TerrainBasedPositionCommand  # noqa: F401
 from omni.isaac.orbit.managers import ActionTermCfg as ActionTerm
 from omni.isaac.orbit.managers import CurriculumTermCfg as CurrTerm  # noqa: F401
 from omni.isaac.orbit.managers import ObservationGroupCfg as ObsGroup
@@ -26,8 +25,10 @@ from omni.isaac.orbit.utils.noise import AdditiveUniformNoiseCfg as Unoise  # no
 import rover_envs.envs.navigation.mdp as mdp
 from rover_envs.assets.terrains.debug.debug_terrains import DebugTerrainSceneCfg  # noqa: F401
 from rover_envs.assets.terrains.mars import MarsTerrainSceneCfg  # noqa: F401
+from rover_envs.envs.navigation.utils.terrains.commands_cfg import TerrainBasedPositionCommandCfg  # noqa: F401
+# from rover_envs.envs.navigation.utils.terrains.terrain_importer import TerrainBasedPositionCommandCustom  # noqa: F401
 from rover_envs.envs.navigation.utils.terrains.terrain_importer import RoverTerrainImporter  # noqa: F401
-from rover_envs.envs.navigation.utils.terrains.terrain_importer import TerrainBasedPositionCommandCustom  # noqa: F401
+from rover_envs.envs.navigation.utils.terrains.terrain_importer import TerrainBasedPositionCommand  # noqa: F401
 
 ##
 # Scene Description
@@ -187,13 +188,13 @@ class TerminationsCfg:
 class CommandsCfg:
     """Command terms for the MDP."""
 
-    target_pose = mdp.TerrainBasedPositionCommandCfg(
-        class_type=TerrainBasedPositionCommandCustom,  # TerrainBasedPositionCommandCustom,
+    target_pose = TerrainBasedPositionCommandCfg(
+        class_type=TerrainBasedPositionCommand,  # TerrainBasedPositionCommandCustom,
         asset_name="robot",
         rel_standing_envs=0.0,
         simple_heading=False,
         resampling_time_range=(150.0, 150.0),
-        ranges=mdp.TerrainBasedPositionCommandCfg.Ranges(
+        ranges=TerrainBasedPositionCommandCfg.Ranges(
             heading=(-math.pi, math.pi)),
         debug_vis=True,
     )

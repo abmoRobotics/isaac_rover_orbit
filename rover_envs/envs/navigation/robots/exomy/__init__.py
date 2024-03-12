@@ -1,3 +1,5 @@
+import os
+
 import gymnasium as gym
 
 from . import env_cfg
@@ -8,5 +10,6 @@ gym.register(
     disable_env_checker=True,
     kwargs={
         "env_cfg_entry_point": env_cfg.AAURoverEnvCfg,
+        "best_model_path": f"{os.path.dirname(__file__)}/policies/best_agent.pt",
     }
 )

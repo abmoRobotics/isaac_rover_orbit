@@ -6,6 +6,7 @@ from skrl.models.torch.gaussian import GaussianMixin
 
 
 def get_activation(activation_name):
+    """Get the activation function by name."""
     activation_fns = {
         "leaky_relu": nn.LeakyReLU(),
         "relu": nn.ReLU(),

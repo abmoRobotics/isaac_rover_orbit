@@ -1,15 +1,13 @@
 import copy
-from typing import TYPE_CHECKING
 
 import torch
 import tqdm
+from omni.isaac.orbit.envs import RLTaskEnv
 from skrl.agents.torch import Agent
 from skrl.envs.wrappers.torch import Wrapper, wrap_env
 from skrl.trainers.torch import Trainer
 from skrl.trainers.torch.sequential import SEQUENTIAL_TRAINER_DEFAULT_CONFIG
 
-if TYPE_CHECKING:
-    from omni.isaac.orbit.envs import RLTaskEnv
 # We use SKRL 1.1, consequently we cannot use the official
 # `SkrlSequentialLogTrainer` class from the `omni.isaac.orbit_tasks.utils.wrappers.skrl` module.
 

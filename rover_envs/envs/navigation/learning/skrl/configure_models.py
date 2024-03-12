@@ -21,20 +21,20 @@ def get_models(agent: str, env: RLTaskEnv, observation_space: Box, action_space:
     """
 
     if agent == "PPO":
-        return get_model_gaussian(env, observation_space, action_space)
+        return gaussian_model_skrl(env, observation_space, action_space)
     if agent == "TRPO":
-        return get_model_gaussian(env, observation_space, action_space)
+        return gaussian_model_skrl(env, observation_space, action_space)
     if agent == "RPO":
-        return get_model_gaussian(env, observation_space, action_space)
+        return gaussian_model_skrl(env, observation_space, action_space)
     if agent == "SAC":
-        return get_model_double_critic_deterministic(env, observation_space, action_space)
+        return double_critic_deterministic_model_skrl(env, observation_space, action_space)
     if agent == "TD3":
-        return get_model_double_critic_deterministic(env, observation_space, action_space)
+        return double_critic_deterministic_model_skrl(env, observation_space, action_space)
 
     raise ValueError(f"Agent {agent} not supported.")
 
 
-def get_model_gaussian(env: RLTaskEnv, observation_space: Box, action_space: Box):
+def gaussian_model_skrl(env: RLTaskEnv, observation_space: Box, action_space: Box):
     models = {}
     encoder_input_size = env.observation_manager.group_obs_term_dim["policy"][-1][0]
 
@@ -65,7 +65,7 @@ def get_model_gaussian(env: RLTaskEnv, observation_space: Box, action_space: Box
     return models
 
 
-def get_model_double_critic_deterministic(env: RLTaskEnv, observation_space: Box, action_space: Box):
+def double_critic_deterministic_model_skrl(env: RLTaskEnv, observation_space: Box, action_space: Box):
     models = {}
     encoder_input_size = env.observation_manager.group_obs_term_dim["policy"][-1][0]
 
