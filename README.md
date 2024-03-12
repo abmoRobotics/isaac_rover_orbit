@@ -1,5 +1,5 @@
 # RL Agent (Mars Rover) for Isaac Gym
-This repository is currently in heavy development, please refer to https://github.com/abmoRobotics/isaac_rover_orbit/tree/dev, to get the latest version. 
+This repository is currently in heavy development, please refer to the [DEV BRANCH](https://github.com/abmoRobotics/isaac_rover_orbit/tree/dev), to get the latest version. 
 ## Introduction
 This project implements a Reinforcement Learning (RL) agent for autonomous mapless navigation in complex environments. The environment is simulated using Isaac Sim and implemented using the [ORBIT](https://isaac-orbit.github.io/orbit/) framework.
 
