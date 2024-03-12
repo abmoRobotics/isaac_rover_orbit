@@ -64,6 +64,9 @@ conda activate orbit_env
 git clone https://github.com/abmoRobotics/isaac_rover_orbit
 cd isaac_rover_orbit
 
+# Install Repo (make sure conda is activated)
+python -m pip install -e .
+
 # Run training script or evaluate pre-trained policy
 cd examples/02_train/train.py
 python train.py
