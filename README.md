@@ -1,4 +1,4 @@
-# RL Agent (Mars Rover) for Isaac Gym
+# RoverLab
 ## Introduction
 This project implements a Reinforcement Learning (RL) agent for autonomous mapless navigation in complex environments. The environment is simulated using Isaac Sim and implemented using the [ORBIT](https://isaac-orbit.github.io/orbit/) framework.
 
@@ -38,7 +38,8 @@ Once inside the docker container you can train and agent by using the following 
 ```
 
 ## Installing natively
-1. Install ORBIT using the following steps:
+1. Install Isaac Sim 2023.1.1 through the [Omniverse Launcher](https://www.nvidia.com/en-us/omniverse/download/)
+2. Install ORBIT using the following steps:
 ```bash
 git clone https://github.com/NVIDIA-Omniverse/orbit
 cd Orbit
@@ -57,7 +58,7 @@ ln -s ${ISAACSIM_PATH} _isaac_sim
 conda activate orbit_env
 
 ```
-2. Clone Repo
+3. Clone Repo
 
 ```bash
 # Clone Repo
