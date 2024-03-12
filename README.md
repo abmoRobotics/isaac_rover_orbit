@@ -65,7 +65,10 @@ git clone https://github.com/abmoRobotics/isaac_rover_orbit
 cd isaac_rover_orbit
 
 # Run training script or evaluate pre-trained policy
+cd examples/02_train/train.py
 python train.py
+
+cd examples/03_inference_pretrained/eval.py
 python eval.py
 ```
 
