@@ -39,5 +39,5 @@ class AckermannActionCfg(ActionTermCfg):
 
     drive_joint_names: list[str] = MISSING
 
-    class_type: type[ActionTerm] = ackermann_actions.AckermannAction2
+    class_type: type[ActionTerm] = ackermann_actions.AckermannAction
     """The specific action class type for Ackermann steering."""
