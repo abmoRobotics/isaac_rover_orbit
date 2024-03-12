@@ -38,7 +38,7 @@ Once inside the docker container you can train and agent by using the following 
 ```
 
 ## Installing natively
-1. Install Isaac Sim 2023.1.1 through the [Omniverse Launcher](https://www.nvidia.com/en-us/omniverse/download/)
+1. Install Isaac Sim 2023.1.1 through the [Omniverse Launcher](https://www.nvidia.com/en-us/omniverse/download/).
 2. Install ORBIT using the following steps:
 ```bash
 git clone https://github.com/NVIDIA-Omniverse/orbit
