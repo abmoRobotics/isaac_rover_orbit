@@ -15,7 +15,7 @@ parser.add_argument("--video_length", type=int, default=200, help="Length of the
 parser.add_argument("--video_interval", type=int, default=2000, help="Interval between video recordings (in steps).")
 parser.add_argument("--cpu", action="store_true", default=False, help="Use CPU pipeline.")
 parser.add_argument("--num_envs", type=int, default=None, help="Number of environments to simulate.")
-parser.add_argument("--task", type=str, default=None, help="Name of the task.")
+parser.add_argument("--task", type=str, default="AAURoverEnv-v0", help="Name of the task.")
 parser.add_argument("--seed", type=int, default=None, help="Seed used for the environment")
 parser.add_argument("--agent", type=str, default="PPO", help="Name of the agent.")
 args_cli = parser.parse_args()
@@ -102,7 +102,6 @@ def video_record(env: RLTaskEnv, log_dir: str, video: bool, video_length: int, v
 
 
 from omni.isaac.orbit_tasks.utils import parse_env_cfg  # noqa: E402
-from omni.isaac.orbit_tasks.utils.wrappers.skrl import SkrlVecEnvWrapper  # noqa: E402
 from skrl.utils import set_seed  # noqa: E402
 
 import rover_envs.envs.navigation.robots.aau_rover  # noqa: E402, F401
@@ -110,6 +109,7 @@ import rover_envs.envs.navigation.robots.aau_rover  # noqa: E402, F401
 from rover_envs.learning.train import get_agent  # noqa: E402
 from rover_envs.utils.config import parse_skrl_cfg  # noqa: E402
 from rover_envs.utils.skrl_utils import SkrlSequentialLogTrainer  # noqa: E402
+from rover_envs.utils.skrl_utils import SkrlVecEnvWrapper  # noqa: E402
 
 
 def train():
