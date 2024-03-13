@@ -337,3 +337,5 @@ examples/**/wandb*
 !rover_envs/envs/**/**/**/*.pt
 !rover_envs/envs/**/**/**/**/*.pt
 rover_envs/assets/robots/__pycache__/*
+!rover_envs/assets/terrains/debug/**/*
+rover_envs/assets/terrains/debug/__pycache__/*
