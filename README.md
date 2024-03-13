@@ -84,8 +84,7 @@ For other questions feel free to contact:
 
 ## Introduction
 
-Welcome to RLRoverLab! This project is at the forefront of applying Reinforcement Learning (RL) for autonomous navigation and manipulation tasks using Isaac Sim and [ORBIT](https://isaac-orbit.github.io/orbit/). Our suite currently supports a variety of tasks, with ongoing efforts to expand our offerings. Keep an eye on our updates for new capabilities!
-
+Welcome to RLRoverLab! This project implements a suite of Reinforcement Learning (RL) agents using Isaac Sim and [ORBIT](https://isaac-orbit.github.io/orbit/). Our suite currently supports a variety of tasks within navigation and manipulation, with ongoing efforts to expand our offerings.
 ## Features
 
 - **Navigation and Manipulation Tasks**: Implementations of RL agents designed for navigation and manipulation tasks, we are working on integrating more tasks.
