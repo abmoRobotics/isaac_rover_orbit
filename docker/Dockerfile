@@ -29,7 +29,8 @@ RUN git clone https://github.com/NVIDIA-Omniverse/orbit ${ORBIT_PATH}
 RUN ln -sf ${ISAAC_SIM_PATH} ${ORBIT_PATH}/_isaac_sim
 
 # Install orbit
-RUN ${ORBIT_PATH}/orbit.sh --install --extra
+RUN ${ORBIT_PATH}/orbit.sh --install
+# --extra
 
 RUN echo "alias orbit=${ORBIT_PATH}/orbit.sh" >> ${HOME}/.bashrc && \
     echo "alias python=${ISAAC_SIM_PATH}/python.sh" >> ${HOME}/.bashrc && \
@@ -42,12 +43,12 @@ RUN echo "alias orbit=${ORBIT_PATH}/orbit.sh" >> ${HOME}/.bashrc && \
 # Clone rover_lab
 RUN git clone https://github.com/abmoRobotics/isaac_rover_orbit ${ROVER_LAB_PATH}
 # Checkout to dev branch and install dependencies
-RUN /bin/bash -c "cd ${ROVER_LAB_PATH} && git checkout dev5 && ${ORBIT_PATH}/orbit.sh -p -m pip install -e ."
+RUN /bin/bash -c "cd ${ROVER_LAB_PATH} && git checkout dev && ${ORBIT_PATH}/orbit.sh -p -m pip install -e .[all]"
 # Install gdown
 RUN ${ORBIT_PATH}/orbit.sh -p -m pip install gdown
 
 # RUN download_usd.py
-RUN /bin/bash -c "cd ${ROVER_LAB_PATH} && ${ORBIT_PATH}/orbit.sh -p download_usd.py"
+#RUN /bin/bash -c "cd ${ROVER_LAB_PATH} && ${ORBIT_PATH}/orbit.sh -p download_usd.py"
 
 #RUN cd ${ROVER_LAB_PATH} && python -m install -e .
 #RUN pip install -e ${ROVER_LAB_PATH}

@@ -1,12 +1,10 @@
-# RoverLab
+# RLRoverLab
 ## Introduction
-This project implements a Reinforcement Learning (RL) agent for autonomous mapless navigation in complex environments. The environment is simulated using Isaac Sim and implemented using the [ORBIT](https://isaac-orbit.github.io/orbit/) framework.
-
-## Implementation Overview
-[WIP]
+This Project implements a suite of Reinforcement Learning (RL) agents using Isaac Sim and [ORBIT](https://isaac-orbit.github.io/orbit/). So far we've implemented navigation and manipulation-based takss and are working on implementing more so expect to see updates soon.
+<!-- This project implements a Reinforcement Learning (RL) agent for autonomous mapless navigation in complex environments. The environment is simulated using Isaac Sim and implemented using the [ORBIT](https://isaac-orbit.github.io/orbit/) framework. -->
 
 # Installation
-In order to ease the setup of this suite, we use docker to install Isaac Sim, ORBIT, and this framework. The following documents the process and requirements of doing this.
+In order to ease the setup of this suite, we use docker to install Isaac Sim, ORBIT, and our suite. The following documents the process and requirements of doing this.
 ## Requirements
 ### Hardware
 - GPU: Any RTX GPU with at least 8 GB VRAM (Tested on NVIDIA RTX 3090 and NVIDIA RTX A6000)
@@ -34,7 +32,7 @@ docker exec -it orbit bash
 2. Train an agent
 Once inside the docker container you can train and agent by using the following command
 ```bash
-/workspace/orbit/orbit.sh -p train.py --task="Rover-v0" --num_envs=256
+/workspace/orbit/orbit.sh -p train.py --task="AAURoverEnv-v0" --num_envs=256
 ```
 
 ## Installing natively

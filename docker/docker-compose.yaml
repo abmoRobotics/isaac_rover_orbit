@@ -69,6 +69,9 @@ services:
       - type: bind
         source: ../rover_envs
         target: /workspace/orbit_rover/rover_envs
+      - type: bind
+        source: ../examples
+        target: /workspace/orbit_rover/examples
       # - type: bind
       #   source: ../docs
       #   target: /workspace/orbit/docs
