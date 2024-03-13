@@ -23,7 +23,7 @@ simulation_app = app_launcher.app
 
 from omni.isaac.orbit_tasks.utils import parse_env_cfg  # noqa: F401, E402
 
-import rover_envs.envs.navigation.robots.aau_rover  # noqa: F401, E402
+import rover_envs.envs.navigation.robots  # noqa: F401, E402
 
 # Import agents
 

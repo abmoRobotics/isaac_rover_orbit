@@ -34,6 +34,11 @@ SKRL_PPO_CONFIG_FILE = {
     "AAURoverEnv-v0_TD3": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_td3.yaml"),
     "AAURoverEnv-v0_SAC": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_sac.yaml"),
     "AAURoverEnv-v0_RPO": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_rpo.yaml"),
+    "Exomy-v0_PPO": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_ppo.yaml"),
+    "Exomy-v0_TRPO": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_trpo.yaml"),
+    "Exomy-v0_TD3": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_td3.yaml"),
+    "Exomy-v0_SAC": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_sac.yaml"),
+    "Exomy-v0_RPO": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_rpo.yaml"),
 }
 
 

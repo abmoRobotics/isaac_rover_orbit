@@ -9,7 +9,7 @@ gym.register(
     entry_point='rover_envs.envs.navigation.entrypoints:RoverEnv',
     disable_env_checker=True,
     kwargs={
-        "env_cfg_entry_point": env_cfg.AAURoverEnvCfg,
+        "env_cfg_entry_point": env_cfg.ExoMyEnvCfg,
         "best_model_path": f"{os.path.dirname(__file__)}/policies/best_agent.pt",
     }
 )
