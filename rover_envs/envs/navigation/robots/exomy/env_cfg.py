@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from omni.isaac.orbit.utils import configclass
 
-from rover_envs.assets.exomy import EXOMY_CFG
+from rover_envs.assets.robots.exomy import EXOMY_CFG
 from rover_envs.envs.navigation.rover_env_cfg import RoverEnvCfg
 
 

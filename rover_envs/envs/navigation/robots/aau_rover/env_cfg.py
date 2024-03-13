@@ -3,7 +3,7 @@ from __future__ import annotations
 from omni.isaac.orbit.utils import configclass
 
 import rover_envs.mdp as mdp
-from rover_envs.assets.aau_rover_simple import AAU_ROVER_SIMPLE_CFG
+from rover_envs.assets.robots.aau_rover_simple import AAU_ROVER_SIMPLE_CFG
 from rover_envs.envs.navigation.rover_env_cfg import RoverEnvCfg
 
 

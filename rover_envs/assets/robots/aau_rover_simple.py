@@ -14,7 +14,7 @@ from rover_envs.envs.navigation.utils.articulation.articulation import RoverArti
 # _AAU_ROVER_SIMPLE_PATH =
 # "http://localhost:8080/omniverse://127.0.0.1/Projects/simple_instanceable_new/rover_instance.usd"
 _AAU_ROVER_SIMPLE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                      "robots", "aau_rover_simple", "rover_instance.usd")
+                                      "aau_rover_simple", "rover_instance.usd")
 AAU_ROVER_SIMPLE_CFG = ArticulationCfg(
     class_type=RoverArticulation,
     spawn=sim_utils.UsdFileCfg(

@@ -7,7 +7,7 @@ from omni.isaac.orbit.assets.articulation import ArticulationCfg
 from rover_envs.envs.navigation.utils.articulation.articulation import RoverArticulation
 
 _EXOMY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                           "robots", "exomy", "exomy.usd")
+                           "exomy", "exomy.usd")
 
 EXOMY_CFG = ArticulationCfg(
     class_type=RoverArticulation,
