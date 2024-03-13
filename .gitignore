@@ -318,7 +318,6 @@ rover_envs/assets/**/*.png
 rover_envs/assets/**/*.jpg
 
 # TODO remove this
-example*
 best_agent*
 *.vscode
 wandb/*
@@ -332,3 +331,8 @@ testers
 
 !pre_trained/**/**/*
 !pre_trained/**/*
+
+examples/**/wandb*
+!rover_envs/assets/robots/**/*
+!rover_envs/envs/**/**/**/*.pt
+!rover_envs/envs/**/**/**/**/*.pt

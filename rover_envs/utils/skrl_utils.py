@@ -2,10 +2,43 @@ import copy
 
 import torch
 import tqdm
+from omni.isaac.orbit.envs import RLTaskEnv
 from skrl.agents.torch import Agent
-from skrl.envs.wrappers.torch import Wrapper
+from skrl.envs.wrappers.torch import Wrapper, wrap_env
 from skrl.trainers.torch import Trainer
 from skrl.trainers.torch.sequential import SEQUENTIAL_TRAINER_DEFAULT_CONFIG
+
+# We use SKRL 1.1, consequently we cannot use the official
+# `SkrlSequentialLogTrainer` class from the `omni.isaac.orbit_tasks.utils.wrappers.skrl` module.
+
+
+def SkrlVecEnvWrapper(env: RLTaskEnv):
+    """Wraps around Orbit environment for skrl.
+
+    This function wraps around the Orbit environment. Since the :class:`RLTaskEnv` environment
+    wrapping functionality is defined within the skrl library itself, this implementation
+    is maintained for compatibility with the structure of the extension that contains it.
+    Internally it calls the :func:`wrap_env` from the skrl library API.
+
+    NOTE: Since we are using SKRL 1.1 - we have to restate the function.
+    Please see "https://github.com/NVIDIA-Omniverse/orbit/blob/main/source/extensions/omni.isaac.orbit_tasks/omni/
+    isaac/orbit_tasks/utils/wrappers/skrl.py"
+
+
+    Args:
+        env: The environment to wrap around.
+
+    Raises:
+        ValueError: When the environment is not an instance of :class:`RLTaskEnv`.
+
+    Reference:
+        https://skrl.readthedocs.io/en/latest/modules/skrl.envs.wrapping.html
+    """
+    # check that input is valid
+    if not isinstance(env.unwrapped, RLTaskEnv):
+        raise ValueError(f"The environment must be inherited from RLTaskEnv. Environment type: {type(env)}")
+    # wrap and return the environment
+    return wrap_env(env, wrapper="isaac-orbit")
 
 
 class SkrlSequentialLogTrainer(Trainer):
@@ -23,6 +56,11 @@ class SkrlSequentialLogTrainer(Trainer):
 
     Reference:
         https://skrl.readthedocs.io/en/latest/modules/skrl.trainers.base_class.html
+
+    NOTE: Since we are using SKRL 1.1 - we have to restate the function with some modifications.
+    Please see "https://github.com/NVIDIA-Omniverse/orbit/blob/main/source/extensions/omni.isaac.orbit_tasks/omni/
+    isaac/orbit_tasks/utils/wrappers/skrl.py"
+
     """
 
     def __init__(
@@ -49,7 +87,7 @@ class SkrlSequentialLogTrainer(Trainer):
         # initialize the base class
         super().__init__(env=env, agents=agents, agents_scope=agents_scope, cfg=_cfg)
         # init agents
-        if self.num_simultaneous_agents > 1:
+        if self.env.num_agents > 1:
             for agent in self.agents:
                 agent.init(trainer_cfg=self.cfg)
         else:
@@ -108,3 +146,65 @@ class SkrlSequentialLogTrainer(Trainer):
             # note: here we do not call reset scene since it is done in the env.step() method
             # update states
             states.copy_(next_states)
+
+    def eval(self) -> None:
+        """Evaluate the agents sequentially.
+
+        This method executes the following steps in loop:
+
+        * Compute actions: Compute the actions for the agents.
+        * Step the environments: Step the environments with the computed actions.
+        * Record the environments' transitions: Record the transitions from the environments.
+        * Log custom environment data: Log custom environment data.
+        """
+        # set running mode
+        if self.num_simultaneous_agents > 1:
+            for agent in self.agents:
+                agent.set_running_mode("eval")
+        else:
+            self.agents.set_running_mode("eval")
+        # single agent
+        if self.num_simultaneous_agents == 1:
+            self.single_agent_eval()
+            return
+
+        # reset env
+        states, infos = self.env.reset()
+        # evaluation loop
+        for timestep in tqdm.tqdm(range(self.initial_timestep, self.timesteps), disable=self.disable_progressbar):
+            # compute actions
+            with torch.no_grad():
+                actions = torch.vstack([
+                    agent.act(states[scope[0]: scope[1]], timestep=timestep, timesteps=self.timesteps)[0]
+                    for agent, scope in zip(self.agents, self.agents_scope)
+                ])
+
+            # step the environments
+            next_states, rewards, terminated, truncated, infos = self.env.step(actions)
+
+            with torch.no_grad():
+                # write data to TensorBoard
+                for agent, scope in zip(self.agents, self.agents_scope):
+                    # track data
+                    agent.record_transition(
+                        states=states[scope[0]: scope[1]],
+                        actions=actions[scope[0]: scope[1]],
+                        rewards=rewards[scope[0]: scope[1]],
+                        next_states=next_states[scope[0]: scope[1]],
+                        terminated=terminated[scope[0]: scope[1]],
+                        truncated=truncated[scope[0]: scope[1]],
+                        infos=infos,
+                        timestep=timestep,
+                        timesteps=self.timesteps,
+                    )
+                    # log custom environment data
+                    if "log" in infos:
+                        for k, v in infos["log"].items():
+                            if isinstance(v, torch.Tensor) and v.numel() == 1:
+                                agent.track_data(k, v.item())
+                    # perform post-interaction
+                    super(type(agent), agent).post_interaction(timestep=timestep, timesteps=self.timesteps)
+
+                # reset environments
+                # note: here we do not call reset scene since it is done in the env.step() method
+                states.copy_(next_states)

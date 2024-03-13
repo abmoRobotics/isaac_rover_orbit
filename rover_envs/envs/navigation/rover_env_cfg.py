@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import math
+from dataclasses import MISSING
 
 import omni.isaac.orbit.sim as sim_utils
 from omni.isaac.orbit.assets import ArticulationCfg, AssetBaseCfg
 from omni.isaac.orbit.envs import RLTaskEnvCfg
-from omni.isaac.orbit.envs.mdp.commands.position_command import TerrainBasedPositionCommand
 from omni.isaac.orbit.managers import ActionTermCfg as ActionTerm
 from omni.isaac.orbit.managers import CurriculumTermCfg as CurrTerm  # noqa: F401
 from omni.isaac.orbit.managers import ObservationGroupCfg as ObsGroup
@@ -23,12 +23,12 @@ from omni.isaac.orbit.utils import configclass
 from omni.isaac.orbit.utils.noise import AdditiveUniformNoiseCfg as Unoise  # noqa: F401
 
 import rover_envs.envs.navigation.mdp as mdp
-from rover_envs.assets.aau_rover_simple import AAU_ROVER_SIMPLE_CFG
-from rover_envs.assets.terrains.debug import DebugTerrainSceneCfg  # noqa: F401
+from rover_envs.assets.terrains.debug.debug_terrains import DebugTerrainSceneCfg  # noqa: F401
 from rover_envs.assets.terrains.mars import MarsTerrainSceneCfg  # noqa: F401
+from rover_envs.envs.navigation.utils.terrains.commands_cfg import TerrainBasedPositionCommandCfg  # noqa: F401
+# from rover_envs.envs.navigation.utils.terrains.terrain_importer import TerrainBasedPositionCommandCustom  # noqa: F401
 from rover_envs.envs.navigation.utils.terrains.terrain_importer import RoverTerrainImporter  # noqa: F401
-
-# from rover_envs.envs.navigation.utils.terrains.terrain_importer import TerrainBasedPositionCommandCustom
+from rover_envs.envs.navigation.utils.terrains.terrain_importer import TerrainBasedPositionCommand  # noqa: F401
 
 ##
 # Scene Description
@@ -65,8 +65,9 @@ class RoverSceneCfg(DebugTerrainSceneCfg):
         init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, -180.0, 80.0)),
     )
 
-    robot: ArticulationCfg = AAU_ROVER_SIMPLE_CFG.replace(
-        prim_path="{ENV_REGEX_NS}/Robot")
+    robot: ArticulationCfg = MISSING
+    # AAU_ROVER_SIMPLE_CFG.replace(
+    #     prim_path="{ENV_REGEX_NS}/Robot")
 
     contact_sensor = ContactSensorCfg(
         prim_path="{ENV_REGEX_NS}/Robot/.*_(Drive|Steer|Boogie|Body)",
@@ -89,16 +90,8 @@ class RoverSceneCfg(DebugTerrainSceneCfg):
 class ActionsCfg:
     """Action"""
 
-    actions: ActionTerm = mdp.AckermannActionCfg(
-        asset_name="robot",
-        wheelbase_length=0.849,
-        middle_wheel_distance=0.894,
-        rear_and_front_wheel_distance=0.77,
-        wheel_radius=0.1,
-        min_steering_radius=0.8,
-        steering_joint_names=[".*Steer_Revolute"],
-        drive_joint_names=[".*Drive_Continuous"],
-    )
+    # We define the action space for the rover
+    actions: ActionTerm = MISSING
 
 
 @configclass
@@ -195,13 +188,13 @@ class TerminationsCfg:
 class CommandsCfg:
     """Command terms for the MDP."""
 
-    target_pose = mdp.TerrainBasedPositionCommandCfg(
+    target_pose = TerrainBasedPositionCommandCfg(
         class_type=TerrainBasedPositionCommand,  # TerrainBasedPositionCommandCustom,
         asset_name="robot",
         rel_standing_envs=0.0,
         simple_heading=False,
         resampling_time_range=(150.0, 150.0),
-        ranges=mdp.TerrainBasedPositionCommandCfg.Ranges(
+        ranges=TerrainBasedPositionCommandCfg.Ranges(
             heading=(-math.pi, math.pi)),
         debug_vis=True,
     )

@@ -1,13 +1,10 @@
-# RL Agent (Mars Rover) for Isaac Gym
-This repository is currently in heavy development, please refer to the [DEV BRANCH](https://github.com/abmoRobotics/isaac_rover_orbit/tree/dev), to get the latest version. 
+# RLRoverLab
 ## Introduction
-This project implements a Reinforcement Learning (RL) agent for autonomous mapless navigation in complex environments. The environment is simulated using Isaac Sim and implemented using the [ORBIT](https://isaac-orbit.github.io/orbit/) framework.
-
-## Implementation Overview
-[WIP]
+This Project implements a suite of Reinforcement Learning (RL) agents using Isaac Sim and [ORBIT](https://isaac-orbit.github.io/orbit/). So far we've implemented navigation and manipulation-based takss and are working on implementing more so expect to see updates soon.
+<!-- This project implements a Reinforcement Learning (RL) agent for autonomous mapless navigation in complex environments. The environment is simulated using Isaac Sim and implemented using the [ORBIT](https://isaac-orbit.github.io/orbit/) framework. -->
 
 # Installation
-In order to ease the setup of this suite, we use docker to install Isaac Sim, ORBIT, and this framework. The following documents the process and requirements of doing this.
+In order to ease the setup of this suite, we use docker to install Isaac Sim, ORBIT, and our suite. The following documents the process and requirements of doing this.
 ## Requirements
 ### Hardware
 - GPU: Any RTX GPU with at least 8 GB VRAM (Tested on NVIDIA RTX 3090 and NVIDIA RTX A6000)
@@ -35,17 +32,18 @@ docker exec -it orbit bash
 2. Train an agent
 Once inside the docker container you can train and agent by using the following command
 ```bash
-/workspace/orbit/orbit.sh -p train.py --task="Rover-v0" --num_envs=256
+/workspace/orbit/orbit.sh -p train.py --task="AAURoverEnv-v0" --num_envs=256
 ```
 
 ## Installing natively
-1. Install ORBIT using the following steps:
+1. Install Isaac Sim 2023.1.1 through the [Omniverse Launcher](https://www.nvidia.com/en-us/omniverse/download/).
+2. Install ORBIT using the following steps:
 ```bash
-git clone https://github.com/abmoRobotics/Orbit-fork
+git clone https://github.com/NVIDIA-Omniverse/orbit
 cd Orbit
 
 # create aliases
-export ISAACSIM_PATH="${HOME}/.local/share/ov/pkg/isaac_sim-2023.1.0-hotfix.1"
+export ISAACSIM_PATH="${HOME}/.local/share/ov/pkg/isaac_sim-2023.1.1"
 export ISAACSIM_PYTHON_EXE="${ISAACSIM_PATH}/python.sh"
 
 # Create symbolic link
@@ -58,17 +56,24 @@ ln -s ${ISAACSIM_PATH} _isaac_sim
 conda activate orbit_env
 
 # Install dependencies
-./orbit.sh --install --extra
+conda --install
+
 ```
-2. Clone Repo
+3. Clone Repo
 
 ```bash
 # Clone Repo
 git clone https://github.com/abmoRobotics/isaac_rover_orbit
 cd isaac_rover_orbit
 
+# Install Repo (make sure conda is activated)
+python -m pip install -e .[all]
+
 # Run training script or evaluate pre-trained policy
+cd examples/02_train/train.py
 python train.py
+
+cd examples/03_inference_pretrained/eval.py
 python eval.py
 ```
 

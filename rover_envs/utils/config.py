@@ -25,15 +25,15 @@ __all__ = ["SKRL_PPO_CONFIG_FILE", "parse_skrl_cfg"]
 
 SKRL_PPO_CONFIG_FILE = {
     # classic
-    "Rover-v0": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_ppo.yaml"),
-    "RoverCamera-v0": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_ppo.yaml"),
-    "RoverNew-v0": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_ppo.yaml"),
-    "RoverNoObstacles-v0": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_ppo.yaml"),
-    "Rover-v0_PPO": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_ppo.yaml"),
-    "Rover-v0_TRPO": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_trpo.yaml"),
-    "Rover-v0_TD3": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_td3.yaml"),
-    "Rover-v0_SAC": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_sac.yaml"),
-    "Rover-v0_RPO": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_rpo.yaml"),
+    "AAURoverEnv-v0": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_ppo.yaml"),
+    "AAURoverEnvCamera-v0": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_ppo.yaml"),
+    "AAURoverEnvNew-v0": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_ppo.yaml"),
+    "AAURoverEnvNoObstacles-v0": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_ppo.yaml"),
+    "AAURoverEnv-v0_PPO": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_ppo.yaml"),
+    "AAURoverEnv-v0_TRPO": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_trpo.yaml"),
+    "AAURoverEnv-v0_TD3": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_td3.yaml"),
+    "AAURoverEnv-v0_SAC": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_sac.yaml"),
+    "AAURoverEnv-v0_RPO": os.path.join(ORBIT_CUSTOM_ENVS_DATA_DIR, "skrl/rover_rpo.yaml"),
 }
 
 

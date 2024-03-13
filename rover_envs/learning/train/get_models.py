@@ -2,8 +2,8 @@
 from gymnasium.spaces.box import Box
 from omni.isaac.orbit.envs import RLTaskEnv
 
-from rover_envs.envs.navigation.learning.models import (Critic, DeterministicActor, DeterministicNeuralNetwork,
-                                                        GaussianNeuralNetwork)
+from rover_envs.envs.navigation.learning.skrl.models import (Critic, DeterministicActor, DeterministicNeuralNetwork,
+                                                             GaussianNeuralNetwork)
 
 
 def get_models(agent: str, env: RLTaskEnv, observation_space: Box, action_space: Box):
