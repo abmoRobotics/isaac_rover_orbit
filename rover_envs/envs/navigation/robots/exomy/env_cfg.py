@@ -8,7 +8,7 @@ from rover_envs.envs.navigation.rover_env_cfg import RoverEnvCfg
 
 
 @configclass
-class AAURoverEnvCfg(RoverEnvCfg):
+class ExoMyEnvCfg(RoverEnvCfg):
     """Configuration for the AAU rover environment."""
 
     def __post_init__(self):
@@ -25,6 +25,6 @@ class AAURoverEnvCfg(RoverEnvCfg):
             rear_and_front_wheel_distance=0.77,
             wheel_radius=0.1,
             min_steering_radius=0.8,
-            steering_joint_names=[".*Steer_Revolute"],
-            drive_joint_names=[".*Drive_Continuous"],
+            steering_joint_names=["FL_Steer_Joint", "FR_Steer_Joint", "RL_Steer_Joint", "RR_Steer_Joint"],
+            drive_joint_names=[".*Drive_Joint"],
         )
