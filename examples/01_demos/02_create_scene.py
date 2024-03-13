@@ -24,8 +24,8 @@ from omni.isaac.orbit.sim import SimulationContext  # noqa: F401, E402
 from omni.isaac.orbit.utils import configclass  # noqa: F401, E402
 
 # Avoid Circular Import
-from rover_envs.assets.aau_rover_simple import AAU_ROVER_SIMPLE_CFG  # noqa: F401, E402
-from rover_envs.assets.exomy import EXOMY_CFG  # noqa: F401, E402
+from rover_envs.assets.robots.aau_rover_simple import AAU_ROVER_SIMPLE_CFG  # noqa: F401, E402
+from rover_envs.assets.robots.exomy import EXOMY_CFG  # noqa: F401, E402
 
 if TYPE_CHECKING:
     from rover_envs.envs.navigation.utils.articulation.articulation import RoverArticulation
