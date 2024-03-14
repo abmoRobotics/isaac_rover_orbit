@@ -49,6 +49,10 @@ def main():
     while simulation_app.is_running:
         with torch.inference_mode():
             actions = torch.zeros(env.action_space.shape, device=env.unwrapped.device)
+            
+            actions[:,0] = 0.0
+            actions[:,1] = -1.0
+
             env.step(actions)
 
 
