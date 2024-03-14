@@ -288,15 +288,6 @@ class AckermannAction2(ActionTerm):
             theta_FR = torch.tensor( (torch.pi/4)) * torch.ones_like(turn_direction)
             theta_RL = torch.tensor( (torch.pi/4)) * torch.ones_like(turn_direction)
             theta_RR = torch.tensor(-(torch.pi/4)) * torch.ones_like(turn_direction)
-
-            # Stack the wheel velocities and steering angles (FIXED)
-            wheel_velocities = torch.stack([vel_ML, vel_FL, vel_RL, vel_RR, vel_MR, vel_FR], dim=1)
-            steering_angles = torch.stack([theta_FL, theta_RL, theta_RR, theta_FR], dim=1)
-                    
-            # Convert wheel velocities from m/s to rad/s
-            wheel_velocities = wheel_velocities / wheel_radius
-
-            return steering_angles, wheel_velocities  # torch.cat([steering_angles, wheel_velocities], dim=1)
         else:
             # Wheel velocities (m/s)
             # if ang_vel is 0, wheel velocity is equal to linear velocity
@@ -316,11 +307,12 @@ class AckermannAction2(ActionTerm):
             theta_RL = -torch.atan2(wl, r_RL) * turn_direction
             theta_RR = -torch.atan2(wl, r_RR) * turn_direction
             # Stack the wheel velocities and steering angles
-            wheel_velocities = torch.stack([vel_ML, vel_FL, vel_RL, vel_RR, vel_MR, vel_FR], dim=1)
-            steering_angles = torch.stack([theta_FL, theta_RL, theta_RR, theta_FR], dim=1)
+        
+        wheel_velocities = torch.stack([vel_ML, vel_FL, vel_RL, vel_RR, vel_MR, vel_FR], dim=1)
+        steering_angles = torch.stack([theta_FL, theta_RL, theta_RR, theta_FR], dim=1)
 
             # Convert wheel velocities from m/s to rad/s
-            wheel_velocities = wheel_velocities / wheel_radius
+        wheel_velocities = wheel_velocities / wheel_radius
 
-            return steering_angles, wheel_velocities  # torch.cat([steering_angles, wheel_velocities], dim=1)
+        return steering_angles, wheel_velocities  # torch.cat([steering_angles, wheel_velocities], dim=1)
     
