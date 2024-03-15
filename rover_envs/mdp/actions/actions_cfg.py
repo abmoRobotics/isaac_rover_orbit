@@ -14,7 +14,7 @@ class AckermannActionCfg(ActionTermCfg):
     typically used in wheeled robots or vehicles.
     """
 
-    class_type: type[ActionTerm] = ackermann_actions.AckermannAction
+    class_type: type[ActionTerm] = ackermann_actions.AckermannAction2
     """The specific action class type for Ackermann steering."""
 
     scale: tuple[float, float] = (1.0, 1.0)

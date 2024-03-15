@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 from typing import TYPE_CHECKING
+import carb
 
 import torch
 from omni.isaac.orbit.assets.articulation import Articulation
@@ -248,18 +249,21 @@ class AckermannAction2(ActionTerm):
         direction: torch.Tensor = torch.sign(lin_vel)
         turn_direction: torch.Tensor = torch.sign(ang_vel)
 
+        direction = torch.where(direction == 0, direction+1,direction)
+
         # Taking the absolute values of the velocities
         lin_vel = torch.abs(lin_vel)
         ang_vel = torch.abs(ang_vel)
 
         # Calculates the turning radius of the rover, returns inf if ang_vel is 0
-        not_zero_condition = torch.logical_not(ang_vel == 0) & torch.logical_not(lin_vel == 0)
+        not_zero_condition = torch.logical_not(ang_vel == 0) | torch.logical_not(lin_vel == 0)
 
         minimum_radius = (d_mw * 0.8)  # should be 0.5 but 0.8 makes operation more smooth
         turning_radius: torch.Tensor = torch.where(
             not_zero_condition, lin_vel / ang_vel, torch.tensor(float('inf'), device=device))
         turning_radius = torch.where(turning_radius < minimum_radius, minimum_radius, turning_radius)
-
+        
+        # if turn_radius is shorter than half of wheelbase: point turn else ackermann
         # Calculating the turning radius of the front wheels
         r_ML = turning_radius - (d_mw / 2)
         r_MR = turning_radius + (d_mw / 2)
@@ -267,30 +271,55 @@ class AckermannAction2(ActionTerm):
         r_FR = turning_radius + (d_fr / 2)
         r_RL = turning_radius - (d_fr / 2)
         r_RR = turning_radius + (d_fr / 2)
-
-        # Steering angles
+        
+        # Point turn or ackermann
+        # Wheel velocities (m/s)
+        # If turning radius is less than distance between middle wheels
+        # Set velocities for point turn, else
+        # if ang_vel is 0, wheel velocity is equal to linear velocity
+        vel_FL = torch.where(turning_radius < d_mw , 
+                             -(lin_vel+1)*turn_direction, 
+                             torch.where(ang_vel == 0, lin_vel, (r_FL * ang_vel)) * direction)
+        vel_FR = torch.where(turning_radius < d_mw , 
+                             (lin_vel+1)*turn_direction, 
+                             torch.where(ang_vel == 0, lin_vel, (r_FR * ang_vel)) * direction)
+        vel_RL = torch.where(turning_radius < d_mw , 
+                             -(lin_vel+1)*turn_direction, 
+                             torch.where(ang_vel == 0, lin_vel, (r_RL * ang_vel)) * direction)
+        vel_RR = torch.where(turning_radius < d_mw , 
+                             (lin_vel+1)*turn_direction, 
+                             torch.where(ang_vel == 0, lin_vel, (r_RR * ang_vel)) * direction)
+        vel_ML = torch.where(turning_radius < d_mw , 
+                             -(lin_vel+1)*turn_direction, 
+                             torch.where(ang_vel == 0, lin_vel, (r_ML * ang_vel)) * direction)
+        vel_MR =  torch.where(turning_radius < d_mw , 
+                             (lin_vel+1)*turn_direction, 
+                             torch.where(ang_vel == 0, lin_vel, (r_MR * ang_vel)) * direction)
 
         wl = torch.ones_like(r_FL) * wl  # Repeat wl as tensor
-        # print(turning_radius)
-        theta_FL = torch.atan2(wl, r_FL) * turn_direction
-        theta_FR = torch.atan2(wl, r_FR) * turn_direction
-        theta_RL = -torch.atan2(wl, r_RL) * turn_direction
-        theta_RR = -torch.atan2(wl, r_RR) * turn_direction
+        
+        # Steering angles for specifically point turns
+        # If turning radius is less than the distance between middle wheels
+        # set steering angles for point turn, else
+        # ackermann       
+        theta_FL = torch.where(turning_radius < d_mw,
+                            torch.tensor(-(torch.pi/4), device=device),
+                            torch.atan2(wl, r_FL) * turn_direction)
+        theta_RR = torch.where(turning_radius < d_mw,
+                            torch.tensor(-(torch.pi/4), device=device),
+                            torch.atan2(wl, r_FL) * turn_direction)
+        theta_FR = torch.where(turning_radius < d_mw,
+                            torch.tensor((torch.pi/4), device=device),
+                            torch.atan2(wl, r_FL) * turn_direction)
+        theta_RL = torch.where(turning_radius < d_mw,
+                            torch.tensor((torch.pi/4), device=device),
+                            torch.atan2(wl, r_FL) * turn_direction)
+        
+        wheel_velocities = torch.stack([vel_ML, vel_FL, vel_RL, vel_RR, vel_MR, vel_FR], dim=1)
+        steering_angles = torch.stack([theta_FL, theta_RL, theta_RR, theta_FR], dim=1)
 
-        # Wheel velocities (m/s)
-        # if ang_vel is 0, wheel velocity is equal to linear velocity
-        vel_FL = torch.where(ang_vel == 0, lin_vel, (r_FL * ang_vel)) * direction
-        vel_FR = torch.where(ang_vel == 0, lin_vel, (r_FR * ang_vel)) * direction
-        vel_RL = torch.where(ang_vel == 0, lin_vel, (r_RL * ang_vel)) * direction
-        vel_RR = torch.where(ang_vel == 0, lin_vel, (r_RR * ang_vel)) * direction
-        vel_ML = torch.where(ang_vel == 0, lin_vel, (r_ML * ang_vel)) * direction
-        vel_MR = torch.where(ang_vel == 0, lin_vel, (r_MR * ang_vel)) * direction
-
-        # Stack the wheel velocities and steering angles
-        wheel_velocities = torch.stack([vel_FL, vel_FR, vel_RL, vel_RR, vel_ML, vel_MR], dim=1)
-        steering_angles = torch.stack([theta_FL, theta_FR, theta_RL, theta_RR], dim=1)
-
-        # Convert wheel velocities from m/s to rad/s
+            # Convert wheel velocities from m/s to rad/s
         wheel_velocities = wheel_velocities / wheel_radius
 
         return steering_angles, wheel_velocities  # torch.cat([steering_angles, wheel_velocities], dim=1)
+    
