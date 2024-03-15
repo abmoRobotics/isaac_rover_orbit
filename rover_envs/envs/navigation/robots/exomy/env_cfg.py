@@ -24,7 +24,7 @@ class ExoMyEnvCfg(RoverEnvCfg):
             middle_wheel_distance=0.1548,
             rear_and_front_wheel_distance=0.1548,
             wheel_radius=0.1,
-            min_steering_radius=0.45,
+            min_steering_radius=0.4,
             steering_joint_names=["FL_Steer_Joint", "RL_Steer_Joint", "RR_Steer_Joint", "FR_Steer_Joint"],
             drive_joint_names=[".*Drive_Joint"],
         )
