@@ -20,11 +20,11 @@ class ExoMyEnvCfg(RoverEnvCfg):
     # Define kinematics for the robot
         self.actions.actions = mdp.AckermannActionCfg(
             asset_name="robot",
-            wheelbase_length=0.849,
-            middle_wheel_distance=0.894,
-            rear_and_front_wheel_distance=0.77,
+            wheelbase_length=0.29778,
+            middle_wheel_distance=0.1548,
+            rear_and_front_wheel_distance=0.1548,
             wheel_radius=0.1,
-            min_steering_radius=0.8,
-            steering_joint_names=["FL_Steer_Joint", "FR_Steer_Joint", "RL_Steer_Joint", "RR_Steer_Joint"],
+            min_steering_radius=0.4,
+            steering_joint_names=["FL_Steer_Joint", "RL_Steer_Joint", "RR_Steer_Joint", "FR_Steer_Joint"],
             drive_joint_names=[".*Drive_Joint"],
         )

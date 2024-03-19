@@ -1,7 +1,6 @@
-# RLRoverLab
+<!--# RLRoverLab
 ## Introduction
-This Project implements a suite of Reinforcement Learning (RL) agents using Isaac Sim and [ORBIT](https://isaac-orbit.github.io/orbit/). So far we've implemented navigation and manipulation-based takss and are working on implementing more so expect to see updates soon.
-<!-- This project implements a Reinforcement Learning (RL) agent for autonomous mapless navigation in complex environments. The environment is simulated using Isaac Sim and implemented using the [ORBIT](https://isaac-orbit.github.io/orbit/) framework. -->
+This Project implements a suite of Reinforcement Learning (RL) agents using Isaac Sim and [ORBIT](https://isaac-orbit.github.io/orbit/). So far we've implemented navigation and manipulation-based takss and are working on implementing more so expect to see updates soon. 
 
 # Installation
 In order to ease the setup of this suite, we use docker to install Isaac Sim, ORBIT, and our suite. The following documents the process and requirements of doing this.
@@ -80,3 +79,35 @@ python eval.py
 # Contact
 For other questions feel free to contact:
 * Anton Bjørndahl Mortensen: antonbm2008@gmail.com
+-->
+# RLRoverLab
+
+## Introduction
+
+Welcome to RLRoverLab! This project implements a suite of Reinforcement Learning (RL) agents using Isaac Sim and [ORBIT](https://isaac-orbit.github.io/orbit/). Our suite currently supports a variety of tasks within navigation and manipulation, with ongoing efforts to expand our offerings.
+## Features
+
+- **Navigation and Manipulation Tasks**: Implementations of RL agents designed for navigation and manipulation tasks, we are working on integrating more tasks.
+- **Isaac Sim and ORBIT Integration**: Utilizes the advanced simulation environments of Isaac Sim and the ORBIT framework for realistic task scenarios.
+- **Expandable Framework**: Architecture designed for easy extension with new tasks and functionalities.
+
+## Getting Started
+
+To get started with RLRoverLab, please refer to our [Installation Guide](https://github.com/abmoRobotics/isaac_rover_orbit/wiki) available in the project's wiki. The guide provides comprehensive steps for setting up the suite using Docker as well as instructions for native installation.
+
+### Quick Links
+
+- [Installation Guide](https://github.com/abmoRobotics/isaac_rover_orbit/wiki/Installing-the-suite)
+- [Examples and Tutorials](https://github.com/abmoRobotics/isaac_rover_orbit/wiki/Examples)
+- [Adding Custom Robots and Tasks](https://github.com/abmoRobotics/isaac_rover_orbit/wiki/Development)
+
+<!--## Contribution
+
+We welcome contributions to RLRoverLab! Whether it's adding new tasks, or fixing bugs. Check out our [Contribution Guidelines](https://github.com/abmoRobotics/isaac_rover_orbit/CONTRIBUTING.md) for more information on how to get involved. -->
+
+## Support
+
+If you have questions, suggestions, feel free to contact us.
+
+- **Contact Us**: For direct inquiries, reach out to Anton Bjørndahl Mortensen at [antonbm2008@gmail.com](mailto:antonbm2008@gmail.com).
+
