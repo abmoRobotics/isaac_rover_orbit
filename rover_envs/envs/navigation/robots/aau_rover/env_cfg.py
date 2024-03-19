@@ -17,7 +17,7 @@ class AAURoverEnvCfg(RoverEnvCfg):
         # Define robot
         self.scene.robot = AAU_ROVER_SIMPLE_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
 
-        # Define kinematics for the robot
+        # Define parameters for the Ackermann kinematics.
         self.actions.actions = mdp.AckermannActionCfg(
             asset_name="robot",
             wheelbase_length=0.849,
@@ -27,4 +27,5 @@ class AAURoverEnvCfg(RoverEnvCfg):
             min_steering_radius=0.8,
             steering_joint_names=[".*Steer_Revolute"],
             drive_joint_names=[".*Drive_Continuous"],
+            offset=-0.0135
         )
