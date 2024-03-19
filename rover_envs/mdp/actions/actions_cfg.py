@@ -20,7 +20,7 @@ class AckermannActionCfg(ActionTermCfg):
     scale: tuple[float, float] = (1.0, 1.0)
     """The scale of the action term."""
 
-    offset: tuple[float, float] = (0.0, 0.0)
+    offset: tuple[float, float] = 0.0
     """The offset of the action term."""
 
     wheelbase_length: float = MISSING
@@ -41,3 +41,11 @@ class AckermannActionCfg(ActionTermCfg):
     steering_joint_names: list[str] = MISSING
 
     drive_joint_names: list[str] = MISSING
+
+    steering_order = ["FL", "FR", "RL", "RR"]
+    """ Name of the steering joints in the following order ["FL", "FR", "RL", "RR"],
+    e.g. if the front left joint is named "front_left", change "FL" to "front_left" """
+
+    drive_order = ["FL", "FR", "CL", "CR", "RL", "RR"]
+    """ Name of the drive joints in the following order ["FL", "FR", "CL", "CR", "RL", "RR"],
+    e.g. if the front left joint is named "front_left", change "FL" to "front_left" """
