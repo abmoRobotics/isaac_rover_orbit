@@ -8,13 +8,21 @@
         "editor.rulers": [120]
     },
     "python.analysis.extraPaths": [
-        "~/.local/share/ov/pkg/isaac_sim-2023.1.0-hotfix.1/exts/omni.isaac.core",
-        "~/.local/share/ov/pkg/isaac_sim-2023.1.0-hotfix.1/kit/exts/omni.usd.libs",
-        "~/.local/share/ov/pkg/isaac_sim-2023.1.0-hotfix.1/extsPhysics/omni.usd.schema.physx",
-        "~/.local/share/ov/pkg/isaac_sim-2023.1.0-hotfix.1/exts/omni.replicator.isaac",
-        "~/.local/share/ov/pkg/isaac_sim-2023.1.0-hotfix.1/extscache/omni.replicator.core-1.10.10+105.1.lx64.r.cp310",
-        "~/.local/share/ov/pkg/isaac_sim-2023.1.0-hotfix.1/kit/kernel/py",
-        "~/.local/share/ov/pkg/isaac_sim-2023.1.0-hotfix.1/exts/omni.isaac.kit",
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.1/exts/omni.isaac.core",
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.1/kit/exts/omni.usd.libs",
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.1/extsPhysics/omni.usd.schema.physx",
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.1/exts/omni.replicator.isaac",
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.1/extscache/omni.replicator.core-1.10.10+105.1.lx64.r.cp310",
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.1/kit/kernel/py",
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.1/exts/omni.isaac.kit",
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.1/exts/omni.isaac.sensor/",
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.1/extscache/omni.replicator.core-1.10.20+105.1.lx64.r.cp310",
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.1/exts/omni.isaac.core_nodes",
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.1/extscache/omni.graph.window.core-1.84.0+105.1",
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.1/kit/exts/omni.syntheticdata",
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.1/kit/exts/omni.graph",
+        "~/.local/share/ov/pkg/isaac_sim-2023.1.1/kit/exts/"
+
     ],
     "python.defaultInterpreterPath": "~/anaconda3/envs/orbit_env/bin/python",
     "codesnap.boxShadow": "none",
