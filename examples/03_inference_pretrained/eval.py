@@ -111,8 +111,8 @@ import rover_envs.envs.navigation.robots  # noqa: E402, F401
 # Import agents
 from rover_envs.learning.train import get_agent  # noqa: E402
 from rover_envs.utils.config import parse_skrl_cfg  # noqa: E402
+from rover_envs.utils.skrl_utils import SkrlOrbitVecWrapper  # noqa: E402
 from rover_envs.utils.skrl_utils import SkrlSequentialLogTrainer  # noqa: E402
-from rover_envs.utils.skrl_utils import SkrlVecEnvWrapper  # noqa: E402
 
 # from omni.isaac.orbit_tasks.utils.wrappers.skrl import SkrlSequentialLogTrainer  # noqa: E402
 
@@ -129,7 +129,7 @@ def main():
     # Check if video recording is enabled
     env = video_record(env, log_dir, args_cli.video, args_cli.video_length, args_cli.video_interval)
     # Wrap the environment
-    env: RLTaskEnv = SkrlVecEnvWrapper(env)
+    env: RLTaskEnv = SkrlOrbitVecWrapper(env)
     set_seed(args_cli_seed if args_cli_seed is not None else experiment_cfg["seed"])
 
     # Get the observation and action spaces

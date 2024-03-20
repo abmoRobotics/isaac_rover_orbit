@@ -1,10 +1,11 @@
 import copy
+from typing import Any, Tuple
 
 import torch
 import tqdm
 from omni.isaac.orbit.envs import RLTaskEnv
 from skrl.agents.torch import Agent
-from skrl.envs.wrappers.torch import Wrapper, wrap_env
+from skrl.envs.wrappers.torch import IsaacOrbitWrapper, Wrapper, wrap_env
 from skrl.trainers.torch import Trainer
 from skrl.trainers.torch.sequential import SEQUENTIAL_TRAINER_DEFAULT_CONFIG
 
@@ -39,6 +40,33 @@ def SkrlVecEnvWrapper(env: RLTaskEnv):
         raise ValueError(f"The environment must be inherited from RLTaskEnv. Environment type: {type(env)}")
     # wrap and return the environment
     return wrap_env(env, wrapper="isaac-orbit")
+
+
+class SkrlOrbitVecWrapper(IsaacOrbitWrapper):
+    """ Wrapper for the Isaac Orbit environment.
+    Note: The wrapper from SKRL breaks with nan values of in the observation space.
+    This can sometimes happen within a ORBIT environment. This wrapper is used to handle the nan values.
+    """
+
+    def __init__(self, env: RLTaskEnv):
+        super().__init__(env)
+        self._env = env
+
+    def step(self, actions: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, Any]:
+        self._obs_dict, reward, terminated, truncated, info = self._env.step(actions)
+
+        self._obs_dict["policy"] = torch.nan_to_num(self._obs_dict["policy"], nan=0.0, posinf=0.0, neginf=0.0)
+        return self._obs_dict["policy"], reward.view(-1, 1), terminated.view(-1, 1), truncated.view(-1, 1), info
+
+    def reset(self) -> Tuple[torch.Tensor, Any]:
+        self._obs_dict, info = self._env.reset()
+
+        if self._reset_once:
+            self._reset_once = False
+            self._obs_dict, info = self._env.reset()
+
+        self._obs_dict["policy"] = torch.nan_to_num(self._obs_dict["policy"], nan=0.0, posinf=0.0, neginf=0.0)
+        return self._obs_dict["policy"].nan_to_num(nan=0.01), info
 
 
 class SkrlSequentialLogTrainer(Trainer):
