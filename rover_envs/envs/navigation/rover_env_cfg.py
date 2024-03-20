@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import os
 from dataclasses import MISSING
 
 import omni.isaac.orbit.sim as sim_utils
@@ -22,6 +23,10 @@ from omni.isaac.orbit.terrains import TerrainImporter, TerrainImporterCfg  # noq
 from omni.isaac.orbit.utils import configclass
 from omni.isaac.orbit.utils.noise import AdditiveUniformNoiseCfg as Unoise  # noqa: F401
 
+##
+# Scene Description
+##
+import rover_envs
 import rover_envs.envs.navigation.mdp as mdp
 from rover_envs.assets.terrains.debug.debug_terrains import DebugTerrainSceneCfg  # noqa: F401
 from rover_envs.assets.terrains.mars import MarsTerrainSceneCfg  # noqa: F401
@@ -30,13 +35,9 @@ from rover_envs.envs.navigation.utils.terrains.commands_cfg import TerrainBasedP
 from rover_envs.envs.navigation.utils.terrains.terrain_importer import RoverTerrainImporter  # noqa: F401
 from rover_envs.envs.navigation.utils.terrains.terrain_importer import TerrainBasedPositionCommand  # noqa: F401
 
-##
-# Scene Description
-##
-
 
 @configclass
-class RoverSceneCfg(DebugTerrainSceneCfg):
+class RoverSceneCfg(MarsTerrainSceneCfg):
     """
     Rover Scene Configuration
 
@@ -52,7 +53,11 @@ class RoverSceneCfg(DebugTerrainSceneCfg):
             color_temperature=4500.0,
             intensity=100,
             enable_color_temperature=True,
-            texture_file="/home/anton/Downloads/image(12).png",
+            texture_file=os.path.join(
+                os.path.dirname(os.path.abspath(rover_envs.__path__)),
+                "assets",
+                "textures.png",
+            ),
             texture_format="latlong",
         ),
     )
@@ -79,7 +84,7 @@ class RoverSceneCfg(DebugTerrainSceneCfg):
         prim_path="{ENV_REGEX_NS}/Robot/Body",
         offset=RayCasterCfg.OffsetCfg(pos=[0.0, 0.0, 10.0]),
         attach_yaw_only=True,
-        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[3.0, 3.0]),
+        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[5.0, 5.0]),
         debug_vis=False,
         mesh_prim_paths=["/World/terrain/hidden_terrain"],
         max_distance=100.0,
