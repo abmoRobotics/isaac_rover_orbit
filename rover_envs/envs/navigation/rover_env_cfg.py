@@ -9,9 +9,9 @@ from omni.isaac.orbit.assets import ArticulationCfg, AssetBaseCfg
 from omni.isaac.orbit.envs import RLTaskEnvCfg
 from omni.isaac.orbit.managers import ActionTermCfg as ActionTerm
 from omni.isaac.orbit.managers import CurriculumTermCfg as CurrTerm  # noqa: F401
+from omni.isaac.orbit.managers import EventTermCfg as EventTerm
 from omni.isaac.orbit.managers import ObservationGroupCfg as ObsGroup
 from omni.isaac.orbit.managers import ObservationTermCfg as ObsTerm
-from omni.isaac.orbit.managers import RandomizationTermCfg as RandTerm
 from omni.isaac.orbit.managers import RewardTermCfg as RewTerm
 from omni.isaac.orbit.managers import SceneEntityCfg
 from omni.isaac.orbit.managers import TerminationTermCfg as DoneTerm
@@ -54,9 +54,11 @@ class RoverSceneCfg(MarsTerrainSceneCfg):
             intensity=100,
             enable_color_temperature=True,
             texture_file=os.path.join(
-                os.path.dirname(os.path.abspath(rover_envs.__path__)),
+                os.path.dirname(os.path.abspath(rover_envs.__path__[0])),
+                "rover_envs",
                 "assets",
-                "textures.png",
+                "textures",
+                "background.png",
             ),
             texture_format="latlong",
         ),
@@ -215,7 +217,7 @@ class RandomizationCfg:
     #         "asset_cfg": SceneEntityCfg(name="robot"),
     #     },
     # )
-    reset_state = RandTerm(
+    reset_state = EventTerm(
         func=mdp.reset_root_state_rover,
         mode="reset",
         params={
@@ -262,7 +264,7 @@ class RoverEnvCfg(RLTaskEnvCfg):
     # Basic Settings
     observations: ObservationCfg = ObservationCfg()
     actions: ActionsCfg = ActionsCfg()
-    randomization: RandomizationCfg = RandomizationCfg()
+    events: RandomizationCfg = RandomizationCfg()
 
     # MDP Settings
     rewards: RewardsCfg = RewardsCfg()

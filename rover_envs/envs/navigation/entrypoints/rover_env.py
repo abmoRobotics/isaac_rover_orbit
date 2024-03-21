@@ -91,9 +91,9 @@ class RoverEnv(RLTaskEnv):
             self._reset_idx(reset_env_ids)
         # -- update command
         self.command_manager.compute(dt=self.step_dt)
-        # -- step interval randomization
-        if "interval" in self.randomization_manager.available_modes:
-            self.randomization_manager.randomize(mode="interval", dt=self.step_dt)
+        # -- step interval events
+        if "interval" in self.event_manager.available_modes:
+            self.event_manager.apply(mode="interval", dt=self.step_dt)
         # -- compute observations
         # note: done after reset to get the correct observations for reset envs
         self.obs_buf = self.observation_manager.compute()
