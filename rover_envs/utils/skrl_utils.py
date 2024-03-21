@@ -53,6 +53,7 @@ class SkrlOrbitVecWrapper(IsaacOrbitWrapper):
         self._env = env
 
     def step(self, actions: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, Any]:
+        actions = torch.nan_to_num(actions, nan=0.0, posinf=0.0, neginf=0.0)
         self._obs_dict, reward, terminated, truncated, info = self._env.step(actions)
 
         self._obs_dict["policy"] = torch.nan_to_num(self._obs_dict["policy"], nan=0.0, posinf=0.0, neginf=0.0)
