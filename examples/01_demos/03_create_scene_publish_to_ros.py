@@ -34,6 +34,7 @@ from omni.isaac.orbit.utils import configclass  # noqa: F401, E402
 from omni.isaac.sensor import Camera  # noqa: F401, E402
 
 import rover_envs.mdp as mdp  # noqa: F401, E402
+from rover_envs.assets.robots.aau_rover import AAU_ROVER_CFG  # noqa: F401, E402
 # Avoid Circular Import
 from rover_envs.assets.robots.aau_rover_simple import AAU_ROVER_SIMPLE_CFG  # noqa: F401, E402
 from rover_envs.mdp.actions.ackermann_actions import AckermannAction3  # noqa: F401, E402
@@ -60,7 +61,7 @@ class RoverEmptySceneCfg(InteractiveSceneCfg):
     )
 
     # Add the robot
-    robot: ArticulationCfg = AAU_ROVER_SIMPLE_CFG.replace(
+    robot: ArticulationCfg = AAU_ROVER_CFG.replace(
         prim_path="{ENV_REGEX_NS}/Robot")
 
 
@@ -69,7 +70,7 @@ def setup_scene():
     sim_cfg = sim_utils.SimulationCfg(
         device=DEVICE,
         use_gpu_pipeline=False,
-        dt=1.0 / 60.0,
+        dt=1.0 / 100.0,
         gravity=(0.0, 0.0, -9.81),
     )
     sim = SimulationContext(sim_cfg)
@@ -120,7 +121,7 @@ def run_simulation(sim: sim_utils.SimulationContext, scene: InteractiveScene):
         wheel_radius=0.1,
         min_steering_radius=0.8,
         steering_joint_names=[".*Steer_Revolute"],
-        drive_joint_names=[".*Drive_Continuous"],
+        drive_joint_names=[".*Drive_Continous"],
         offset=-0.0135
     )
 
