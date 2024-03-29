@@ -4,6 +4,7 @@ import os
 import random
 from datetime import datetime
 
+import carb
 import gymnasium as gym
 from omni.isaac.orbit.app import AppLauncher
 
@@ -31,6 +32,15 @@ else:
 app_launcher = AppLauncher(launcher_args=args_cli, experience=app_experience)
 simulation_app = app_launcher.app
 
+carb_settings = carb.settings.get_settings()
+carb_settings.set_bool(
+    "rtx/raytracing/cached/enabled",
+    False,
+)
+carb_settings.set_int(
+    "rtx/descriptorSets",
+    8192,
+)
 from omni.isaac.orbit.envs import RLTaskEnv  # noqa: E402
 from omni.isaac.orbit.utils.dict import print_dict  # noqa: E402
 from omni.isaac.orbit.utils.io import dump_pickle, dump_yaml  # noqa: E402
@@ -102,7 +112,7 @@ def video_record(env: RLTaskEnv, log_dir: str, video: bool, video_length: int, v
 
 
 from omni.isaac.orbit_tasks.utils import parse_env_cfg  # noqa: E402
-from skrl.utils import set_seed  # noqa: E402
+from skrl.utils import set_seed  # noqa: E402, F401
 
 import rover_envs.envs.navigation.robots  # noqa: E402, F401
 # Import agents
@@ -124,12 +134,12 @@ def train():
     # Check if video recording is enabled
     env = video_record(env, log_dir, args_cli.video, args_cli.video_length, args_cli.video_interval)
     # Wrap the environment
-    env: RLTaskEnv = SkrlOrbitVecWrapper(env)
+    env: RLTaskEnv = SkrlOrbitVecWrapper(env.unwrapped)
     set_seed(args_cli_seed if args_cli_seed is not None else experiment_cfg["seed"])
 
     # Get the observation and action spaces
-    num_obs = env.observation_manager.group_obs_dim["policy"][0]
-    num_actions = env.action_manager.action_term_dim[0]
+    num_obs = env.unwrapped.observation_manager.group_obs_dim["policy"][0]
+    num_actions = env.unwrapped.action_manager.action_term_dim[0]
     observation_space = gym.spaces.Box(low=-math.inf, high=math.inf, shape=(num_obs,))
     action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(num_actions,))
 
