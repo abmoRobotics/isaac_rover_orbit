@@ -208,7 +208,7 @@ class CommandsCfg:
 
 
 @configclass
-class RandomizationCfg:
+class EventCfg:
     """Randomization configuration for the task."""
     # startup_state = RandTerm(
     #     func=mdp.reset_root_state_rover,
@@ -238,7 +238,7 @@ class RoverEnvCfg(RLTaskEnvCfg):
 
     # Create scene
     scene: RoverSceneCfg = RoverSceneCfg(
-        num_envs=256, env_spacing=4.0, replicate_physics=False)
+        num_envs=5, env_spacing=4.0, replicate_physics=False)
 
     # Setup PhysX Settings
     sim: SimCfg = SimCfg(
@@ -264,7 +264,7 @@ class RoverEnvCfg(RLTaskEnvCfg):
     # Basic Settings
     observations: ObservationCfg = ObservationCfg()
     actions: ActionsCfg = ActionsCfg()
-    events: RandomizationCfg = RandomizationCfg()
+    events: EventCfg = EventCfg()
 
     # MDP Settings
     rewards: RewardsCfg = RewardsCfg()
