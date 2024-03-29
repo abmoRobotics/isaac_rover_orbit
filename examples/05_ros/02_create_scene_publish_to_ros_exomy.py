@@ -24,7 +24,6 @@ from omni.isaac.core.utils.extensions import enable_extension  # noqa: F401, E40
 
 enable_extension("omni.isaac.ros2_bridge")
 
-import omni.isaac.core.utils.numpy.rotations as rot_utils  # noqa: F401, E402
 import omni.isaac.orbit.sim as sim_utils  # noqa: F401, E402
 from omni.isaac.core.utils import prims  # noqa: F401, E402
 from omni.isaac.orbit.assets import Articulation, ArticulationCfg, AssetBaseCfg  # noqa: F401, E402
@@ -34,12 +33,9 @@ from omni.isaac.orbit.utils import configclass  # noqa: F401, E402
 from omni.isaac.sensor import Camera  # noqa: F401, E402
 
 import rover_envs.mdp as mdp  # noqa: F401, E402
-from rover_envs.assets.robots.aau_rover import AAU_ROVER_CFG  # noqa: F401, E402
 # Avoid Circular Import
-from rover_envs.assets.robots.aau_rover_simple import AAU_ROVER_SIMPLE_CFG  # noqa: F401, E402
-from rover_envs.mdp.actions.ackermann_actions import AckermannAction3  # noqa: F401, E402
-from rover_envs.utils.ros2.publishers import publish_camera_info, publish_depth, publish_rgb  # noqa: F401, E402
-from rover_envs.utils.ros2.subscribers import TwistSubscriber  # noqa: F401, E402
+from rover_envs.assets.robots.exomy import EXOMY_CFG  # noqa: F401, E402
+from rover_envs.mdp.actions.ackermann_actions import AckermannActionNonVec  # noqa: F401, E402
 
 if TYPE_CHECKING:
     from rover_envs.envs.navigation.utils.articulation.articulation import RoverArticulation
@@ -61,7 +57,7 @@ class RoverEmptySceneCfg(InteractiveSceneCfg):
     )
 
     # Add the robot
-    robot: ArticulationCfg = AAU_ROVER_CFG.replace(
+    robot: ArticulationCfg = EXOMY_CFG.replace(
         prim_path="{ENV_REGEX_NS}/Robot")
 
 
@@ -70,7 +66,7 @@ def setup_scene():
     sim_cfg = sim_utils.SimulationCfg(
         device=DEVICE,
         use_gpu_pipeline=False,
-        dt=1.0 / 100.0,
+        dt=1.0 / 60.0,
         gravity=(0.0, 0.0, -9.81),
     )
     sim = SimulationContext(sim_cfg)
@@ -81,25 +77,24 @@ def setup_scene():
     scene = InteractiveScene(scene_cfg)
 
     # Create Camera
-
-    sim.reset()
-    return sim, scene
-
-
-def setup_camera():
+    import omni.isaac.core.utils.numpy.rotations as rot_utils  # noqa: F401
     camera = Camera(
         prim_path="/World/envs/env_0/Robot/Body/Camera",
         resolution=(1280, 720),
         translation=([-0.151, 0, 0.73428]),
+        # orientation=([0.64086, 0.29884, -0.29884, -0.64086]),
+        # orientation=([-0.64086, 0.64086, 0.29884, -0.64086]),
         orientation=(rot_utils.euler_angles_to_quats(np.array([0, 30, 0]), degrees=True))
+        # orientation=([0.64086, 0.29884, -0.29884, -0.64086]),
     )
-
     camera.initialize()
     camera.set_horizontal_aperture(6.055)
     camera.set_focal_length(2.12)
     camera.set_vertical_aperture(2.968879962)
     camera.set_clipping_range(near_distance=0.01, far_distance=1000000)
-    return camera
+
+    sim.reset()
+    return sim, scene, camera
 
 
 def run_simulation(sim: sim_utils.SimulationContext, scene: InteractiveScene):
@@ -115,42 +110,67 @@ def run_simulation(sim: sim_utils.SimulationContext, scene: InteractiveScene):
 
     action_cfg = mdp.AckermannActionCfg(
         asset_name="robot",
-        wheelbase_length=0.849,
-        middle_wheel_distance=0.894,
-        rear_and_front_wheel_distance=0.77,
+        wheelbase_length=0.29778,
+        middle_wheel_distance=0.1548,
+        rear_and_front_wheel_distance=0.1548,
         wheel_radius=0.1,
-        min_steering_radius=0.8,
-        steering_joint_names=[".*Steer_Revolute"],
-        drive_joint_names=[".*Drive_Continous"],
-        offset=-0.0135
+        min_steering_radius=0.4,
+        steering_joint_names=["FL_Steer_Joint", "RL_Steer_Joint", "RR_Steer_Joint", "FR_Steer_Joint"],
+        drive_joint_names=[".*Drive_Joint"],
     )
-
-    rover_articulation_manager = AckermannAction3(action_cfg, robot, num_envs=args_cli.num_envs, device=DEVICE)
+    rover_articulation_manager = AckermannActionNonVec(action_cfg, robot, num_envs=args_cli.num_envs, device=DEVICE)
 
     sim_dt = sim.get_physics_dt()
+    count = 0
+
+    def reset_scene(robot: RoverArticulation, scene: InteractiveScene):
+        root_state = robot.data.default_root_state.clone()
+        root_state[:, :3] += scene.env_origins
+        robot.write_root_state_to_sim(root_state)
+
+        joint_pos, joint_vel = robot.data.default_joint_pos.clone(), robot.data.default_joint_vel.clone()
+        joint_pos += torch.randn_like(joint_pos) * 0.1
+        robot.write_joint_state_to_sim(joint_pos, joint_vel)
+
+        scene.reset()
+        print("Reset")
 
     while simulation_app.is_running():
+        # Reset
+        if count % 54444400 == 0:
+            # reset counter
+            count = 0
+
+            # Reset the scene
+            reset_scene(robot, scene)
+        import copy
+
         # Step the simulation
         scene.write_data_to_sim()
-        lin_vel = cmd_vel_subscriber.velocity
-        ang_vel = cmd_vel_subscriber.angular
+        lin_vel = copy.deepcopy(cmd_vel_subscriber.velocity)
+        ang_vel = copy.deepcopy(cmd_vel_subscriber.angular)
+        # print(f'lin vel: {lin_vel}, ang vel {ang_vel}')
         actions = torch.tensor([[lin_vel, ang_vel]], dtype=torch.float32)
         rover_articulation_manager.process_actions(actions)
         rover_articulation_manager.apply_actions()
-
         sim.step()
+
+        count += 1
+
         scene.update(sim_dt)
+
+
+from rover_envs.utils.ros2.publishers import publish_camera_info, publish_depth, publish_rgb  # noqa: F401, E402
+from rover_envs.utils.ros2.subscribers import TwistSubscriber  # noqa: F401, E402
 
 
 def main():
     # First we setup the scene
-    sim, scene = setup_scene()
-    # Add Camera
-    camera = setup_camera()
-    # Publish Camera
+    sim, scene, camera = setup_scene()
     publish_camera_info(camera, 30)
     publish_rgb(camera, 30)
     publish_depth(camera, 30)
+
     # Then we run the simulation
     run_simulation(sim, scene)
 
