@@ -49,19 +49,17 @@ class SkrlOrbitVecWrapper(IsaacOrbitWrapper):
     """
 
     def __init__(self, env: RLTaskEnv):
-        super().__init__(env)
         self._env = env
+        super().__init__(env)
 
     def step(self, actions: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, Any]:
-        actions = torch.nan_to_num(actions, nan=0.0, posinf=0.0, neginf=0.0)
         self._obs_dict, reward, terminated, truncated, info = self._env.step(actions)
 
         self._obs_dict["policy"] = torch.nan_to_num(self._obs_dict["policy"], nan=0.0, posinf=0.0, neginf=0.0)
         return self._obs_dict["policy"], reward.view(-1, 1), terminated.view(-1, 1), truncated.view(-1, 1), info
 
     def reset(self) -> Tuple[torch.Tensor, Any]:
-        self._obs_dict, info = self._env.reset()
-
+        info = {}
         if self._reset_once:
             self._reset_once = False
             self._obs_dict, info = self._env.reset()
@@ -187,13 +185,13 @@ class SkrlSequentialLogTrainer(Trainer):
         * Log custom environment data: Log custom environment data.
         """
         # set running mode
-        if self.num_simultaneous_agents > 1:
+        if self.num_agents > 1:
             for agent in self.agents:
                 agent.set_running_mode("eval")
         else:
             self.agents.set_running_mode("eval")
         # single agent
-        if self.num_simultaneous_agents == 1:
+        if self.num_agents == 1:
             self.single_agent_eval()
             return
 
