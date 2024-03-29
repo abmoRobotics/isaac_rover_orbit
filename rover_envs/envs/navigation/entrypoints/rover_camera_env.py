@@ -6,16 +6,15 @@ import numpy as np
 import torch
 import warp as wp
 from omni.isaac.core.utils import prims
-# from .rover_env import RoverEnv
-from omni.isaac.orbit.envs.rl_task_env import RLTaskEnv
 
 # ENV
 from ..rover_env_cfg import RoverEnvCfg
+from .rover_env import RoverEnv
 
 # from omni.replicator.isaac.scripts.writers.pytorch_listener import PytorchListener
 
 
-class RoverEnvCamera(RLTaskEnv):
+class RoverEnvCamera(RoverEnv):
     """ Rover environment for collecting camera data for Learning By Cheating.
 
     Note:
@@ -31,49 +30,46 @@ class RoverEnvCamera(RLTaskEnv):
         self.PytorchListener = PytorchListenerRover
 
         super().__init__(cfg, **kwargs)
+        self._post_process_cfg()
 
     def _post_process_cfg(self):
-        super()._post_process_cfg()
-        from omni.isaac.core.utils.stage import get_current_stage
-        from pxr import Usd
-        stage: Usd.Stage = get_current_stage()
 
         # Create camera. only need to do this once, since cloner will clone it for each env
-        camera = prims.create_prim(
-            prim_path="/World/envs/env_0/Robot/Body/Camera",
-            prim_type="Camera",
-            attributes={
-                # "focusDistance": 1,
-                "focalLength": 2.12,
-                # "fStop": 1.8,
-                "horizontalAperture": 6.055,
-                "verticalAperture": 2.968879962,
-                "clippingRange": (0.01, 1000000),
-                "clippingPlanes": np.array([1.0, 0.0, 1.0, 1.0]),
-            },
-            translation=(-0.151, 0, 0.73428),
-            orientation=(0.64086, 0.29884, -0.29884, -0.64086),
-        )
-
         # Create render products for each env
         self.render_products = []
         for i in range(self.num_envs):
-            camera = stage.GetPrimAtPath(f"/World/envs/env_{i}/Robot/Body/Camera")
-            render_product = self.rep.create.render_product(camera.GetPrimPath(), resolution=(160, 90))
+            prims.create_prim(
+                prim_path=f"/World/envs/env_{i}/Robot/Body/Camera",
+                prim_type="Camera",
+                attributes={
+                    # "focusDistance": 1,
+                    "focalLength": 2.12,
+                    # "fStop": 1.8,
+                    "horizontalAperture": 6.055,
+                    "verticalAperture": 2.968879962,
+                    "clippingRange": (0.01, 1000000),
+                    "clippingPlanes": np.array([1.0, 0.0, 1.0, 1.0]),
+                },
+                translation=(-0.151, 0, 0.73428),
+                orientation=(0.64086, 0.29884, -0.29884, -0.64086),
+            )
+            render_product = self.rep.create.render_product(
+                f"/World/envs/env_{i}/Robot/Body/Camera", resolution=(160, 90))
             self.render_products.append(render_product)
 
-        # Initialize pytorch writer for vectorized collection
+        # # Initialize pytorch writer for vectorized collection
         self.pytorch_listener = self.PytorchListener()
         self.pytorch_writer = self.rep.WriterRegistry.get("PytorchWriterRover")
         self.pytorch_writer.initialize(listener=self.pytorch_listener, device="cuda:0")
         self.pytorch_writer.attach(self.render_products)
         self.image_index_test = 0
 
-    def _step_impl(self, actions: torch.Tensor):
-        super()._step_impl(actions)
+    def step(self, actions: torch.Tensor):
+        obs_dict, reward, terminated, truncated, info = super().step(actions)
 
         self.extras["rgb"] = self.pytorch_listener.get_rgb_data()
         self.extras["depth"] = self.pytorch_listener.get_depth_data()
+        return obs_dict, reward, terminated, truncated, info
 
 
 try:
