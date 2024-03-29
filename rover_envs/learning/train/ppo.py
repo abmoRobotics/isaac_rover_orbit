@@ -11,7 +11,7 @@ def PPO_agent(experiment_cfg, observation_space: Box, action_space: Box, env: RL
 
     # Define memory size
     memory_size = experiment_cfg["agent"]["rollouts"]
-    memory = RandomMemory(memory_size=memory_size, num_envs=env.num_envs, device=env.device)
+    memory = RandomMemory(memory_size=memory_size, num_envs=env.unwrapped.num_envs, device=env.unwrapped.device)
 
     # Get the models
     models = get_models("PPO", env, observation_space, action_space)

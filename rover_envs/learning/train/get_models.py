@@ -36,14 +36,14 @@ def get_models(agent: str, env: RLTaskEnv, observation_space: Box, action_space:
 
 def get_model_gaussian(env: RLTaskEnv, observation_space: Box, action_space: Box):
     models = {}
-    encoder_input_size = env.observation_manager.group_obs_term_dim["policy"][-1][0]
+    encoder_input_size = env.unwrapped.observation_manager.group_obs_term_dim["policy"][-1][0]
 
     mlp_input_size = 4
 
     models["policy"] = GaussianNeuralNetwork(
         observation_space=observation_space,
         action_space=action_space,
-        device=env.device,
+        device=env.unwrapped.device,
         mlp_input_size=mlp_input_size,
         mlp_layers=[256, 160, 128],
         mlp_activation="leaky_relu",
@@ -54,7 +54,7 @@ def get_model_gaussian(env: RLTaskEnv, observation_space: Box, action_space: Box
     models["value"] = DeterministicNeuralNetwork(
         observation_space=observation_space,
         action_space=action_space,
-        device=env.device,
+        device=env.unwrapped.device,
         mlp_input_size=mlp_input_size,
         mlp_layers=[256, 160, 128],
         mlp_activation="leaky_relu",
