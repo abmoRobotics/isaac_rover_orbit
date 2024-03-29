@@ -4,11 +4,11 @@ from rclpy.node import Node
 
 class TwistSubscriber(Node):
 
-    def __init__(self):
+    def __init__(self, topic_name='cmd_vel'):
         super().__init__('twist_subscriber')
         self.subscription = self.create_subscription(
             Twist,
-            'cmd_vel',
+            topic_name,
             self.listener_callback,
             10)
         self.subscription
