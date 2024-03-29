@@ -1,1 +1,1 @@
-docker compose --file docker-compose.yaml up --detach --build --remove-orphans
+docker compose --file docker-compose.yaml up orbit-base --detach --build --remove-orphans
