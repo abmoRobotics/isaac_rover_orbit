@@ -105,6 +105,9 @@ To get started with RLRoverLab, please refer to our [Installation Guide](https:/
 
 We welcome contributions to RLRoverLab! Whether it's adding new tasks, or fixing bugs. Check out our [Contribution Guidelines](https://github.com/abmoRobotics/isaac_rover_orbit/CONTRIBUTING.md) for more information on how to get involved. -->
 
+## Video of trained RL-agent
+https://github.com/abmoRobotics/isaac_rover_orbit/assets/56405924/84a9f405-f537-4041-9d1f-8a2307f450a7
+
 ## Support
 
 If you have questions, suggestions, feel free to contact us.
