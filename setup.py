@@ -12,6 +12,7 @@ INSTALL_REQUIRES = [
     # devices
     "hidapi",
     "skrl==1.1.0",
+    "wandb",
 ]
 
 # url=EXTENSION_TOML_DATA["package"]["repository"], # add later

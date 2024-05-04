@@ -24,7 +24,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Clone orbit
 RUN git clone https://github.com/NVIDIA-Omniverse/orbit ${ORBIT_PATH}
-
+RUN /bin/bash -c "cd ${ORBIT_PATH} && git checkout 40e4591f97c2ccb04830c38bed99a20720fa346d"
 # Create symlink to Isaac Sim
 RUN ln -sf ${ISAAC_SIM_PATH} ${ORBIT_PATH}/_isaac_sim
 
@@ -43,8 +43,8 @@ RUN echo "alias orbit=${ORBIT_PATH}/orbit.sh" >> ${HOME}/.bashrc && \
 # Clone rover_lab
 RUN git clone https://github.com/abmoRobotics/isaac_rover_orbit ${ROVER_LAB_PATH}
 # Checkout to dev branch and install dependencies
-RUN /bin/bash -c "cd ${ROVER_LAB_PATH} && git checkout 40e4591f97c2ccb04830c38bed99a20720fa346d && ${ORBIT_PATH}/orbit.sh -p -m pip install -e .[all]"
-# Install gdown
+RUN /bin/bash -c "cd ${ROVER_LAB_PATH} && git checkout dev && ${ORBIT_PATH}/orbit.sh -p -m pip install -e .[all]"
+# Install gdown #40e4591f97c2ccb04830c38bed99a20720fa346d
 RUN ${ORBIT_PATH}/orbit.sh -p -m pip install gdown
 
 # RUN download_usd.py

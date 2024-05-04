@@ -235,9 +235,10 @@ if __name__ == "__main__":
     try:
         # run the main execution
         env = start_env()
+        main(env, tags=[args_cli.task, "experiment:train"])
         # for i in range(5):
         #     main(env, tags=[args_cli.task, "experiment:horizon"])
-        sweep(env)
+        # sweep(env)
         env.close()
     except Exception as err:
         carb.log_error(err)
