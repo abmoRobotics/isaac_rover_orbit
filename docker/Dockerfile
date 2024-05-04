@@ -38,13 +38,14 @@ RUN echo "alias orbit=${ORBIT_PATH}/orbit.sh" >> ${HOME}/.bashrc && \
     echo "alias pip='${ISAAC_SIM_PATH}/python.sh -m pip'" >> ${HOME}/.bashrc && \
     echo "alias pip3='${ISAAC_SIM_PATH}/python.sh -m pip'" >> ${HOME}/.bashrc && \
     echo "alias tensorboard='${ISAAC_SIM_PATH}/python.sh ${ISAAC_SIM_PATH}/tensorboard'" >> ${HOME}/.bashrc && \
+    echo "export TZ=$(date +%Z)" >> ${HOME}/.bashrc \
     echo "export TZ=$(date +%Z)" >> ${HOME}/.bashrc
 
 # Clone rover_lab
 RUN git clone https://github.com/abmoRobotics/isaac_rover_orbit ${ROVER_LAB_PATH}
 # Checkout to dev branch and install dependencies
 RUN /bin/bash -c "cd ${ROVER_LAB_PATH} && git checkout dev && ${ORBIT_PATH}/orbit.sh -p -m pip install -e .[all]"
-# Install gdown #40e4591f97c2ccb04830c38bed99a20720fa346d
+# Install gdown
 RUN ${ORBIT_PATH}/orbit.sh -p -m pip install gdown
 
 # RUN download_usd.py
