@@ -43,7 +43,7 @@ RUN echo "alias orbit=${ORBIT_PATH}/orbit.sh" >> ${HOME}/.bashrc && \
 # Clone rover_lab
 RUN git clone https://github.com/abmoRobotics/isaac_rover_orbit ${ROVER_LAB_PATH}
 # Checkout to dev branch and install dependencies
-RUN /bin/bash -c "cd ${ROVER_LAB_PATH} && git checkout dev && ${ORBIT_PATH}/orbit.sh -p -m pip install -e .[all]"
+RUN /bin/bash -c "cd ${ROVER_LAB_PATH} && git checkout 40e4591f97c2ccb04830c38bed99a20720fa346d && ${ORBIT_PATH}/orbit.sh -p -m pip install -e .[all]"
 # Install gdown
 RUN ${ORBIT_PATH}/orbit.sh -p -m pip install gdown
 
