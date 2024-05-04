@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from dataclasses import MISSING
 
 import omni.isaac.orbit.sim as sim_utils
@@ -7,6 +8,7 @@ from omni.isaac.orbit.assets import ArticulationCfg, AssetBaseCfg, RigidObjectCf
 from omni.isaac.orbit.envs import RLTaskEnvCfg
 from omni.isaac.orbit.managers import ActionTermCfg as ActionTerm  # noqa: F401
 from omni.isaac.orbit.managers import CurriculumTermCfg as CurrTerm  # noqa: F401
+from omni.isaac.orbit.managers import EventTermCfg as EventTerm
 from omni.isaac.orbit.managers import ObservationGroupCfg as ObsGroup
 from omni.isaac.orbit.managers import ObservationTermCfg as ObsTerm  # noqa: F401
 from omni.isaac.orbit.managers import RandomizationTermCfg as RandTerm  # noqa: F401
@@ -24,6 +26,7 @@ from omni.isaac.orbit.utils import configclass
 from omni.isaac.orbit.utils.assets import ISAAC_NUCLEUS_DIR
 from omni.isaac.orbit.utils.noise import AdditiveUniformNoiseCfg as Unoise  # noqa: F401
 
+import rover_envs
 import rover_envs.envs.manipulation.mdp as mdp  # noqa: F401
 # from rover_envs.assets.terrains.debug import DebugTerrainSceneCfg  # noqa: F401
 # from rover_envs.assets.terrains.mars import MarsTerrainSceneCfg  # noqa: F401
@@ -53,7 +56,13 @@ class ManipulatorSceneCfg(InteractiveSceneCfg):
             color_temperature=4500.0,
             intensity=100,
             enable_color_temperature=True,
-            texture_file="/home/anton/Downloads/image(12).png",
+            texture_file=os.path.join(
+                os.path.dirname(os.path.abspath(rover_envs.__path__[0])),
+                "rover_envs",
+                "assets",
+                "textures",
+                "background.png",
+            ),
             texture_format="latlong",
         ),
     )
@@ -78,7 +87,7 @@ class ManipulatorSceneCfg(InteractiveSceneCfg):
     # Table
     table = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Table",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0, 0], rot=[0.707, 0, 0, 0.707]),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0.0, 0], rot=[0.707, 0, 0, 0.707]),
         spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd"),
     )
 
@@ -88,6 +97,11 @@ class ManipulatorSceneCfg(InteractiveSceneCfg):
         init_state=AssetBaseCfg.InitialStateCfg(pos=[0, 0, -1.05]),
         spawn=GroundPlaneCfg(),
     )
+
+    contact_sensor = ContactSensorCfg(
+        prim_path="{ENV_REGEX_NS}/Robot/.*_(link1|link2|link3|link4|link5|link6|link7|hand)",
+    )
+    # contact_sensor = None
 
 
 @configclass
@@ -136,6 +150,11 @@ class RewardsCfg:
 
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-3)
 
+    # ee_closed_near_object = RewTerm(
+    #     func=mdp.ee_closed_near_object,
+    #     params={"std": 0.01},
+    #     weight=0.5)
+
     joint_vel = RewTerm(
         func=mdp.joint_vel_l2,
         weight=-1e-4,
@@ -155,6 +174,14 @@ class TerminationsCfg:
         }
     )
 
+    table_contact = DoneTerm(
+        func=mdp.illegal_contact,
+        params={
+            "threshold": 0.01,
+            "sensor_cfg": SceneEntityCfg("contact_sensor")
+        },
+    )
+
 
 # "mdp.illegal_contact
 @configclass
@@ -167,18 +194,19 @@ class CommandsCfg:
         resampling_time_range=(5.0, 5.0),
         debug_vis=True,
         ranges=mdp.UniformPoseCommandCfg.Ranges(
-            pos_x=(0.3, 0.7), pos_y=(0.3, 0.7), pos_z=(0.0, 0.0), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
+            pos_x=(0.4, 0.6), pos_y=(-0.25, 0.25), pos_z=(0.25, 0.5), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
+            # pos_x=(0.3, 0.7), pos_y=(-0.5, 0.0), pos_z=(0.15, 0.3), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
         ),
     )
 
 
 @configclass
-class RandomizationCfg:
+class EventCfg:
     """Configuration for randomization of the task."""
 
-    reset_all = RandTerm(func=mdp.reset_scene_to_default, mode="reset")
+    reset_all = EventTerm(func=mdp.reset_scene_to_default, mode="reset")
 
-    reset_object_position = RandTerm(
+    reset_object_position = EventTerm(
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
@@ -186,6 +214,19 @@ class RandomizationCfg:
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("object", body_names="Object"),
         },
+    )
+
+
+@configclass
+class CurriculumCfg:
+    """Curriculum terms for the MDP."""
+
+    action_rate = CurrTerm(
+        func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -1e-2, "num_steps": 30000}
+    )
+
+    joint_vel = CurrTerm(
+        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-3, "num_steps": 30000}
     )
 
 
@@ -220,16 +261,20 @@ class ManipulatorEnvCfg(RLTaskEnvCfg):
     # Basic Settings
     observations: ObservationCfg = ObservationCfg()
     actions: ActionsCfg = ActionsCfg()
-    randomization: RandomizationCfg = RandomizationCfg()
+    # randomization: RandomizationCfg = RandomizationCfg()
+    events: EventCfg = EventCfg()
 
     # MDP Settings
     rewards: RewardsCfg = RewardsCfg()
     terminations: TerminationsCfg = TerminationsCfg()
     commands: CommandsCfg = CommandsCfg()
-    # curriculum: CurriculumCfg = CurriculumCfg()
+    curriculum: CurriculumCfg = CurriculumCfg()
 
     def __post_init__(self):
         self.sim.dt = 1 / 100.0  # 100 Hz
         self.decimation = 2
         self.episode_length_s = 5
         self.viewer.eye = (-6.0, -6.0, 3.5)
+
+        if self.scene.contact_sensor is not None:
+            self.scene.contact_sensor.update_period = self.sim.dt * self.decimation

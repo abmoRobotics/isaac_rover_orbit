@@ -24,6 +24,8 @@ class RoverEnv(RLTaskEnv):
         terrain.env_origins[env_ids, 0] += 100
         terrain.env_origins[env_ids, 1] += 100
 
+        self.global_step_counter = 0
+
     def _reset_idx(self, idx: torch.Tensor):
         """Reset the environment at the given indices.
 
@@ -58,6 +60,7 @@ class RoverEnv(RLTaskEnv):
         Returns:
             A tuple containing the observations, rewards, resets (terminated and truncated) and extras.
         """
+        self.global_step_counter += 1
         # process actions
         self.action_manager.process_action(action)
         # perform physics stepping

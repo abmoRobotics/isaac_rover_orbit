@@ -45,6 +45,28 @@ def object_ee_distance(
     return 1 - torch.tanh(object_ee_distance / std)
 
 
+def ee_closed_near_object(
+        env: RLTaskEnv,
+        std: float,
+        object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+        ee_frame_cfg: SceneEntityCfg = SceneEntityCfg("ee_frame"),
+) -> torch.Tensor:
+    """Reward the agent for reaching the object using tanh-kernel."""
+    # extract the used quantities (to enable type-hinting)
+    object: RigidObject = env.scene[object_cfg.name]
+    ee_frame: FrameTransformer = env.scene[ee_frame_cfg.name]
+    # Target object position: (num_envs, 3)
+    cube_pos_w = object.data.root_pos_w
+    # End-effector position: (num_envs, 3)
+    ee_w = ee_frame.data.target_pos_w[..., 0, :]
+    # Distance of the end-effector to the object: (num_envs,)
+    object_ee_distance = torch.norm(cube_pos_w - ee_w, dim=1)
+    # where both the end-effector is closed and near the object e.g. action == 0
+
+    processed_actions = env.action_manager.get_term("finger_joint_pos").processed_actions[:, 0]
+    return torch.where(processed_actions == 0.0, 1 - torch.tanh(object_ee_distance / std), 0.0)
+
+
 def object_goal_distance(
     env: RLTaskEnv,
     std: float,

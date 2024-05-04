@@ -3,17 +3,19 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+import omni.isaac.orbit.sim as sim_utils
 from omni.isaac.orbit.assets import RigidObjectCfg
 from omni.isaac.orbit.sensors import FrameTransformerCfg
 from omni.isaac.orbit.sensors.frame_transformer.frame_transformer_cfg import OffsetCfg
 from omni.isaac.orbit.sim.schemas.schemas_cfg import RigidBodyPropertiesCfg
 from omni.isaac.orbit.sim.spawners.from_files.from_files_cfg import UsdFileCfg
 from omni.isaac.orbit.utils import configclass
-from omni.isaac.orbit.utils.assets import ISAAC_NUCLEUS_DIR
+from omni.isaac.orbit.utils.assets import ISAAC_NUCLEUS_DIR, ISAAC_ORBIT_NUCLEUS_DIR
 
+import rover_envs  # noqa: F401
 import rover_envs.envs.manipulation.mdp as mdp
-# from omni.isaac.orbit_tasks.manipulation.lift.lift_env_cfg import LiftEnvCfg
 from rover_envs.envs.manipulation.manipulation_env_cfg import ManipulatorEnvCfg
+from rover_envs.envs.navigation.utils.articulation.articulation import FrankaArticulation
 
 ##
 # Pre-defined configs
@@ -30,6 +32,19 @@ class FrankaCubeLiftEnvCfg(ManipulatorEnvCfg):
 
         # Set Franka as robot
         self.scene.robot = FRANKA_PANDA_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
+        self.scene.robot.class_type = FrankaArticulation
+        self.scene.robot.spawn = sim_utils.UsdFileCfg(
+            usd_path=f"{ISAAC_ORBIT_NUCLEUS_DIR}/Robots/FrankaEmika/panda_instanceable.usd",
+            activate_contact_sensors=True,
+            rigid_props=sim_utils.RigidBodyPropertiesCfg(
+                disable_gravity=False,
+                max_depenetration_velocity=5.0,
+            ),
+            articulation_props=sim_utils.ArticulationRootPropertiesCfg(
+                enabled_self_collisions=True, solver_position_iteration_count=8, solver_velocity_iteration_count=0
+            ),
+            # collision_props=sim_utils.CollisionPropertiesCfg(contact_offset=0.005, rest_offset=0.0),
+        )
 
         # Set actions for the specific robot type (franka)
         self.actions.body_joint_pos = mdp.JointPositionActionCfg(
@@ -49,6 +64,7 @@ class FrankaCubeLiftEnvCfg(ManipulatorEnvCfg):
             prim_path="{ENV_REGEX_NS}/Object",
             init_state=RigidObjectCfg.InitialStateCfg(pos=[0.5, 0, 0.055], rot=[1, 0, 0, 0]),
             spawn=UsdFileCfg(
+                # usd_path=os.path.join(rover_envs.__path__[0], "assets", "objects", "rocks", "rock_0", "rock_0.usd"),
                 usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Blocks/DexCube/dex_cube_instanceable.usd",
                 scale=(0.8, 0.8, 0.8),
                 rigid_props=RigidBodyPropertiesCfg(
