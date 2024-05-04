@@ -1,5 +1,6 @@
 from typing import Sequence
 
+import omni.isaac.orbit.sim as sim_utils
 import torch
 from omni.isaac.orbit.assets import Articulation
 from omni.isaac.orbit.envs import BaseEnv
@@ -8,14 +9,25 @@ from omni.isaac.orbit.markers import VisualizationMarkers
 # TODO (anton): Remove the following import since they were changed in the Orbit API
 # from omni.isaac.orbit.envs.mdp.commands.commands_cfg import TerrainBasedPositionCommandCfg
 # from omni.isaac.orbit.envs.mdp.commands.position_command import TerrainBasedPositionCommand
-from omni.isaac.orbit.markers.config import CUBOID_MARKER_CFG
+from omni.isaac.orbit.markers.config import GREEN_ARROW_X_MARKER_CFG
+from omni.isaac.orbit.markers.visualization_markers import VisualizationMarkersCfg
 from omni.isaac.orbit.terrains import TerrainImporter, TerrainImporterCfg
-from omni.isaac.orbit.utils.math import quat_rotate_inverse, wrap_to_pi, yaw_quat
+from omni.isaac.orbit.utils.math import quat_from_euler_xyz, quat_rotate_inverse, wrap_to_pi, yaw_quat
 
 from .terrain_utils import TerrainManager
 
+SPHERE_MARKER_CFG = VisualizationMarkersCfg(
+    markers={
+        "sphere": sim_utils.SphereCfg(
+            radius=0.2,
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(1.0, 0.0, 0.0)),
+        ),
+    }
+)
 
 # TODO: THIS IS A TEMPORARY FIX, since terrain based command is changed in the Orbit API
+
+
 class TerrainBasedPositionCommand(CommandTerm):
     """Command generator that generates position commands based on the terrain.
 
@@ -65,7 +77,7 @@ class TerrainBasedPositionCommand(CommandTerm):
     @property
     def command(self) -> torch.Tensor:
         """The desired base position in base frame. Shape is (num_envs, 3)."""
-        return self.pos_command_b
+        return torch.cat((self.pos_command_b, self.heading_command_b.unsqueeze(1)), dim=1)
 
     """
     Implementation specific functions.
@@ -73,26 +85,12 @@ class TerrainBasedPositionCommand(CommandTerm):
 
     def _resample_command(self, env_ids: Sequence[int]):
         # sample new position targets from the terrain
-        # TODO: need to add that here directly
         self.pos_command_w[env_ids] = self.terrain.sample_new_targets(env_ids)
         # offset the position command by the current root position
         self.pos_command_w[env_ids, 2] += self.robot.data.default_root_state[env_ids, 2]
-
-        if self.cfg.simple_heading:
-            # set heading command to point towards target
-            target_vec = self.pos_command_w[env_ids] - self.robot.data.root_pos_w[env_ids]
-            target_direction = torch.atan2(target_vec[:, 1], target_vec[:, 0])
-            flipped_heading = wrap_to_pi(target_direction + torch.pi)
-            self.heading_command_w[env_ids] = torch.where(
-                wrap_to_pi(target_direction - self.robot.data.heading_w[env_ids]).abs()
-                < wrap_to_pi(flipped_heading - self.robot.data.heading_w[env_ids]).abs(),
-                target_direction,
-                flipped_heading,
-            )
-        else:
-            # random heading command
-            r = torch.empty(len(env_ids), device=self.device)
-            self.heading_command_w[env_ids] = r.uniform_(*self.cfg.ranges.heading)
+        # random heading command
+        r = torch.empty(len(env_ids), device=self.device)
+        self.heading_command_w[env_ids] = r.uniform_(*self.cfg.ranges.heading)
 
     def _update_command(self):
         """Re-target the position command to the current root position and heading."""
@@ -106,22 +104,37 @@ class TerrainBasedPositionCommand(CommandTerm):
         self.metrics["error_heading"] = torch.abs(wrap_to_pi(self.heading_command_w - self.robot.data.heading_w))
 
     def _set_debug_vis_impl(self, debug_vis: bool):
-        # create markers if necessary for the first tome
+
         if debug_vis:
-            if not hasattr(self, "box_goal_visualizer"):
-                marker_cfg = CUBOID_MARKER_CFG.copy()
-                marker_cfg.prim_path = "/Visuals/Command/position_goal"
-                marker_cfg.markers["cuboid"].scale = (0.1, 0.1, 0.1)
-                self.box_goal_visualizer = VisualizationMarkers(marker_cfg)
+            if not hasattr(self, "arrow_goal_visualizer"):
+                arrow_cfg = GREEN_ARROW_X_MARKER_CFG.copy()
+                arrow_cfg.prim_path = "/Visuals/Command/heading_goal"
+                arrow_cfg.markers["arrow"].scale = (0.2, 0.2, 0.8)
+                self.arrow_goal_visualizer = VisualizationMarkers(arrow_cfg)
+            if not hasattr(self, "sphere_goal_visualizer"):
+                sphere_cfg = SPHERE_MARKER_CFG.copy()
+                sphere_cfg.prim_path = "/Visuals/Command/position_goal"
+                sphere_cfg.markers["sphere"].radius = 0.2
+                self.sphere_goal_visualizer = VisualizationMarkers(sphere_cfg)
+
             # set their visibility to true
-            self.box_goal_visualizer.set_visibility(True)
+            self.arrow_goal_visualizer.set_visibility(True)
+            self.sphere_goal_visualizer.set_visibility(True)
         else:
-            if hasattr(self, "box_goal_visualizer"):
-                self.box_goal_visualizer.set_visibility(False)
+            if hasattr(self, "arrow_goal_visualizer"):
+                self.arrow_goal_visualizer.set_visibility(False)
+            if hasattr(self, "sphere_goal_visualizer"):
+                self.sphere_goal_visualizer.set_visibility(False)
 
     def _debug_vis_callback(self, event):
-        # update the box marker
-        self.box_goal_visualizer.visualize(self.pos_command_w)
+        # update the sphere marker
+        self.sphere_goal_visualizer.visualize(self.pos_command_w)
+
+        # update the arrow marker
+        zero_vec = torch.zeros_like(self.heading_command_w)
+        quaternion = quat_from_euler_xyz(zero_vec, zero_vec, self.heading_command_w)
+        position_arrow_w = self.pos_command_w + torch.tensor([0.0, 0.0, 0.25], device=self.device)
+        self.arrow_goal_visualizer.visualize(position_arrow_w, quaternion)
 
 
 class RoverTerrainImporter(TerrainImporter):
@@ -179,7 +192,7 @@ class RoverTerrainImporter(TerrainImporter):
         This function returns valid spawn locations, that avoids spawning the rover on top of obstacles.
 
         Returns:
-            spawn_locations: The spawn locations buffer. Shape (num_envs, 3).
+            spawn_locations: The spawn locations buffer. Shape (num_env, 3).
         """
         return self._terrainManager.spawn_locations
 

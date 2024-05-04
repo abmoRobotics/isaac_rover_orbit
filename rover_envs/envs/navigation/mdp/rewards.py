@@ -44,13 +44,16 @@ def reached_target(env: RLTaskEnv, command_name: str, threshold: float) -> torch
     target = env.command_manager.get_command(command_name)
     target_position = target[:, :2]
 
+    # Get angle to target
+    angle = env.command_manager.get_command(command_name)[:, 3]
+
     # Calculating the distance and determining if the target is reached
     distance = torch.norm(target_position, p=2, dim=-1)
     time_steps_to_goal = env.max_episode_length - env.episode_length_buf
     reward_scale = time_steps_to_goal / env.max_episode_length
 
     # Return the reward, scaled depending on the remaining time steps
-    return torch.where(distance < threshold, 1.0 * reward_scale, 0)
+    return torch.where((distance < threshold) & (torch.abs(angle) < 0.1), 2.0 * reward_scale, 0.0)
 
 
 def oscillation_penalty(env: RLTaskEnv) -> torch.Tensor:
@@ -135,3 +138,21 @@ def far_from_target_reward(env: RLTaskEnv, command_name: str, threshold: float) 
     distance = torch.norm(target_position, p=2, dim=-1)
 
     return torch.where(distance > threshold, 1.0, 0.0)
+
+
+def angle_to_goal_reward(env: RLTaskEnv, command_name: str) -> torch.Tensor:
+    """
+    Calculate the angle to the goal.
+
+    This function computes the angle between the rover's heading direction and the direction
+    towards the goal. A reward is given based on the cosine of this angle.
+    """
+    # Get vector(x,y) from rover to target, in base frame of the rover.
+    target_vector_b = env.command_manager.get_command(command_name)[:, :2]
+    distance = torch.norm(target_vector_b, p=2, dim=-1)
+    angle_b = env.command_manager.get_command(command_name)[:, 3]
+
+    angle_reward = (1 / (1 + distance)) * 1 / (1 + torch.abs(angle_b))
+
+    # Return the cosine of the angle, normalized by the maximum episode length.
+    return angle_reward / env.max_episode_length

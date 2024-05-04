@@ -54,7 +54,7 @@ class RoverEnvCamera(RoverEnv):
                 orientation=(0.64086, 0.29884, -0.29884, -0.64086),
             )
             render_product = self.rep.create.render_product(
-                f"/World/envs/env_{i}/Robot/Body/Camera", resolution=(160, 90))
+                f"/World/envs/env_{i}/Robot/Body/Camera", resolution=(320, 180))
             self.render_products.append(render_product)
 
         # # Initialize pytorch writer for vectorized collection
@@ -88,7 +88,7 @@ try:
             if "pytorch_rgb" in self.data:  # noqa R505
                 images = self.data["pytorch_rgb"]
                 images = images[..., :3]
-                images = images.permute(0, 2, 1, 3)
+                images = images.permute(0, 1, 2, 3)
                 return images
             else:
                 return None
@@ -96,7 +96,7 @@ try:
         def get_depth_data(self) -> Optional[torch.Tensor]:
             if "pytorch_depth" in self.data:  # noqa R505
                 images = self.data["pytorch_depth"]
-                images = images.permute(0, 2, 1)
+                images = images.permute(0, 1, 2)
                 return images
             else:
                 return None

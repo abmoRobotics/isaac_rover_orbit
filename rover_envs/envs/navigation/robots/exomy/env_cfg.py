@@ -9,15 +9,14 @@ from rover_envs.envs.navigation.rover_env_cfg import RoverEnvCfg
 
 @configclass
 class ExoMyEnvCfg(RoverEnvCfg):
-    """Configuration for the AAU rover environment."""
+    """Configuration for the ExoyMy rover environment."""
 
     def __post_init__(self):
         super().__post_init__()
 
         self.scene.robot = EXOMY_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
 
-    # TODO: Fix the kinematics for the robot
-    # Define kinematics for the robot
+        # Define kinematics for the robot
         self.actions.actions = mdp.AckermannActionCfg(
             asset_name="robot",
             wheelbase_length=0.29778,

@@ -1,3 +1,5 @@
+# from omni.isaac.orbit.markers.visualization_markers import VisualizationMarkersCfg, VisualizationMarkers
+# import omni.isaac.orbit.sim as sim_utils
 import os
 from typing import Tuple
 
@@ -9,6 +11,14 @@ import torch
 from rover_envs.envs.navigation.utils.terrains.usd_utils import get_triangles_and_vertices_from_prim
 
 directory_terrain_utils = os.path.dirname(os.path.abspath(__file__))
+# SPHERE_MARKER_CFG = VisualizationMarkersCfg(
+#     markers={
+#         "sphere": sim_utils.SphereCfg(
+#             radius=0.4,
+#             visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.0, 0.0, 1.0)),
+#         ),
+#     }
+# )
 
 
 class HeightmapManager():
@@ -128,6 +138,15 @@ class TerrainManager():
         if device == 'cuda:0':
             self.spawn_locations = torch.from_numpy(self.spawn_locations).cuda()
             self.rock_mask_tensor = torch.from_numpy(self.safe_rock_mask).cuda().unsqueeze(-1)
+
+        # if not hasattr(self, "sphere_goal_visualizer"):
+        #     sphere_cfg = SPHERE_MARKER_CFG.copy()
+        #     sphere_cfg.prim_path = "/Visuals/Command/position_goal"
+        #     sphere_cfg.markers["sphere"].radius = 0.2
+        #     self.sphere_goal_visualizer = VisualizationMarkers(sphere_cfg)
+
+        # self.sphere_goal_visualizer.set_visibility(True)
+        # self.sphere_goal_visualizer.visualize(self.spawn_locations[:, 0:3])
 
     def get_mesh(self, prim_path="/") -> Tuple[np.ndarray, np.ndarray]:
         """ This function reads a USD from the specified prim path and return vertices and faces.
@@ -288,14 +307,12 @@ class TerrainManager():
 
         # Initialize a rock mask with zeros
         rock_mask = np.zeros_like(heightmap, dtype=np.int32)
-
         # Mark the areas where gradient magnitude is greater than the threshold as rocks
         rock_mask[grad_magnitude > threshold] = 1
 
         # Perform dilation to add a safety margin around the rocks
         kernel = np.ones((3, 3), np.uint8)
         rock_mask = cv2.morphologyEx(rock_mask.astype(np.uint8), cv2.MORPH_CLOSE, kernel)
-
         # = cv2.morphologyEx(rock_mask.astype(np.uint8), cv2.MORPH_OPEN, kernel)
 
         # # Perform dilation to add a safety margin around the rocks
@@ -313,18 +330,23 @@ class TerrainManager():
 
         return rock_mask, safe_rock_mask
 
-    def show_heightmap(self, heightmap, name="2D Heightmap"):
+    def show_heightmap(self, heightmap, name="2D Heightmap", vmax=None):
         plt.figure(figsize=(10, 10))
 
+        if vmax is None:
+            vmax = np.max(heightmap)
+            vmin = np.min(heightmap)
+        else:
+            vmin = np.min(heightmap)
         # Display the heightmap
-        plt.imshow(heightmap, cmap='terrain', origin='lower')
+        plt.imshow(heightmap, cmap='terrain', origin='lower', vmin=vmin, vmax=vmax, extent=[0, 200, 0, 200])
 
         # Add a color bar for reference
         plt.colorbar(label='Height')
 
         # Add labels and title
-        plt.xlabel('X Coordinate')
-        plt.ylabel('Y Coordinate')
+        plt.xlabel('X Coordinate (m)')
+        plt.ylabel('Y Coordinate (m)')
         plt.title(f"{name}")
 
         # Show the plot
@@ -419,7 +441,7 @@ def show_heightmap(heightmap, cmap="terrain"):
     plt.show()
 
 
-def visualize_spawn_points(spawn_locations: np.ndarray, heightmap: np.ndarray):
+def visualize_spawn_points(spawn_locations: np.ndarray, heightmap: np.ndarray, scale=1):
     """
     Visualize the spawn locations on the heightmap as separate plots.
 
@@ -431,7 +453,6 @@ def visualize_spawn_points(spawn_locations: np.ndarray, heightmap: np.ndarray):
     Returns:
         None
     """
-
     # Create a 3D plot for heightmap and spawn locations
     fig1 = plt.figure(figsize=(12, 12))
     ax1 = fig1.add_subplot(111, projection='3d')
@@ -452,10 +473,10 @@ def visualize_spawn_points(spawn_locations: np.ndarray, heightmap: np.ndarray):
     fig2 = plt.figure()
     ax2 = fig2.add_subplot(111)
     ax2.set_title('2D Heightmap with Spawn Locations')
-    ax2.set_xlabel('X Coordinate')
-    ax2.set_ylabel('Y Coordinate')
+    ax2.set_xlabel('X Coordinate (m)')
+    ax2.set_ylabel('Y Coordinate (m)')
 
-    ax2.imshow(heightmap, cmap='terrain', origin='lower')
+    ax2.imshow(heightmap, cmap='terrain', origin='lower', extent=[0, 200, 0, 200])
     # ax2.imshow(np.ma.masked_where(rock_mask == 0, rock_mask), cmap='coolwarm', alpha=0.4)
     ax2.scatter(spawn_locations[:, 0], spawn_locations[:, 1], c='r', marker='o')
 

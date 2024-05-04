@@ -43,3 +43,11 @@ def height_scan_rover(env: RLTaskEnv, sensor_cfg: SceneEntityCfg) -> torch.Tenso
     # height scan: height = sensor_height - hit_point_z - 0.26878
     # Note: 0.26878 is the distance between the sensor and the rover's base
     return sensor.data.pos_w[:, 2].unsqueeze(1) - sensor.data.ray_hits_w[..., 2] - 0.26878
+
+
+def angle_diff(env: RLTaskEnv, command_name: str) -> torch.Tensor:
+    """Calculate the angle difference between the rover's heading and the target."""
+    # Get the angle to the target
+    heading_angle_diff = env.command_manager.get_command(command_name)[:, 3]
+
+    return heading_angle_diff.unsqueeze(-1)

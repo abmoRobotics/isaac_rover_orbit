@@ -86,7 +86,7 @@ class RoverSceneCfg(MarsTerrainSceneCfg):
         prim_path="{ENV_REGEX_NS}/Robot/Body",
         offset=RayCasterCfg.OffsetCfg(pos=[0.0, 0.0, 10.0]),
         attach_yaw_only=True,
-        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[5.0, 5.0]),
+        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[3.0, 3.0]),
         debug_vis=False,
         mesh_prim_paths=["/World/terrain/hidden_terrain"],
         max_distance=100.0,
@@ -116,6 +116,11 @@ class ObservationCfg:
                 "command_name": "target_pose",
             },
             scale=1 / math.pi,
+        )
+        angle_diff = ObsTerm(
+            func=mdp.angle_diff,
+            params={"command_name": "target_pose"},
+            scale=1 / math.pi
         )
         height_scan = ObsTerm(
             func=mdp.height_scan_rover,
@@ -159,7 +164,7 @@ class RewardsCfg:
     )
     collision = RewTerm(
         func=mdp.collision_penalty,
-        weight=-2.0,
+        weight=-3.0,
         params={"sensor_cfg": SceneEntityCfg(
             "contact_sensor"), "threshold": 1.0},
     )
@@ -167,6 +172,11 @@ class RewardsCfg:
         func=mdp.far_from_target_reward,
         weight=-2.0,
         params={"command_name": "target_pose", "threshold": 11.0},
+    )
+    angle_diff = RewTerm(
+        func=mdp.angle_to_goal_reward,
+        weight=5.0,
+        params={"command_name": "target_pose"},
     )
 
 

@@ -38,7 +38,7 @@ def get_model_gaussian(env: RLTaskEnv, observation_space: Box, action_space: Box
     models = {}
     encoder_input_size = env.unwrapped.observation_manager.group_obs_term_dim["policy"][-1][0]
 
-    mlp_input_size = 4
+    mlp_input_size = 5
 
     models["policy"] = GaussianNeuralNetwork(
         observation_space=observation_space,
