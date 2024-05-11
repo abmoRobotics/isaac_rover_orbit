@@ -38,7 +38,7 @@ def gaussian_model_skrl(env: RLTaskEnv, observation_space: Box, action_space: Bo
     models = {}
     encoder_input_size = env.observation_manager.group_obs_term_dim["policy"][-1][0]
 
-    mlp_input_size = 4
+    mlp_input_size = 5
 
     models["policy"] = GaussianNeuralNetwork(
         observation_space=observation_space,

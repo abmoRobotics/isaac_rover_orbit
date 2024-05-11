@@ -29,6 +29,7 @@ def is_success(env: RLTaskEnv, command_name: str, threshold: float) -> torch.Ten
     distance = torch.norm(target_position, p=2, dim=-1)
 
     return torch.where((distance < threshold) & (torch.abs(angle) < 0.1), True, False)
+    # return torch.where(distance < threshold, True, False)
 
 
 def far_from_target(env: RLTaskEnv, command_name: str, threshold: float) -> torch.Tensor:

@@ -229,22 +229,22 @@ def ackermann(lin_vel, ang_vel, cfg, device):
     # Set velocities for point turn, else
     # if ang_vel is 0, wheel velocity is equal to linear velocity
     vel_FL = torch.where(turning_radius < minimum_radius,
-                         -(lin_vel+1)*turn_direction,
+                         -(ang_vel)*turn_direction,
                          torch.where(ang_vel == 0, lin_vel, (r_FL * ang_vel)) * direction)
     vel_FR = torch.where(turning_radius < minimum_radius,
-                         (lin_vel+1)*turn_direction,
+                         (ang_vel)*turn_direction,
                          torch.where(ang_vel == 0, lin_vel, (r_FR * ang_vel)) * direction)
     vel_RL = torch.where(turning_radius < minimum_radius,
-                         -(lin_vel+1)*turn_direction,
+                         -(ang_vel)*turn_direction,
                          torch.where(ang_vel == 0, lin_vel, (r_RL * ang_vel)) * direction)
     vel_RR = torch.where(turning_radius < minimum_radius,
-                         (lin_vel+1)*turn_direction,
+                         (ang_vel)*turn_direction,
                          torch.where(ang_vel == 0, lin_vel, (r_RR * ang_vel)) * direction)
     vel_ML = torch.where(turning_radius < minimum_radius,
-                         -(lin_vel+1)*turn_direction,
+                         -(ang_vel)*turn_direction,
                          torch.where(ang_vel == 0, lin_vel, (r_ML * ang_vel)) * direction)
     vel_MR = torch.where(turning_radius < minimum_radius,
-                         (lin_vel+1)*turn_direction,
+                         (ang_vel)*turn_direction,
                          torch.where(ang_vel == 0, lin_vel, (r_MR * ang_vel)) * direction)
 
     wl = torch.ones_like(r_FL) * wl  # Repeat wl as tensor

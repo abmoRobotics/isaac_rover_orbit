@@ -36,6 +36,22 @@ class HeightmapEncoder(nn.Module):
         return x
 
 
+class Conv_HeightmapEncoder(nn.Module):
+    def __init__(self, in_channels, encoder_features=[80, 60], encoder_activation="leaky_relu"):
+        super().__init__()
+        self.encoder_layers = nn.ModuleList()
+        for feature in encoder_features:
+            self.encoder_layers.append(nn.Conv2d(in_channels, feature, kernel_size=5, stride=2, padding=2))
+            self.encoder_layers.append(nn.MaxPool2d(kernel_size=2, stride=2))
+            self.encoder_layers.append(get_activation(encoder_activation))
+            in_channels = feature
+
+    def forward(self, x):
+        for layer in self.encoder_layers:
+            x = layer(x)
+        return x
+
+
 class GaussianNeuralNetwork(GaussianMixin, BaseModel):
     """Gaussian neural network model."""
 
@@ -44,7 +60,7 @@ class GaussianNeuralNetwork(GaussianMixin, BaseModel):
         observation_space,
         action_space,
         device,
-        mlp_input_size=4,
+        mlp_input_size=5,
         mlp_layers=[256, 160, 128],
         mlp_activation="leaky_relu",
         encoder_input_size=None,
@@ -91,8 +107,8 @@ class GaussianNeuralNetwork(GaussianMixin, BaseModel):
         if self.encoder_input_size is None:
             x = states["states"]
         else:
-            x = states["states"][:, 0:self.mlp_input_size]
             encoder_output = self.dense_encoder(states["states"][:, self.mlp_input_size - 1:-1])
+            x = states["states"][:, 0:self.mlp_input_size]
             x = torch.cat([x, encoder_output], dim=1)
 
         # Compute the output of the MLP.

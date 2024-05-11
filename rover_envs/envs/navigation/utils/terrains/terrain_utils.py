@@ -134,7 +134,8 @@ class TerrainManager():
             rock_mask=self.safe_rock_mask,
             heightmap=self._heightmap_manager.heightmap,
             n_spawns=num_envs*2 if num_envs > 100 else 200,
-            seed=41)
+            border_offset=25.0,
+            seed=12345)
         if device == 'cuda:0':
             self.spawn_locations = torch.from_numpy(self.spawn_locations).cuda()
             self.rock_mask_tensor = torch.from_numpy(self.safe_rock_mask).cuda().unsqueeze(-1)
