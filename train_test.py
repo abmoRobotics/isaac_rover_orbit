@@ -104,7 +104,8 @@ def main(env, tags, sweep=False):
 
     experiment_cfg["seed"] = random.randint(0, 1000000)
     # set seed for the experiment (override from command line)
-    set_seed(args_cli_seed if args_cli_seed is not None else experiment_cfg["seed"])
+    seed = args_cli_seed if args_cli_seed is not None else experiment_cfg["seed"]
+    set_seed(seed)
 
     # instantiate models using skrl model instantiator utility
     # https://skrl.readthedocs.io/en/latest/modules/skrl.utils.model_instantiators.html
@@ -149,7 +150,8 @@ def main(env, tags, sweep=False):
     experiment_cfg["agent"]["rewards_shaper"] = None  # avoid 'dictionary changed size during iteration'
     agent_cfg.update(process_skrl_cfg(experiment_cfg["agent"]))
     trainer_cfg = experiment_cfg["trainer"]
-
+    agent_cfg["seed"] = seed
+    agent_cfg["task"] = args_cli.task
     trainer_cfg = trainer_cfg if trainer_cfg is not None else {}
     try:
         models_cfg = {k: v.net._modules for (k, v) in models.items()}
@@ -163,7 +165,7 @@ def main(env, tags, sweep=False):
     wandb_kwargs.setdefault("config", {})
     wandb_kwargs["config"].update(config)
     # init Weights & Biases
-    wandb.init(project=f'RLRoverLab-{args_cli.task}', tags=tags, **wandb_kwargs)
+    wandb.init(project='RLRoverLab-FrankaCubeLift-v0', tags=tags, **wandb_kwargs)
     if sweep:
         # agent_cfg["mini_batches"] = wandb.config.rollouts // wandb.config.mini_batch_factor
         agent_cfg["rollouts"] = wandb.config.rollouts
@@ -174,6 +176,7 @@ def main(env, tags, sweep=False):
         agent_cfg["value_loss_scale"] = wandb.config.value_loss_scale
         agent_cfg["entropy_loss_scale"] = wandb.config.entropy_loss_scale
         agent_cfg["kl_threshold"] = wandb.config.kl_threshold
+        agent_cfg["learning_epochs"] = wandb.config.learning_epochs
         wandb.config.update({'mini_batches': agent_cfg["mini_batches"]}, allow_val_change=True)
 
     agent_cfg["state_preprocessor_kwargs"].update({"size": env.observation_space, "device": env.device})
@@ -229,6 +232,8 @@ def sweep(env):
 
     sweep_id = wandb.sweep(sweep_configuration, project=f'RLRoverLab-{args_cli.task}')
     wandb.agent(sweep_id, function=lambda: main(env, tags=[args_cli.task, "experiment:sweep"], sweep=True))
+    # wandb.agent("ox5aways", project="RLRoverLab-FrankaCubeLift-v0",
+    #             function=lambda: main(env, tags=[args_cli.task, "experiment:sweep"], sweep=True))
 
 
 if __name__ == "__main__":
@@ -236,9 +241,9 @@ if __name__ == "__main__":
         # run the main execution
         env = start_env()
         # main(env, tags=[args_cli.task, "experiment:train"])
-        # for i in range(5):
-        #     main(env, tags=[args_cli.task, "experiment:horizon"])
-        sweep(env)
+        for i in range(5):
+            main(env, tags=[args_cli.task, "experiment:learning_rate"])
+#        sweep(env)
         env.close()
     except Exception as err:
         carb.log_error(err)

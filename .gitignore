@@ -214,7 +214,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
+#.env
 .venv
 env/
 venv/
@@ -339,3 +339,6 @@ examples/**/wandb*
 rover_envs/assets/robots/__pycache__/*
 !rover_envs/assets/terrains/debug/**/*
 rover_envs/assets/terrains/debug/__pycache__/*
+ack_rm.py
+rm.py
+remove.txt
