@@ -13,6 +13,7 @@ INSTALL_REQUIRES = [
     "hidapi",
     "skrl==1.1.0",
     "wandb",
+    "opencv-python",
 ]
 
 # url=EXTENSION_TOML_DATA["package"]["repository"], # add later
