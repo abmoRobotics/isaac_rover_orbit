@@ -8,7 +8,13 @@ from rover_envs.learning.train.td3 import TD3_agent
 from rover_envs.learning.train.trpo import TRPO_agent
 
 
-def get_agent(agent: str, env: RLTaskEnv, observation_space: Box, action_space: Box, experiment_cfg):
+def get_agent(
+        agent: str,
+        env: RLTaskEnv,
+        observation_space: Box,
+        action_space: Box,
+        experiment_cfg,
+        conv: bool = False):
     """
     Function to get the agent.
 
@@ -19,7 +25,7 @@ def get_agent(agent: str, env: RLTaskEnv, observation_space: Box, action_space: 
         Agent: The agent.
     """
     if agent == "PPO":
-        return PPO_agent(experiment_cfg, observation_space, action_space, env)
+        return PPO_agent(experiment_cfg, observation_space, action_space, env, conv)
     if agent == "TRPO":
         return TRPO_agent(experiment_cfg, observation_space, action_space, env)
     if agent == "RPO":

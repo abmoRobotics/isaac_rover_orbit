@@ -74,7 +74,7 @@ def main(env, tags, sweep=False):
     """Train with skrl agent."""
     # read the seed from command line
     args_cli_seed = args_cli.seed
-
+    CONV = True
     # parse configuration
     env_cfg = parse_env_cfg(args_cli.task, use_gpu=not args_cli.cpu, num_envs=args_cli.num_envs)
     experiment_cfg = parse_skrl_cfg(args_cli.task + f"_{args_cli.agent}")
@@ -119,7 +119,7 @@ def main(env, tags, sweep=False):
     agent_cfg["seed"] = seed
     agent_cfg["task"] = args_cli.task
     agent_cfg["num_obs"] = num_obs = env.unwrapped.observation_manager.group_obs_dim["policy"][0]
-
+    agent_cfg["conv"] = CONV
     config = {**agent_cfg, **trainer_cfg}
     # set default values
     wandb_kwargs = copy.deepcopy(agent_cfg.get("experiment", {}).get("wandb_kwargs", {}))
@@ -155,7 +155,7 @@ def main(env, tags, sweep=False):
     num_actions = env.unwrapped.action_manager.action_term_dim[0]
     observation_space = gym.spaces.Box(low=-math.inf, high=math.inf, shape=(num_obs,))
     action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(num_actions,))
-    agent = get_agent(args_cli.agent, env, observation_space, action_space, experiment_cfg)
+    agent = get_agent(args_cli.agent, env, observation_space, action_space, experiment_cfg, conv=CONV)
     # agent.load("best_agent.pt")
     # configure and instantiate a custom RL trainer for logging episode events
     # https://skrl.readthedocs.io/en/latest/modules/skrl.trainers.base_class.html
