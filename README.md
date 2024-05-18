@@ -109,6 +109,10 @@ We welcome contributions to RLRoverLab! Whether it's adding new tasks, or fixing
 https://github.com/abmoRobotics/isaac_rover_orbit/assets/56405924/71b69616-0a69-46c6-b3ce-009554bfa3c4
 
 
+https://github.com/abmoRobotics/isaac_rover_orbit/assets/56405924/c9daf864-bf26-410b-a515-86b122d7a01d
+
+
+
 
 ## Video of trained RL-agent
 https://github.com/abmoRobotics/isaac_rover_orbit/assets/56405924/84a9f405-f537-4041-9d1f-8a2307f450a7
