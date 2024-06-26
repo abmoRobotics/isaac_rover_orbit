@@ -3,6 +3,8 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+import os
+
 import omni.isaac.orbit.sim as sim_utils
 from omni.isaac.orbit.assets import RigidObjectCfg
 from omni.isaac.orbit.sensors import FrameTransformerCfg
@@ -10,7 +12,7 @@ from omni.isaac.orbit.sensors.frame_transformer.frame_transformer_cfg import Off
 from omni.isaac.orbit.sim.schemas.schemas_cfg import RigidBodyPropertiesCfg
 from omni.isaac.orbit.sim.spawners.from_files.from_files_cfg import UsdFileCfg
 from omni.isaac.orbit.utils import configclass
-from omni.isaac.orbit.utils.assets import ISAAC_NUCLEUS_DIR, ISAAC_ORBIT_NUCLEUS_DIR
+from omni.isaac.orbit.utils.assets import ISAAC_ORBIT_NUCLEUS_DIR
 
 import rover_envs  # noqa: F401
 import rover_envs.envs.manipulation.mdp as mdp
@@ -62,11 +64,11 @@ class FrankaCubeLiftEnvCfg(ManipulatorEnvCfg):
         # Set Cube as object
         self.scene.object = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/Object",
-            init_state=RigidObjectCfg.InitialStateCfg(pos=[0.5, 0, 0.055], rot=[1, 0, 0, 0]),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=[0.45, 0, 0.055], rot=[1, 0, 0, 0]),
             spawn=UsdFileCfg(
-                # usd_path=os.path.join(rover_envs.__path__[0], "assets", "objects", "rocks", "rock_0", "rock_0.usd"),
-                usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Blocks/DexCube/dex_cube_instanceable.usd",
-                scale=(0.8, 0.8, 0.8),
+                usd_path=os.path.join(rover_envs.__path__[0], "assets", "objects", "rocks", "rock_0", "rock_0.usd"),
+                # usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Blocks/DexCube/dex_cube_instanceable.usd",
+                scale=(0.9, 0.9, 0.9),
                 rigid_props=RigidBodyPropertiesCfg(
                     solver_position_iteration_count=16,
                     solver_velocity_iteration_count=1,

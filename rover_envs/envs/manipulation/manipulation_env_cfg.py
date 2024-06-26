@@ -20,10 +20,10 @@ from omni.isaac.orbit.sensors import ContactSensorCfg, RayCasterCfg, patterns  #
 from omni.isaac.orbit.sensors.frame_transformer.frame_transformer_cfg import FrameTransformerCfg
 from omni.isaac.orbit.sim import PhysxCfg
 from omni.isaac.orbit.sim import SimulationCfg as SimCfg
-from omni.isaac.orbit.sim.spawners.from_files.from_files_cfg import GroundPlaneCfg, UsdFileCfg
+from omni.isaac.orbit.sim.spawners.from_files.from_files_cfg import GroundPlaneCfg
 from omni.isaac.orbit.terrains import TerrainImporter, TerrainImporterCfg  # noqa: F401
 from omni.isaac.orbit.utils import configclass
-from omni.isaac.orbit.utils.assets import ISAAC_NUCLEUS_DIR
+from omni.isaac.orbit.utils.assets import ISAAC_NUCLEUS_DIR  # noqa: F401
 from omni.isaac.orbit.utils.noise import AdditiveUniformNoiseCfg as Unoise  # noqa: F401
 
 import rover_envs
@@ -85,16 +85,23 @@ class ManipulatorSceneCfg(InteractiveSceneCfg):
     object: RigidObjectCfg = MISSING
 
     # Table
-    table = AssetBaseCfg(
-        prim_path="{ENV_REGEX_NS}/Table",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0.0, 0], rot=[0.707, 0, 0, 0.707]),
-        spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd"),
-    )
+    # table = AssetBaseCfg(
+    #     prim_path="{ENV_REGEX_NS}/Table",
+    #     init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0.0, 0], rot=[0.707, 0, 0, 0.707]),
+    #     spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd"),
+    # )
+
+    # Plane
+    # plane = AssetBaseCfg(
+    #     prim_path="/World/GroundPlane",
+    #     init_state=AssetBaseCfg.InitialStateCfg(pos=[0, 0, 0.00]),
+    #     spawn=GroundPlaneCfg(),
+    # )
 
     # Plane
     plane = AssetBaseCfg(
         prim_path="/World/GroundPlane",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[0, 0, -1.05]),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=[0, 0, 0.0]),
         spawn=GroundPlaneCfg(),
     )
 
@@ -210,9 +217,9 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.1, 0.1), "y": (-0.25, 0.25), "z": (0.0, 0.0)},
+            "pose_range": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (0.0, 0.0)},
             "velocity_range": {},
-            "asset_cfg": SceneEntityCfg("object", body_names="Object"),
+            "asset_cfg": SceneEntityCfg("object", body_names="rock"),
         },
     )
 

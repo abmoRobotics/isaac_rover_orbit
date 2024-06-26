@@ -55,8 +55,8 @@ agent:
     directory: "rover"
     experiment_name: ""
     write_interval: 40
-    checkpoint_interval: 401
+    checkpoint_interval: 400
     wandb: True             # whether to use Weights & Biases
 
 trainer:
-  timesteps: 40000
+  timesteps: 1000000

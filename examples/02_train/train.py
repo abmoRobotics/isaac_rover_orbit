@@ -130,11 +130,13 @@ def train():
     log_dir = log_setup(experiment_cfg, env_cfg, args_cli.agent)
 
     # Create the environment
-    env = gym.make(args_cli.task, cfg=env_cfg, headless=args_cli.headless, viewport=args_cli.video)
+    render_mode = "rgb_array" if args_cli.video else None
+    env = gym.make(args_cli.task, cfg=env_cfg, headless=args_cli.headless,
+                   viewport=args_cli.video, render_mode=render_mode)
     # Check if video recording is enabled
     env = video_record(env, log_dir, args_cli.video, args_cli.video_length, args_cli.video_interval)
     # Wrap the environment
-    env: RLTaskEnv = SkrlOrbitVecWrapper(env.unwrapped)
+    env: RLTaskEnv = SkrlOrbitVecWrapper(env)
     set_seed(args_cli_seed if args_cli_seed is not None else experiment_cfg["seed"])
 
     # Get the observation and action spaces
@@ -145,7 +147,7 @@ def train():
 
     trainer_cfg = experiment_cfg["trainer"]
 
-    agent = get_agent(args_cli.agent, env, observation_space, action_space, experiment_cfg)
+    agent = get_agent(args_cli.agent, env, observation_space, action_space, experiment_cfg, conv=True)
     trainer = SkrlSequentialLogTrainer(cfg=trainer_cfg, agents=agent, env=env)
     trainer.train()
 
