@@ -54,7 +54,7 @@ class RoverEnvCamera(RoverEnv):
                 orientation=(0.64086, 0.29884, -0.29884, -0.64086),
             )
             render_product = self.rep.create.render_product(
-                f"/World/envs/env_{i}/Robot/Body/Camera", resolution=(320, 180))
+                f"/World/envs/env_{i}/Robot/Body/Camera", resolution=(160, 90))
             self.render_products.append(render_product)
 
         # # Initialize pytorch writer for vectorized collection

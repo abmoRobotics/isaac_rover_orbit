@@ -6,7 +6,8 @@ from omni.isaac.orbit.terrains import TerrainImporter
 
 from rover_envs.envs.navigation.rover_env_cfg import RoverEnvCfg
 
-VecEnvStepReturn = tuple[VecEnvObs, torch.Tensor, torch.Tensor, torch.Tensor, dict]
+VecEnvStepReturn = tuple[VecEnvObs, torch.Tensor,
+                         torch.Tensor, torch.Tensor, dict]
 
 
 class RoverEnv(RLTaskEnv):
